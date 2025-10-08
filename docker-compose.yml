@@ -1,0 +1,24 @@
+version: '3.8'
+
+services:
+  frontend:
+    build: .
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
+    networks:
+      - cms-network
+
+  # Assuming your backend service configuration
+  backend:
+    # Add your backend service configuration here
+    # image: your-backend-image
+    # ports:
+    #   - "8000:8000"
+    networks:
+      - cms-network
+
+networks:
+  cms-network:
+    driver: bridge
