@@ -1,8 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
-import { useNotificationContext } from '../../contexts/NotificationContext';
-import { clientAPI, meetingAPI, openPointsAPI } from '../../utils/apiServices';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import React, { useState, useEffect } from "react";
+import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
+import { useNotificationContext } from "../../contexts/NotificationContext";
+import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
+import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import {
+  MeetingsList,
+  MeetingDetails,
+  MeetingForm,
+} from "../../components/Meetings";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -19,18 +24,25 @@ import {
   Security as SecurityIcon,
   AccountTree as WorkflowIcon,
   ArrowBack as ArrowBackIcon,
-  MoreVert as MoreVertIcon
-} from '@mui/icons-material';
-import './ClientsPage.css';
+  MoreVert as MoreVertIcon,
+} from "@mui/icons-material";
+import "./ClientsPage.css";
 
 const ClientsPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientDetails, setClientDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
-  const [activeTab, setActiveTab] = useState('overview');
+  const [activeTab, setActiveTab] = useState("overview");
+
+  // Meeting-related state
+  const [selectedMeeting, setSelectedMeeting] = useState(null);
+  const [showMeetingForm, setShowMeetingForm] = useState(false);
+  const [editingMeeting, setEditingMeeting] = useState(null);
+  const [meetingsView, setMeetingsView] = useState("list"); // 'list' or 'details'
+
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
@@ -43,8 +55,8 @@ const ClientsPage = () => {
       const clientsData = await clientAPI.getAll();
       setClients(clientsData);
     } catch (error) {
-      showError('Failed to load clients');
-      console.error('Error loading clients:', error);
+      showError("Failed to load clients");
+      console.error("Error loading clients:", error);
     } finally {
       setLoading(false);
     }
@@ -53,27 +65,26 @@ const ClientsPage = () => {
   const loadClientDetails = async (clientId) => {
     try {
       setDetailsLoading(true);
-      
+
       // Load client basic info
-      const client = clients.find(c => c.id === clientId);
-      
+      const client = clients.find((c) => c.id === clientId);
+
       // Load related data
       const [meetings, tasks] = await Promise.all([
         meetingAPI.getByClient(clientId).catch(() => []),
-        openPointsAPI.getByClient(clientId).catch(() => [])
+        openPointsAPI.getByClient(clientId).catch(() => []),
       ]);
-      
+
       setClientDetails({
         ...client,
         meetings,
         tasks,
         workflows: [], // Placeholder for workflows
-        secrets: [] // Placeholder for secrets
+        secrets: [], // Placeholder for secrets
       });
-      
     } catch (error) {
-      showError('Failed to load client details');
-      console.error('Error loading client details:', error);
+      showError("Failed to load client details");
+      console.error("Error loading client details:", error);
     } finally {
       setDetailsLoading(false);
     }
@@ -87,12 +98,66 @@ const ClientsPage = () => {
   const handleBackToList = () => {
     setSelectedClient(null);
     setClientDetails(null);
-    setActiveTab('overview');
+    setActiveTab("overview");
+    setSelectedMeeting(null);
+    setShowMeetingForm(false);
+    setEditingMeeting(null);
+    setMeetingsView("list");
   };
 
-  const filteredClients = clients.filter(client =>
-    client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    client.email?.toLowerCase().includes(searchTerm.toLowerCase())
+  // Meeting handlers
+  const handleMeetingSelect = (meeting) => {
+    setSelectedMeeting(meeting);
+    setMeetingsView("details");
+  };
+
+  const handleBackToMeetings = () => {
+    setSelectedMeeting(null);
+    setMeetingsView("list");
+  };
+
+  const handleAddMeeting = () => {
+    setEditingMeeting(null);
+    setShowMeetingForm(true);
+  };
+
+  const handleEditMeeting = (meeting) => {
+    setEditingMeeting(meeting);
+    setShowMeetingForm(true);
+  };
+
+  const handleDeleteMeeting = async (meeting) => {
+    if (
+      !window.confirm(`Are you sure you want to delete "${meeting.title}"?`)
+    ) {
+      return;
+    }
+
+    try {
+      await meetingAPI.delete(meeting.id);
+      showSuccess("Meeting deleted successfully");
+      loadClientDetails(selectedClient.id);
+    } catch (error) {
+      showError("Failed to delete meeting");
+      console.error("Error deleting meeting:", error);
+    }
+  };
+
+  const handleMeetingFormSave = () => {
+    setShowMeetingForm(false);
+    setEditingMeeting(null);
+    loadClientDetails(selectedClient.id);
+  };
+
+  const handleMeetingFormCancel = () => {
+    setShowMeetingForm(false);
+    setEditingMeeting(null);
+  };
+
+  const filteredClients = clients.filter(
+    (client) =>
+      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   if (loading) {
@@ -120,7 +185,7 @@ const ClientsPage = () => {
                 <PersonIcon />
               </div>
               <div className="client-title-info">
-                <h1>{selectedClient.name || 'Unnamed Client'}</h1>
+                <h1>{selectedClient.name || "Unnamed Client"}</h1>
                 <p>{selectedClient.email}</p>
               </div>
             </div>
@@ -137,37 +202,37 @@ const ClientsPage = () => {
           </div>
 
           <div className="client-details-tabs">
-            <button 
-              className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
-              onClick={() => setActiveTab('overview')}
+            <button
+              className={`tab-btn ${activeTab === "overview" ? "active" : ""}`}
+              onClick={() => setActiveTab("overview")}
             >
               <PersonIcon />
               Overview
             </button>
-            <button 
-              className={`tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
-              onClick={() => setActiveTab('meetings')}
+            <button
+              className={`tab-btn ${activeTab === "meetings" ? "active" : ""}`}
+              onClick={() => setActiveTab("meetings")}
             >
               <VideoCallIcon />
               Meetings
             </button>
-            <button 
-              className={`tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
-              onClick={() => setActiveTab('tasks')}
+            <button
+              className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
+              onClick={() => setActiveTab("tasks")}
             >
               <AssignmentIcon />
               Open Points
             </button>
-            <button 
-              className={`tab-btn ${activeTab === 'workflows' ? 'active' : ''}`}
-              onClick={() => setActiveTab('workflows')}
+            <button
+              className={`tab-btn ${activeTab === "workflows" ? "active" : ""}`}
+              onClick={() => setActiveTab("workflows")}
             >
               <WorkflowIcon />
               Workflows
             </button>
-            <button 
-              className={`tab-btn ${activeTab === 'secrets' ? 'active' : ''}`}
-              onClick={() => setActiveTab('secrets')}
+            <button
+              className={`tab-btn ${activeTab === "secrets" ? "active" : ""}`}
+              onClick={() => setActiveTab("secrets")}
             >
               <SecurityIcon />
               Secrets
@@ -181,7 +246,7 @@ const ClientsPage = () => {
               </div>
             ) : (
               <>
-                {activeTab === 'overview' && (
+                {activeTab === "overview" && (
                   <div className="overview-tab">
                     <div className="overview-cards">
                       <div className="overview-card">
@@ -191,61 +256,77 @@ const ClientsPage = () => {
                             <PersonIcon className="info-icon" />
                             <div>
                               <label>Name</label>
-                              <span>{selectedClient.name || 'Not provided'}</span>
+                              <span>
+                                {selectedClient.name || "Not provided"}
+                              </span>
                             </div>
                           </div>
                           <div className="info-item">
                             <EmailIcon className="info-icon" />
                             <div>
                               <label>Email</label>
-                              <span>{selectedClient.email || 'Not provided'}</span>
+                              <span>
+                                {selectedClient.email || "Not provided"}
+                              </span>
                             </div>
                           </div>
                           <div className="info-item">
                             <PhoneIcon className="info-icon" />
                             <div>
                               <label>Phone</label>
-                              <span>{selectedClient.phone || 'Not provided'}</span>
+                              <span>
+                                {selectedClient.phone || "Not provided"}
+                              </span>
                             </div>
                           </div>
                           <div className="info-item">
                             <BusinessIcon className="info-icon" />
                             <div>
                               <label>Company</label>
-                              <span>{selectedClient.company || 'Not provided'}</span>
+                              <span>
+                                {selectedClient.company || "Not provided"}
+                              </span>
                             </div>
                           </div>
                         </div>
                       </div>
-                      
+
                       <div className="overview-card">
                         <h3>Statistics</h3>
                         <div className="stats-grid">
                           <div className="stat-item">
                             <VideoCallIcon className="stat-icon meetings" />
                             <div>
-                              <span className="stat-number">{clientDetails?.meetings?.length || 0}</span>
+                              <span className="stat-number">
+                                {clientDetails?.meetings?.length || 0}
+                              </span>
                               <label>Meetings</label>
                             </div>
                           </div>
                           <div className="stat-item">
                             <AssignmentIcon className="stat-icon tasks" />
                             <div>
-                              <span className="stat-number">{clientDetails?.tasks?.length || 0}</span>
+                              <span className="stat-number">
+                                {clientDetails?.tasks?.length || 0}
+                              </span>
                               <label>Open Points</label>
                             </div>
                           </div>
                           <div className="stat-item">
                             <WorkflowIcon className="stat-icon workflows" />
                             <div>
-                              <span className="stat-number">{clientDetails?.workflows?.length || 0}</span>
+                              <span className="stat-number">
+                                {clientDetails?.workflows?.length || 0}
+                              </span>
                               <label>Workflows</label>
                             </div>
                           </div>
                           <div className="stat-item">
                             <SecurityIcon className="stat-icon secrets" />
                             <div>
-                              <span className="stat-number">{clientDetails?.secrets?.length || 0}</span>
+                              <span className="stat-number">
+                                {clientDetails?.secrets?.length || 0}
+                              </span>
                               <label>Secrets</label>
                             </div>
                           </div>
@@ -255,44 +336,30 @@ const ClientsPage = () => {
                   </div>
                 )}
 
-                {activeTab === 'meetings' && (
+                {activeTab === "meetings" && (
                   <div className="meetings-tab">
-                    <div className="tab-header">
-                      <h3>Client Meetings</h3>
-                      <button className="btn btn-primary">
-                        <AddIcon />
-                        Add Meeting
-                      </button>
-                    </div>
-                    <div className="meetings-list">
-                      {clientDetails?.meetings?.length > 0 ? (
-                        clientDetails.meetings.map((meeting) => (
-                          <div key={meeting.id} className="meeting-item">
-                            <VideoCallIcon className="meeting-icon" />
-                            <div className="meeting-info">
-                              <h4>{meeting.title || 'Untitled Meeting'}</h4>
-                              <p>{meeting.description || 'No description'}</p>
-                              <span className="meeting-date">
-                                {new Date(meeting.created_at).toLocaleDateString()}
-                              </span>
-                            </div>
-                            <button className="action-btn">
-                              <MoreVertIcon />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="empty-tab-state">
-                          <VideoCallIcon className="empty-icon" />
-                          <h4>No meetings found</h4>
-                          <p>Start by adding a meeting for this client.</p>
-                        </div>
-                      )}
-                    </div>
+                    {meetingsView === "list" ? (
+                      <MeetingsList
+                        meetings={clientDetails?.meetings || []}
+                        onMeetingSelect={handleMeetingSelect}
+                        onAddMeeting={handleAddMeeting}
+                        onEditMeeting={handleEditMeeting}
+                        onDeleteMeeting={handleDeleteMeeting}
+                        loading={detailsLoading}
+                      />
+                    ) : (
+                      <MeetingDetails
+                        meetingId={selectedMeeting?.id}
+                        onBack={handleBackToMeetings}
+                        onEdit={handleEditMeeting}
+                        onDelete={handleDeleteMeeting}
+                        clientName={selectedClient?.name}
+                      />
+                    )}
                   </div>
                 )}
 
-                {activeTab === 'tasks' && (
+                {activeTab === "tasks" && (
                   <div className="tasks-tab">
                     <div className="tab-header">
                       <h3>Open Points</h3>
@@ -307,10 +374,10 @@ const ClientsPage = () => {
                           <div key={task.id} className="task-item">
                             <AssignmentIcon className="task-icon" />
                             <div className="task-info">
-                              <h4>{task.title || 'Untitled Task'}</h4>
-                              <p>{task.description || 'No description'}</p>
+                              <h4>{task.title || "Untitled Task"}</h4>
+                              <p>{task.description || "No description"}</p>
                               <span className={`task-status ${task.status}`}>
-                                {task.status?.replace('_', ' ') || 'Open'}
+                                {task.status?.replace("_", " ") || "Open"}
                               </span>
                             </div>
                             <button className="action-btn">
@@ -322,14 +389,17 @@ const ClientsPage = () => {
                         <div className="empty-tab-state">
                           <AssignmentIcon className="empty-icon" />
                           <h4>No open points found</h4>
-                          <p>All tasks are completed or no tasks have been created yet.</p>
+                          <p>
+                            All tasks are completed or no tasks have been
+                            created yet.
+                          </p>
                         </div>
                       )}
                     </div>
                   </div>
                 )}
 
-                {activeTab === 'workflows' && (
+                {activeTab === "workflows" && (
                   <div className="workflows-tab">
                     <div className="tab-header">
                       <h3>Workflows</h3>
@@ -346,7 +416,7 @@ const ClientsPage = () => {
                   </div>
                 )}
 
-                {activeTab === 'secrets' && (
+                {activeTab === "secrets" && (
                   <div className="secrets-tab">
                     <div className="tab-header">
                       <h3>Client Secrets</h3>
@@ -365,6 +435,16 @@ const ClientsPage = () => {
               </>
             )}
           </div>
+
+          {/* Meeting Form Modal */}
+          <MeetingForm
+            meeting={editingMeeting}
+            clientId={selectedClient?.id}
+            clientName={selectedClient?.name}
+            onSave={handleMeetingFormSave}
+            onCancel={handleMeetingFormCancel}
+            isOpen={showMeetingForm}
+          />
         </div>
       </DashboardLayout>
     );
@@ -415,12 +495,18 @@ const ClientsPage = () => {
           <div className="clients-grid">
             {filteredClients.length > 0 ? (
               filteredClients.map((client) => (
-                <div key={client.id} className="client-card" onClick={() => handleClientSelect(client)}>
+                <div
+                  key={client.id}
+                  className="client-card"
+                  onClick={() => handleClientSelect(client)}
+                >
                   <div className="client-avatar">
                     <PersonIcon />
                   </div>
                   <div className="client-info">
-                    <h3 className="client-name">{client.name || 'Unnamed Client'}</h3>
+                    <h3 className="client-name">
+                      {client.name || "Unnamed Client"}
+                    </h3>
                     <p className="client-email">
                       <EmailIcon className="email-icon" />
                       {client.email}
@@ -428,15 +514,25 @@ const ClientsPage = () => {
                     <div className="client-meta">
                       <span className="client-status active">Active</span>
                       <span className="client-date">
-                        Added {new Date(client.created_at || Date.now()).toLocaleDateString()}
+                        Added{" "}
+                        {new Date(
+                          client.created_at || Date.now()
+                        ).toLocaleDateString()}
                       </span>
                     </div>
                   </div>
-                  <div className="client-actions" onClick={(e) => e.stopPropagation()}>
+                  <div
+                    className="client-actions"
+                    onClick={(e) => e.stopPropagation()}
+                  >
                     <button className="action-btn edit" title="Edit Client">
                       <EditIcon />
                     </button>
-                    <button className="action-btn view" title="View Details" onClick={() => handleClientSelect(client)}>
+                    <button
+                      className="action-btn view"
+                      title="View Details"
+                      onClick={() => handleClientSelect(client)}
+                    >
                       <VisibilityIcon />
                     </button>
                     <button className="action-btn delete" title="Delete Client">
@@ -450,10 +546,9 @@ const ClientsPage = () => {
                 <PeopleIcon className="empty-icon" />
                 <h3>No Clients Found</h3>
                 <p>
-                  {searchTerm 
+                  {searchTerm
                     ? `No clients match "${searchTerm}". Try a different search term.`
-                    : 'Start by adding your first client to get started with the CMS.'
-                  }
+                    : "Start by adding your first client to get started with the CMS."}
                 </p>
                 <button className="btn btn-primary">
                   <AddIcon />
