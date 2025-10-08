@@ -1,14 +1,36 @@
 import React, { useState, useEffect } from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
 import { useNotificationContext } from '../../contexts/NotificationContext';
-import { clientAPI } from '../../utils/apiServices';
+import { clientAPI, meetingAPI, openPointsAPI } from '../../utils/apiServices';
 import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import {
+  People as PeopleIcon,
+  Add as AddIcon,
+  Search as SearchIcon,
+  Edit as EditIcon,
+  Visibility as VisibilityIcon,
+  Delete as DeleteIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  Phone as PhoneIcon,
+  Business as BusinessIcon,
+  VideoCall as VideoCallIcon,
+  Assignment as AssignmentIcon,
+  Security as SecurityIcon,
+  AccountTree as WorkflowIcon,
+  ArrowBack as ArrowBackIcon,
+  MoreVert as MoreVertIcon
+} from '@mui/icons-material';
 import './ClientsPage.css';
 
 const ClientsPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [selectedClient, setSelectedClient] = useState(null);
+  const [clientDetails, setClientDetails] = useState(null);
+  const [detailsLoading, setDetailsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState('overview');
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
@@ -28,6 +50,46 @@ const ClientsPage = () => {
     }
   };
 
+  const loadClientDetails = async (clientId) => {
+    try {
+      setDetailsLoading(true);
+      
+      // Load client basic info
+      const client = clients.find(c => c.id === clientId);
+      
+      // Load related data
+      const [meetings, tasks] = await Promise.all([
+        meetingAPI.getByClient(clientId).catch(() => []),
+        openPointsAPI.getByClient(clientId).catch(() => [])
+      ]);
+      
+      setClientDetails({
+        ...client,
+        meetings,
+        tasks,
+        workflows: [], // Placeholder for workflows
+        secrets: [] // Placeholder for secrets
+      });
+      
+    } catch (error) {
+      showError('Failed to load client details');
+      console.error('Error loading client details:', error);
+    } finally {
+      setDetailsLoading(false);
+    }
+  };
+
+  const handleClientSelect = (client) => {
+    setSelectedClient(client);
+    loadClientDetails(client.id);
+  };
+
+  const handleBackToList = () => {
+    setSelectedClient(null);
+    setClientDetails(null);
+    setActiveTab('overview');
+  };
+
   const filteredClients = clients.filter(client =>
     client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
     client.email?.toLowerCase().includes(searchTerm.toLowerCase())
@@ -43,18 +105,286 @@ const ClientsPage = () => {
     );
   }
 
+  // Render client details view
+  if (selectedClient) {
+    return (
+      <DashboardLayout>
+        <div className="clients-page">
+          <div className="client-details-header">
+            <button className="back-btn" onClick={handleBackToList}>
+              <ArrowBackIcon />
+              Back to Clients
+            </button>
+            <div className="client-details-title">
+              <div className="client-avatar-large">
+                <PersonIcon />
+              </div>
+              <div className="client-title-info">
+                <h1>{selectedClient.name || 'Unnamed Client'}</h1>
+                <p>{selectedClient.email}</p>
+              </div>
+            </div>
+            <div className="client-actions-header">
+              <button className="btn btn-secondary">
+                <EditIcon />
+                Edit Client
+              </button>
+              <button className="btn btn-danger">
+                <DeleteIcon />
+                Delete
+              </button>
+            </div>
+          </div>
+
+          <div className="client-details-tabs">
+            <button 
+              className={`tab-btn ${activeTab === 'overview' ? 'active' : ''}`}
+              onClick={() => setActiveTab('overview')}
+            >
+              <PersonIcon />
+              Overview
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'meetings' ? 'active' : ''}`}
+              onClick={() => setActiveTab('meetings')}
+            >
+              <VideoCallIcon />
+              Meetings
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'tasks' ? 'active' : ''}`}
+              onClick={() => setActiveTab('tasks')}
+            >
+              <AssignmentIcon />
+              Open Points
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'workflows' ? 'active' : ''}`}
+              onClick={() => setActiveTab('workflows')}
+            >
+              <WorkflowIcon />
+              Workflows
+            </button>
+            <button 
+              className={`tab-btn ${activeTab === 'secrets' ? 'active' : ''}`}
+              onClick={() => setActiveTab('secrets')}
+            >
+              <SecurityIcon />
+              Secrets
+            </button>
+          </div>
+
+          <div className="client-details-content">
+            {detailsLoading ? (
+              <div className="details-loading">
+                <LoadingSpinner message="Loading client details..." />
+              </div>
+            ) : (
+              <>
+                {activeTab === 'overview' && (
+                  <div className="overview-tab">
+                    <div className="overview-cards">
+                      <div className="overview-card">
+                        <h3>Client Information</h3>
+                        <div className="info-grid">
+                          <div className="info-item">
+                            <PersonIcon className="info-icon" />
+                            <div>
+                              <label>Name</label>
+                              <span>{selectedClient.name || 'Not provided'}</span>
+                            </div>
+                          </div>
+                          <div className="info-item">
+                            <EmailIcon className="info-icon" />
+                            <div>
+                              <label>Email</label>
+                              <span>{selectedClient.email || 'Not provided'}</span>
+                            </div>
+                          </div>
+                          <div className="info-item">
+                            <PhoneIcon className="info-icon" />
+                            <div>
+                              <label>Phone</label>
+                              <span>{selectedClient.phone || 'Not provided'}</span>
+                            </div>
+                          </div>
+                          <div className="info-item">
+                            <BusinessIcon className="info-icon" />
+                            <div>
+                              <label>Company</label>
+                              <span>{selectedClient.company || 'Not provided'}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      
+                      <div className="overview-card">
+                        <h3>Statistics</h3>
+                        <div className="stats-grid">
+                          <div className="stat-item">
+                            <VideoCallIcon className="stat-icon meetings" />
+                            <div>
+                              <span className="stat-number">{clientDetails?.meetings?.length || 0}</span>
+                              <label>Meetings</label>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <AssignmentIcon className="stat-icon tasks" />
+                            <div>
+                              <span className="stat-number">{clientDetails?.tasks?.length || 0}</span>
+                              <label>Open Points</label>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <WorkflowIcon className="stat-icon workflows" />
+                            <div>
+                              <span className="stat-number">{clientDetails?.workflows?.length || 0}</span>
+                              <label>Workflows</label>
+                            </div>
+                          </div>
+                          <div className="stat-item">
+                            <SecurityIcon className="stat-icon secrets" />
+                            <div>
+                              <span className="stat-number">{clientDetails?.secrets?.length || 0}</span>
+                              <label>Secrets</label>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'meetings' && (
+                  <div className="meetings-tab">
+                    <div className="tab-header">
+                      <h3>Client Meetings</h3>
+                      <button className="btn btn-primary">
+                        <AddIcon />
+                        Add Meeting
+                      </button>
+                    </div>
+                    <div className="meetings-list">
+                      {clientDetails?.meetings?.length > 0 ? (
+                        clientDetails.meetings.map((meeting) => (
+                          <div key={meeting.id} className="meeting-item">
+                            <VideoCallIcon className="meeting-icon" />
+                            <div className="meeting-info">
+                              <h4>{meeting.title || 'Untitled Meeting'}</h4>
+                              <p>{meeting.description || 'No description'}</p>
+                              <span className="meeting-date">
+                                {new Date(meeting.created_at).toLocaleDateString()}
+                              </span>
+                            </div>
+                            <button className="action-btn">
+                              <MoreVertIcon />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="empty-tab-state">
+                          <VideoCallIcon className="empty-icon" />
+                          <h4>No meetings found</h4>
+                          <p>Start by adding a meeting for this client.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'tasks' && (
+                  <div className="tasks-tab">
+                    <div className="tab-header">
+                      <h3>Open Points</h3>
+                      <button className="btn btn-primary">
+                        <AddIcon />
+                        Add Task
+                      </button>
+                    </div>
+                    <div className="tasks-list">
+                      {clientDetails?.tasks?.length > 0 ? (
+                        clientDetails.tasks.map((task) => (
+                          <div key={task.id} className="task-item">
+                            <AssignmentIcon className="task-icon" />
+                            <div className="task-info">
+                              <h4>{task.title || 'Untitled Task'}</h4>
+                              <p>{task.description || 'No description'}</p>
+                              <span className={`task-status ${task.status}`}>
+                                {task.status?.replace('_', ' ') || 'Open'}
+                              </span>
+                            </div>
+                            <button className="action-btn">
+                              <MoreVertIcon />
+                            </button>
+                          </div>
+                        ))
+                      ) : (
+                        <div className="empty-tab-state">
+                          <AssignmentIcon className="empty-icon" />
+                          <h4>No open points found</h4>
+                          <p>All tasks are completed or no tasks have been created yet.</p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'workflows' && (
+                  <div className="workflows-tab">
+                    <div className="tab-header">
+                      <h3>Workflows</h3>
+                      <button className="btn btn-primary">
+                        <AddIcon />
+                        Add Workflow
+                      </button>
+                    </div>
+                    <div className="empty-tab-state">
+                      <WorkflowIcon className="empty-icon" />
+                      <h4>No workflows found</h4>
+                      <p>Workflows feature coming soon.</p>
+                    </div>
+                  </div>
+                )}
+
+                {activeTab === 'secrets' && (
+                  <div className="secrets-tab">
+                    <div className="tab-header">
+                      <h3>Client Secrets</h3>
+                      <button className="btn btn-primary">
+                        <AddIcon />
+                        Add Secret
+                      </button>
+                    </div>
+                    <div className="empty-tab-state">
+                      <SecurityIcon className="empty-icon" />
+                      <h4>No secrets found</h4>
+                      <p>Secrets are securely stored and managed.</p>
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      </DashboardLayout>
+    );
+  }
+
   return (
     <DashboardLayout>
       <div className="clients-page">
         <div className="page-header">
           <div className="page-title-section">
-            <h1 className="page-title">👥 Manage Clients</h1>
+            <h1 className="page-title">
+              <PeopleIcon className="page-icon" />
+              Manage Clients
+            </h1>
             <p className="page-subtitle">
               Manage your client information, assignments, and relationships
             </p>
           </div>
           <button className="btn btn-primary">
-            <span>➕</span>
+            <AddIcon />
             Add New Client
           </button>
         </div>
@@ -63,7 +393,7 @@ const ClientsPage = () => {
           <div className="content-header">
             <div className="search-section">
               <div className="search-input-wrapper">
-                <span className="search-icon">🔍</span>
+                <SearchIcon className="search-icon" />
                 <input
                   type="text"
                   placeholder="Search clients by name or email..."
@@ -85,13 +415,16 @@ const ClientsPage = () => {
           <div className="clients-grid">
             {filteredClients.length > 0 ? (
               filteredClients.map((client) => (
-                <div key={client.id} className="client-card">
+                <div key={client.id} className="client-card" onClick={() => handleClientSelect(client)}>
                   <div className="client-avatar">
-                    {client.name ? client.name.charAt(0).toUpperCase() : 'C'}
+                    <PersonIcon />
                   </div>
                   <div className="client-info">
                     <h3 className="client-name">{client.name || 'Unnamed Client'}</h3>
-                    <p className="client-email">{client.email}</p>
+                    <p className="client-email">
+                      <EmailIcon className="email-icon" />
+                      {client.email}
+                    </p>
                     <div className="client-meta">
                       <span className="client-status active">Active</span>
                       <span className="client-date">
@@ -99,22 +432,22 @@ const ClientsPage = () => {
                       </span>
                     </div>
                   </div>
-                  <div className="client-actions">
+                  <div className="client-actions" onClick={(e) => e.stopPropagation()}>
                     <button className="action-btn edit" title="Edit Client">
-                      ✏️
+                      <EditIcon />
                     </button>
-                    <button className="action-btn view" title="View Details">
-                      👁️
+                    <button className="action-btn view" title="View Details" onClick={() => handleClientSelect(client)}>
+                      <VisibilityIcon />
                     </button>
                     <button className="action-btn delete" title="Delete Client">
-                      🗑️
+                      <DeleteIcon />
                     </button>
                   </div>
                 </div>
               ))
             ) : (
               <div className="empty-state">
-                <div className="empty-icon">👥</div>
+                <PeopleIcon className="empty-icon" />
                 <h3>No Clients Found</h3>
                 <p>
                   {searchTerm 
@@ -123,7 +456,7 @@ const ClientsPage = () => {
                   }
                 </p>
                 <button className="btn btn-primary">
-                  <span>➕</span>
+                  <AddIcon />
                   Add Your First Client
                 </button>
               </div>

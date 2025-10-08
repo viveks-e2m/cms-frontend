@@ -6,6 +6,10 @@ import LoginPage from './pages/Login/LoginPage';
 import SignupPage from './pages/Signup/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPassword/ForgotPasswordPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
+import ClientsPage from './pages/Clients/ClientsPage';
+import MeetingsPage from './pages/Meetings/MeetingsPage';
+import TasksPage from './pages/Tasks/TasksPage';
+import SecretsPage from './pages/Secrets/SecretsPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute/ProtectedRoute';
 import './styles/App.css';
 
@@ -24,6 +28,38 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <DashboardPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/clients" 
+                element={
+                  <ProtectedRoute>
+                    <ClientsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/meetings" 
+                element={
+                  <ProtectedRoute>
+                    <MeetingsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/tasks" 
+                element={
+                  <ProtectedRoute>
+                    <TasksPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/secrets" 
+                element={
+                  <ProtectedRoute>
+                    <SecretsPage />
                   </ProtectedRoute>
                 } 
               />
