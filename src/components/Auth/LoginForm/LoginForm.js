@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import "./LoginForm.css";
@@ -67,9 +68,9 @@ const LoginForm = ({ onSuccess }) => {
   return (
     <form onSubmit={handleSubmit} className="login-form">
       <div className="form-group">
-        <label htmlFor="email" className="form-label">
+        {/* <label htmlFor="email" className="form-label">
           Email Address
-        </label>
+        </label> */}
         <input
           type="email"
           id="email"
@@ -84,9 +85,9 @@ const LoginForm = ({ onSuccess }) => {
       </div>
 
       <div className="form-group">
-        <label htmlFor="password" className="form-label">
+        {/* <label htmlFor="password" className="form-label">
           Password
-        </label>
+        </label> */}
         <input
           type="password"
           id="password"
@@ -114,6 +115,23 @@ const LoginForm = ({ onSuccess }) => {
           "Sign In"
         )}
       </button>
+
+      <div className="form-footer">
+        <div className="signup-prompt">
+          <p>
+            Don't have an account?{" "}
+            <Link to="/signup" className="signup-link">
+              Create one here
+            </Link>
+          </p>
+        </div>
+
+        <div className="forgot-password">
+          <Link to="/forgot-password" className="forgot-link">
+            Forgot your password?
+          </Link>
+        </div>
+      </div>
     </form>
   );
 };

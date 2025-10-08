@@ -3,6 +3,8 @@ import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-d
 import { AuthProvider } from './hooks/useAuth';
 import { NotificationProvider } from './contexts/NotificationContext';
 import LoginPage from './pages/Login/LoginPage';
+import SignupPage from './pages/Signup/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPassword/ForgotPasswordPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute/ProtectedRoute';
 import './styles/App.css';
@@ -15,6 +17,8 @@ function App() {
           <div className="app">
             <Routes>
               <Route path="/login" element={<LoginPage />} />
+              <Route path="/signup" element={<SignupPage />} />
+              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
               <Route 
                 path="/dashboard" 
                 element={

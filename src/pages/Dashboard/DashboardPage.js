@@ -2,9 +2,17 @@ import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../hooks/useAuth';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { clientAPI, meetingAPI, openPointsAPI } from '../../utils/apiServices';
-import Header from '../../components/Layout/Header/Header';
+import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
 import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
-import ApiTest from '../../components/Debug/ApiTest';
+import {
+  People as PeopleIcon,
+  VideoCall as VideoCallIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  WavingHand as WavingHandIcon
+} from '@mui/icons-material';
 import './DashboardPage.css';
 
 const DashboardPage = () => {
@@ -78,75 +86,73 @@ const DashboardPage = () => {
     }
   };
 
-  const actions = [
-    {
-      icon: '👥',
-      title: 'Manage Clients',
-      description: 'Add, edit, or view your client information and assignments',
-      action: () => showInfo('Client management feature coming soon!')
-    },
-    {
-      icon: '📹',
-      title: 'Upload Meeting',
-      description: 'Upload meeting recordings and generate transcripts',
-      action: () => showInfo('Meeting upload feature coming soon!')
-    },
-    {
-      icon: '📋',
-      title: 'View Tasks',
-      description: 'Manage open points and track task completion',
-      action: () => showInfo('Task management feature coming soon!')
-    },
-    {
-      icon: '🔐',
-      title: 'Manage Secrets',
-      description: 'Securely store and manage client credentials',
-      action: () => showInfo('Secrets management feature coming soon!')
-    }
-  ];
+  // Removed actions array - now using sidebar navigation
 
   if (loading) {
     return (
-      <div className="dashboard-page">
-        <Header />
+      <DashboardLayout>
         <div className="dashboard-loading">
           <LoadingSpinner message="Loading dashboard..." />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="dashboard-page">
-      <Header />
-      
-      <main className="dashboard-content">
-        <div className="container">
+    <DashboardLayout>
+      <div className="dashboard-page">
+          {/* Welcome Message */}
           <div className="dashboard-welcome">
-            <h2 className="welcome-title">
-              Welcome back, {user?.name || user?.email || 'User'}!
-            </h2>
+            <h1 className="welcome-title">
+              <WavingHandIcon className="welcome-icon" />
+              Welcome back, {user?.name || user?.email?.split('@')[0] || 'User'}!
+            </h1>
             <p className="welcome-subtitle">
-              Here's what's happening with your CMS today.
+              Here's an overview of your CMS activities and recent updates.
             </p>
           </div>
 
+          {/* Stats Grid */}
           <div className="dashboard-stats">
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.totalClients}</div>
-              <p className="stat-label">Total Clients</p>
+            <div className="stat-card clients">
+              <div className="stat-icon">
+                <PeopleIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.totalClients}</div>
+                <p className="stat-label">Total Clients</p>
+                <div className="stat-trend positive">+12% this month</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.totalMeetings}</div>
-              <p className="stat-label">Total Meetings</p>
+            <div className="stat-card meetings">
+              <div className="stat-icon">
+                <VideoCallIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.totalMeetings}</div>
+                <p className="stat-label">Total Meetings</p>
+                <div className="stat-trend positive">+8% this week</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.openTasks}</div>
-              <p className="stat-label">Open Tasks</p>
+            <div className="stat-card tasks-open">
+              <div className="stat-icon">
+                <AssignmentIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.openTasks}</div>
+                <p className="stat-label">Open Tasks</p>
+                <div className="stat-trend neutral">No change</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.completedTasks}</div>
-              <p className="stat-label">Completed Tasks</p>
+            <div className="stat-card tasks-completed">
+              <div className="stat-icon">
+                <CheckCircleIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.completedTasks}</div>
+                <p className="stat-label">Completed Tasks</p>
+                <div className="stat-trend positive">+15% this week</div>
+              </div>
             </div>
           </div>
 
@@ -158,9 +164,15 @@ const DashboardPage = () => {
                 {dashboardData.clients.length > 0 ? (
                   dashboardData.clients.slice(0, 5).map((client) => (
                     <div key={client.id} className="client-item">
+                      <div className="client-avatar">
+                        <PersonIcon />
+                      </div>
                       <div className="client-info">
                         <h4 className="client-name">{client.name}</h4>
-                        <p className="client-email">{client.email}</p>
+                        <p className="client-email">
+                          <EmailIcon className="email-icon" />
+                          {client.email}
+                        </p>
                       </div>
                       <div className="client-status">
                         <span className="status-badge status-active">Active</span>
@@ -197,27 +209,9 @@ const DashboardPage = () => {
             </div>
           </div>
 
-          <div className="dashboard-actions">
-            {actions.map((action, index) => (
-              <div key={index} className="action-card">
-                <div className="action-icon">{action.icon}</div>
-                <h3 className="action-title">{action.title}</h3>
-                <p className="action-description">{action.description}</p>
-                <button 
-                  className="btn btn-primary"
-                  onClick={action.action}
-                >
-                  Get Started
-                </button>
-              </div>
-            ))}
-          </div>
 
-          {/* API Test Component - Remove in production */}
-          {process.env.NODE_ENV === 'development' && <ApiTest />}
-        </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 
