@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
+import { clientAPI, meetingAPI, openPointsAPI, secretsAPI } from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   MeetingsList,
@@ -9,6 +9,7 @@ import {
   MeetingForm,
 } from "../../components/Meetings";
 import OnboardingInfo from "../../components/Clients/OnboardingInfo";
+import SecretsManager from "../../components/Clients/SecretsManager";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -79,9 +80,10 @@ const ClientsPage = () => {
       const client = clients.find((c) => c.id === clientId);
 
       // Load related data
-      const [meetings, tasks] = await Promise.all([
+      const [meetings, tasks, secrets] = await Promise.all([
         meetingAPI.getByClient(clientId).catch(() => []),
         openPointsAPI.getByClient(clientId).catch(() => []),
+        secretsAPI.getByClient(clientId).catch(() => []),
       ]);
 
       setClientDetails({
@@ -89,7 +91,7 @@ const ClientsPage = () => {
         meetings,
         tasks,
         workflows: [], // Placeholder for workflows
-        secrets: [], // Placeholder for secrets
+        secrets: secrets || [],
       });
     } catch (error) {
       showError("Failed to load client details");
@@ -572,18 +574,10 @@ const ClientsPage = () => {
 
                 {activeTab === "secrets" && (
                   <div className="secrets-tab">
-                    <div className="tab-header">
-                      <h3>Client Secrets</h3>
-                      <button className="btn btn-primary">
-                        <AddIcon />
-                        Add Secret
-                      </button>
-                    </div>
-                    <div className="empty-tab-state">
-                      <SecurityIcon className="empty-icon" />
-                      <h4>No secrets found</h4>
-                      <p>Secrets are securely stored and managed.</p>
-                    </div>
+                    <SecretsManager
+                      clientId={selectedClient.id}
+                      clientName={selectedClient.name}
+                    />
                   </div>
                 )}
               </>
