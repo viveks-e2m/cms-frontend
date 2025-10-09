@@ -25,6 +25,10 @@ import {
   AccountTree as WorkflowIcon,
   ArrowBack as ArrowBackIcon,
   MoreVert as MoreVertIcon,
+  FilterList as FilterIcon,
+  Sort as SortIcon,
+  ViewModule as GridViewIcon,
+  ViewList as ListViewIcon,
 } from "@mui/icons-material";
 import "./ClientsPage.css";
 
@@ -32,6 +36,9 @@ const ClientsPage = () => {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [sortBy, setSortBy] = useState("name");
+  const [sortOrder, setSortOrder] = useState("asc");
   const [selectedClient, setSelectedClient] = useState(null);
   const [clientDetails, setClientDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
@@ -154,11 +161,61 @@ const ClientsPage = () => {
     setEditingMeeting(null);
   };
 
-  const filteredClients = clients.filter(
-    (client) =>
-      client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email?.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  // Enhanced filtering and sorting logic
+  const getClientStatus = (client) => {
+    // Determine client status based on various factors
+    if (client.status) {
+      return client.status.toLowerCase();
+    }
+    // Default logic: consider active if created within last 90 days or has recent activity
+    const createdDate = new Date(client.created_at);
+    const daysSinceCreated =
+      (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
+    return daysSinceCreated <= 90 ? "active" : "inactive";
+  };
+
+  const filteredAndSortedClients = clients
+    .filter((client) => {
+      // Search filter
+      const matchesSearch =
+        client.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        client.company?.toLowerCase().includes(searchTerm.toLowerCase());
+
+      // Status filter
+      const matchesStatus =
+        !statusFilter || getClientStatus(client) === statusFilter;
+
+      return matchesSearch && matchesStatus;
+    })
+    .sort((a, b) => {
+      let aValue, bValue;
+
+      switch (sortBy) {
+        case "name":
+          aValue = a.name?.toLowerCase() || "";
+          bValue = b.name?.toLowerCase() || "";
+          break;
+        case "email":
+          aValue = a.email?.toLowerCase() || "";
+          bValue = b.email?.toLowerCase() || "";
+          break;
+        case "company":
+          aValue = a.company?.toLowerCase() || "";
+          bValue = b.company?.toLowerCase() || "";
+          break;
+        case "created":
+          aValue = new Date(a.created_at || 0);
+          bValue = new Date(b.created_at || 0);
+          break;
+        default:
+          return 0;
+      }
+
+      if (aValue < bValue) return sortOrder === "asc" ? -1 : 1;
+      if (aValue > bValue) return sortOrder === "asc" ? 1 : -1;
+      return 0;
+    });
 
   if (loading) {
     return (
@@ -178,11 +235,19 @@ const ClientsPage = () => {
           <div className="client-details-header">
             <button className="back-btn" onClick={handleBackToList}>
               <ArrowBackIcon />
-              Back to Clients
             </button>
             <div className="client-details-title">
               <div className="client-avatar-large">
-                <PersonIcon />
+                <span className="client-initials">
+                  {selectedClient.name
+                    ? selectedClient.name
+                        .split(" ")
+                        .map((n) => n[0])
+                        .join("")
+                        .toUpperCase()
+                        .slice(0, 2)
+                    : "UC"}
+                </span>
               </div>
               <div className="client-title-info">
                 <h1>{selectedClient.name || "Unnamed Client"}</h1>
@@ -476,84 +541,164 @@ const ClientsPage = () => {
                 <SearchIcon className="search-icon" />
                 <input
                   type="text"
-                  placeholder="Search clients by name or email..."
+                  placeholder="Search clients by name, email, or company..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="search-input"
                 />
               </div>
             </div>
-            <div className="filter-section">
-              <select className="filter-select">
-                <option value="">All Clients</option>
-                <option value="active">Active</option>
-                <option value="inactive">Inactive</option>
-              </select>
+
+            <div className="controls-section">
+              <div className="filter-controls">
+                <div className="filter-group">
+                  <FilterIcon className="filter-icon" />
+                  <select
+                    className="filter-select"
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
+                  >
+                    <option value="">All Status</option>
+                    <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
+                  </select>
+                </div>
+
+                <div className="sort-group">
+                  <SortIcon className="sort-icon" />
+                  <select
+                    className="sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                  >
+                    <option value="name">Sort by Name</option>
+                    <option value="email">Sort by Email</option>
+                    <option value="company">Sort by Company</option>
+                    <option value="created">Sort by Date Added</option>
+                  </select>
+
+                  <button
+                    className={`sort-order-btn ${
+                      sortOrder === "desc" ? "desc" : "asc"
+                    }`}
+                    onClick={() =>
+                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                    }
+                    title={`Sort ${
+                      sortOrder === "asc" ? "Descending" : "Ascending"
+                    }`}
+                  >
+                    {sortOrder === "asc" ? "↑" : "↓"}
+                  </button>
+                </div>
+              </div>
+
+              <div className="results-info">
+                <span className="results-count">
+                  {filteredAndSortedClients.length} of {clients.length} clients
+                </span>
+              </div>
             </div>
           </div>
 
           <div className="clients-grid">
-            {filteredClients.length > 0 ? (
-              filteredClients.map((client) => (
-                <div
-                  key={client.id}
-                  className="client-card"
-                  onClick={() => handleClientSelect(client)}
-                >
-                  <div className="client-avatar">
-                    <PersonIcon />
-                  </div>
-                  <div className="client-info">
-                    <h3 className="client-name">
-                      {client.name || "Unnamed Client"}
-                    </h3>
-                    <p className="client-email">
-                      <EmailIcon className="email-icon" />
-                      {client.email}
-                    </p>
-                    <div className="client-meta">
-                      <span className="client-status active">Active</span>
-                      <span className="client-date">
-                        Added{" "}
-                        {new Date(
-                          client.created_at || Date.now()
-                        ).toLocaleDateString()}
-                      </span>
+            {filteredAndSortedClients.length > 0 ? (
+              filteredAndSortedClients.map((client) => {
+                const clientStatus = getClientStatus(client);
+                const initials = client.name
+                  ? client.name
+                      .split(" ")
+                      .map((n) => n[0])
+                      .join("")
+                      .toUpperCase()
+                      .slice(0, 2)
+                  : "UC";
+
+                return (
+                  <div
+                    key={client.id}
+                    className="client-card"
+                    onClick={() => handleClientSelect(client)}
+                  >
+                    <div className="client-avatar">
+                      <span className="client-initials">{initials}</span>
+                    </div>
+                    <div className="client-info">
+                      <h3 className="client-name">
+                        {client.name || "Unnamed Client"}
+                      </h3>
+                      <p className="client-email">
+                        <EmailIcon className="email-icon" />
+                        {client.email}
+                      </p>
+                      {client.company && (
+                        <p className="client-company">
+                          <BusinessIcon className="company-icon" />
+                          {client.company}
+                        </p>
+                      )}
+                      <div className="client-meta">
+                        <span className={`client-status ${clientStatus}`}>
+                          {clientStatus === "active" ? "Active" : "Inactive"}
+                        </span>
+                        <span className="client-date">
+                          Added{" "}
+                          {new Date(
+                            client.created_at || Date.now()
+                          ).toLocaleDateString()}
+                        </span>
+                      </div>
+                    </div>
+                    <div
+                      className="client-actions"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <button className="action-btn edit" title="Edit Client">
+                        <EditIcon />
+                      </button>
+                      <button
+                        className="action-btn view"
+                        title="View Details"
+                        onClick={() => handleClientSelect(client)}
+                      >
+                        <VisibilityIcon />
+                      </button>
+                      <button
+                        className="action-btn delete"
+                        title="Delete Client"
+                      >
+                        <DeleteIcon />
+                      </button>
                     </div>
                   </div>
-                  <div
-                    className="client-actions"
-                    onClick={(e) => e.stopPropagation()}
-                  >
-                    <button className="action-btn edit" title="Edit Client">
-                      <EditIcon />
-                    </button>
-                    <button
-                      className="action-btn view"
-                      title="View Details"
-                      onClick={() => handleClientSelect(client)}
-                    >
-                      <VisibilityIcon />
-                    </button>
-                    <button className="action-btn delete" title="Delete Client">
-                      <DeleteIcon />
-                    </button>
-                  </div>
-                </div>
-              ))
+                );
+              })
             ) : (
               <div className="empty-state">
                 <PeopleIcon className="empty-icon" />
                 <h3>No Clients Found</h3>
                 <p>
-                  {searchTerm
-                    ? `No clients match "${searchTerm}". Try a different search term.`
+                  {searchTerm || statusFilter
+                    ? `No clients match your current filters. Try adjusting your search criteria.`
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
-                <button className="btn btn-primary">
-                  <AddIcon />
-                  Add Your First Client
-                </button>
+                {!searchTerm && !statusFilter && (
+                  <button className="btn btn-primary">
+                    <AddIcon />
+                    Add Your First Client
+                  </button>
+                )}
+                {(searchTerm || statusFilter) && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("");
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
             )}
           </div>

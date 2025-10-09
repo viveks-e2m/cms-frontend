@@ -88,7 +88,6 @@ const MeetingDetails = ({
         <p>The requested meeting could not be loaded.</p>
         <button className="btn btn-primary" onClick={onBack}>
           <ArrowBackIcon />
-          Back to Meetings
         </button>
       </div>
     );
@@ -99,7 +98,6 @@ const MeetingDetails = ({
       <div className="meeting-details-header">
         <button className="back-btn" onClick={onBack}>
           <ArrowBackIcon />
-          Back to Meetings
         </button>
         
         <div className="meeting-header-info">
