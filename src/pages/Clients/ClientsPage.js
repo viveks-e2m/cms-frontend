@@ -16,6 +16,7 @@ import {
   Visibility as VisibilityIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
+  PersonOutline as PersonOutlineIcon,
   Email as EmailIcon,
   Phone as PhoneIcon,
   Business as BusinessIcon,
@@ -238,32 +239,14 @@ const ClientsPage = () => {
             </button>
             <div className="client-details-title">
               <div className="client-avatar-large">
-                <span className="client-initials">
-                  {selectedClient.name
-                    ? selectedClient.name
-                        .split(" ")
-                        .map((n) => n[0])
-                        .join("")
-                        .toUpperCase()
-                        .slice(0, 2)
-                    : "UC"}
-                </span>
+                <PersonOutlineIcon />
               </div>
               <div className="client-title-info">
                 <h1>{selectedClient.name || "Unnamed Client"}</h1>
                 <p>{selectedClient.email}</p>
               </div>
             </div>
-            <div className="client-actions-header">
-              <button className="btn btn-secondary">
-                <EditIcon />
-                Edit Client
-              </button>
-              <button className="btn btn-danger">
-                <DeleteIcon />
-                Delete
-              </button>
-            </div>
+
           </div>
 
           <div className="client-details-tabs">
@@ -605,14 +588,6 @@ const ClientsPage = () => {
             {filteredAndSortedClients.length > 0 ? (
               filteredAndSortedClients.map((client) => {
                 const clientStatus = getClientStatus(client);
-                const initials = client.name
-                  ? client.name
-                      .split(" ")
-                      .map((n) => n[0])
-                      .join("")
-                      .toUpperCase()
-                      .slice(0, 2)
-                  : "UC";
 
                 return (
                   <div
@@ -621,7 +596,7 @@ const ClientsPage = () => {
                     onClick={() => handleClientSelect(client)}
                   >
                     <div className="client-avatar">
-                      <span className="client-initials">{initials}</span>
+                      <PersonOutlineIcon />
                     </div>
                     <div className="client-info">
                       <h3 className="client-name">

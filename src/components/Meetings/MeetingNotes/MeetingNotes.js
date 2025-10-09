@@ -190,15 +190,6 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
               <NotesIcon className="empty-icon" />
               <h4>No notes yet</h4>
               <p>Add notes to keep track of important points from this meeting.</p>
-              {!isAddingNote && (
-                <button 
-                  className="btn btn-primary"
-                  onClick={() => setIsAddingNote(true)}
-                >
-                  <AddIcon />
-                  Add First Note
-                </button>
-              )}
             </div>
           )}
         </div>

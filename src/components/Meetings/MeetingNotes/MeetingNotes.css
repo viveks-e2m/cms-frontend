@@ -14,16 +14,16 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
-  padding-bottom: 16px;
-  border-bottom: 1px solid #E5E7EB;
+  margin-bottom: 32px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid var(--neutral-light);
 }
 
 .meeting-notes-header h3 {
   margin: 0;
-  color: #001F3F;
-  font-size: 1.25rem;
-  font-weight: 600;
+  color: var(--primary-navy);
+  font-size: 1.375rem;
+  font-weight: var(--font-weight-semibold);
 }
 
 .meeting-notes-content {

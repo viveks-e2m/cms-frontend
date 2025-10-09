@@ -170,10 +170,6 @@ const MeetingsList = ({
             <VideoCallIcon className="empty-icon" />
             <h4>No meetings found</h4>
             <p>Start by adding a meeting for this client.</p>
-            <button className="btn btn-primary" onClick={onAddMeeting}>
-              <AddIcon />
-              Add Your First Meeting
-            </button>
           </div>
         )}
       </div>
