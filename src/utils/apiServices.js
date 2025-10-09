@@ -46,7 +46,7 @@ export const clientAPI = {
   // Fetch pre-onboarding info
   fetchPreOnboardingInfo: async (clientId) => {
     const response = await api.get(`/clients/${clientId}/fetch_pre_onboarding_info`, {
-      timeout: 30000 // 30 seconds timeout for onboarding fetch
+      timeout: 300000 // 30 seconds timeout for onboarding fetch
     });
     return handleApiResponse(response);
   },

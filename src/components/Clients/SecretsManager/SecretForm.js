@@ -10,7 +10,7 @@ import {
 } from "@mui/icons-material";
 import "./SecretForm.css";
 
-const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) => {
+const SecretForm = ({ clientId, clientName, isOpen, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     title: "",
     value: ""
@@ -22,23 +22,15 @@ const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) 
 
   useEffect(() => {
     if (isOpen) {
-      if (secret) {
-        // Editing existing secret
-        setFormData({
-          title: secret.title || "",
-          value: "" // Don't pre-fill the secret value for security
-        });
-      } else {
-        // Adding new secret
-        setFormData({
-          title: "",
-          value: ""
-        });
-      }
+      // Only for adding new secrets
+      setFormData({
+        title: "",
+        value: ""
+      });
       setErrors({});
       setShowSecret(false);
     }
-  }, [secret, isOpen]);
+  }, [isOpen]);
 
   const validateForm = () => {
     const newErrors = {};
@@ -67,16 +59,16 @@ const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) 
     try {
       setLoading(true);
 
-      // Always create new secret (backend handles encryption)
+      // Create new secret (backend handles encryption)
       await secretsAPI.create(clientId, {
         title: formData.title.trim(),
         value: formData.value
       });
       
-      showSuccess(secret ? "Secret updated successfully" : "Secret created successfully");
+      showSuccess("Secret created successfully");
       onSave();
     } catch (error) {
-      showError(secret ? "Failed to update secret" : "Failed to create secret");
+      showError("Failed to create secret");
       console.error("Error saving secret:", error);
     } finally {
       setLoading(false);
@@ -111,7 +103,7 @@ const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) 
           <div className="modal-title">
             <SecurityIcon className="modal-icon" />
             <div>
-              <h3>{secret ? "Edit Secret" : "Add New Secret"}</h3>
+              <h3>Add New Secret</h3>
               <p>For client: {clientName}</p>
             </div>
           </div>
@@ -153,7 +145,7 @@ const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) 
                 id="value"
                 type={showSecret ? "text" : "password"}
                 className={`form-input secret-input ${errors.value ? "error" : ""}`}
-                placeholder={secret ? "Enter new secret value" : "Enter secret value"}
+                placeholder="Enter secret value"
                 value={formData.value}
                 onChange={(e) => handleInputChange("value", e.target.value)}
                 disabled={loading}
@@ -200,12 +192,12 @@ const SecretForm = ({ secret, clientId, clientName, isOpen, onSave, onCancel }) 
               {loading ? (
                 <>
                   <div className="btn-spinner" />
-                  {secret ? "Updating..." : "Creating..."}
+                  Creating...
                 </>
               ) : (
                 <>
                   <SaveIcon />
-                  {secret ? "Update Secret" : "Create Secret"}
+                  Create Secret
                 </>
               )}
             </button>

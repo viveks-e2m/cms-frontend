@@ -9,7 +9,6 @@ import {
   Add as AddIcon,
   Visibility as ViewIcon,
   Delete as DeleteIcon,
-  Edit as EditIcon,
   Lock as LockIcon,
   AccessTime as TimeIcon,
   Person as PersonIcon,
@@ -20,7 +19,6 @@ const SecretsManager = ({ clientId, clientName }) => {
   const [secrets, setSecrets] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showSecretForm, setShowSecretForm] = useState(false);
-  const [editingSecret, setEditingSecret] = useState(null);
   const [viewingSecret, setViewingSecret] = useState(null);
   const [showSecretViewer, setShowSecretViewer] = useState(false);
   const { showError, showSuccess } = useNotificationContext();
@@ -45,21 +43,17 @@ const SecretsManager = ({ clientId, clientName }) => {
   };
 
   const handleAddSecret = () => {
-    setEditingSecret(null);
     setShowSecretForm(true);
   };
 
-  const handleEditSecret = (secret) => {
-    setEditingSecret(secret);
-    setShowSecretForm(true);
-  };
+  // Edit functionality removed - no backend API support
 
   const handleViewSecret = async (secret) => {
     try {
       const secretData = await secretsAPI.getById(secret.id);
       setViewingSecret({
         ...secret,
-        decryptedValue: secretData.value || secretData.secret_encrypted,
+        decryptedValue: secretData.value,
       });
       setShowSecretViewer(true);
     } catch (error) {
@@ -89,13 +83,11 @@ const SecretsManager = ({ clientId, clientName }) => {
 
   const handleSecretFormSave = () => {
     setShowSecretForm(false);
-    setEditingSecret(null);
     loadSecrets();
   };
 
   const handleSecretFormCancel = () => {
     setShowSecretForm(false);
-    setEditingSecret(null);
   };
 
   const handleSecretViewerClose = () => {
@@ -168,13 +160,7 @@ const SecretsManager = ({ clientId, clientName }) => {
                 >
                   <ViewIcon />
                 </button>
-                <button
-                  className="action-btn edit-btn"
-                  onClick={() => handleEditSecret(secret)}
-                  title="Edit Secret"
-                >
-                  <EditIcon />
-                </button>
+                {/* Edit functionality removed - no backend API support */}
                 <button
                   className="action-btn delete-btn"
                   onClick={() => handleDeleteSecret(secret)}
@@ -203,7 +189,6 @@ const SecretsManager = ({ clientId, clientName }) => {
 
       {/* Secret Form Modal */}
       <SecretForm
-        secret={editingSecret}
         clientId={clientId}
         clientName={clientName}
         isOpen={showSecretForm}

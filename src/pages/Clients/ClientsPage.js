@@ -10,6 +10,7 @@ import {
 } from "../../components/Meetings";
 import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import SecretsManager from "../../components/Clients/SecretsManager";
+import ClientForm from "../../components/Clients/ClientForm";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -52,6 +53,10 @@ const ClientsPage = () => {
   const [showMeetingForm, setShowMeetingForm] = useState(false);
   const [editingMeeting, setEditingMeeting] = useState(null);
   const [meetingsView, setMeetingsView] = useState("list"); // 'list' or 'details'
+
+  // Client form state
+  const [showClientForm, setShowClientForm] = useState(false);
+  const [editingClient, setEditingClient] = useState(null);
 
   const { showError, showSuccess } = useNotificationContext();
 
@@ -163,6 +168,30 @@ const ClientsPage = () => {
   const handleMeetingFormCancel = () => {
     setShowMeetingForm(false);
     setEditingMeeting(null);
+  };
+
+  // Client form handlers
+  const handleAddClient = () => {
+    console.log("Add client button clicked"); // Debug log
+    setEditingClient(null);
+    setShowClientForm(true);
+    console.log("showClientForm set to true"); // Debug log
+  };
+
+  const handleEditClient = (client) => {
+    setEditingClient(client);
+    setShowClientForm(true);
+  };
+
+  const handleClientFormSave = () => {
+    setShowClientForm(false);
+    setEditingClient(null);
+    loadClients(); // Reload the clients list
+  };
+
+  const handleClientFormCancel = () => {
+    setShowClientForm(false);
+    setEditingClient(null);
   };
 
   // Enhanced filtering and sorting logic
@@ -593,6 +622,7 @@ const ClientsPage = () => {
             onCancel={handleMeetingFormCancel}
             isOpen={showMeetingForm}
           />
+
         </div>
       </DashboardLayout>
     );
@@ -611,7 +641,10 @@ const ClientsPage = () => {
               Manage your client information, assignments, and relationships
             </p>
           </div>
-          <button className="btn btn-primary">
+          <button 
+            className="btn btn-primary"
+            onClick={handleAddClient}
+          >
             <AddIcon />
             Add New Client
           </button>
@@ -728,7 +761,11 @@ const ClientsPage = () => {
                       className="client-actions"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button className="action-btn edit" title="Edit Client">
+                      <button 
+                        className="action-btn edit" 
+                        title="Edit Client"
+                        onClick={() => handleEditClient(client)}
+                      >
                         <EditIcon />
                       </button>
                       <button
@@ -758,7 +795,10 @@ const ClientsPage = () => {
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
                 {!searchTerm && !statusFilter && (
-                  <button className="btn btn-primary">
+                  <button 
+                    className="btn btn-primary"
+                    onClick={handleAddClient}
+                  >
                     <AddIcon />
                     Add Your First Client
                   </button>
@@ -778,6 +818,14 @@ const ClientsPage = () => {
             )}
           </div>
         </div>
+
+        {/* Client Form Modal - Available in both views */}
+        <ClientForm
+          client={editingClient}
+          isOpen={showClientForm}
+          onSave={handleClientFormSave}
+          onCancel={handleClientFormCancel}
+        />
       </div>
     </DashboardLayout>
   );
