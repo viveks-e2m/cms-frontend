@@ -40,6 +40,12 @@ export const NOTIFICATION_MESSAGES = {
   CLIENT_WORKFLOW_DELETED: 'Workflow deleted successfully',
   CLIENT_WORKFLOWS_LOADED: 'Client workflows loaded successfully',
   CLIENT_WORKFLOWS_ERROR: 'Failed to load client workflows',
+  
+  // Fathom integration messages
+  FATHOM_FETCH_STARTED: 'Fetching data from Fathom...',
+  FATHOM_FETCH_SUCCESS: 'Fathom data imported successfully',
+  FATHOM_FETCH_PARTIAL: 'Meeting created, but Fathom data could not be imported',
+  FATHOM_FETCH_ERROR: 'Failed to fetch data from Fathom URL',
 };
 
 export default NOTIFICATION_MESSAGES;

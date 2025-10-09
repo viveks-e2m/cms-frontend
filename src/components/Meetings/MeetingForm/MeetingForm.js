@@ -11,7 +11,11 @@ import {
   Assignment as AssignmentIcon,
   Source as SourceIcon,
   RadioButtonChecked as RadioCheckedIcon,
-  RadioButtonUnchecked as RadioUncheckedIcon
+  RadioButtonUnchecked as RadioUncheckedIcon,
+  CloudDownload as FetchIcon,
+  CheckCircle as SuccessIcon,
+  Error as ErrorIcon,
+  Refresh as RefreshIcon
 } from '@mui/icons-material';
 import { meetingAPI } from '../../../utils/apiServices';
 import { useNotificationContext } from '../../../contexts/NotificationContext';
@@ -32,7 +36,13 @@ const MeetingForm = ({
     source: 'fathom'
   });
   const [loading, setLoading] = useState(false);
-  const { showError, showSuccess } = useNotificationContext();
+  const [fathomStatus, setFathomStatus] = useState({
+    fetching: false,
+    success: false,
+    error: null,
+    attempted: false
+  });
+  const { showError, showSuccess, showInfo } = useNotificationContext();
 
   useEffect(() => {
     if (meeting) {
@@ -75,6 +85,14 @@ const MeetingForm = ({
       // Clear transcript and summary when switching to Fathom
       ...(source === 'fathom' ? { transcript: '', summary: '' } : {})
     }));
+    
+    // Reset Fathom status when changing source
+    setFathomStatus({
+      fetching: false,
+      success: false,
+      error: null,
+      attempted: false
+    });
   };
 
   const handleSubmit = async (e) => {
@@ -82,6 +100,12 @@ const MeetingForm = ({
 
     try {
       setLoading(true);
+      
+      // Show different loading message for Fathom
+      if (formData.source === 'fathom') {
+        setFathomStatus(prev => ({ ...prev, fetching: true, error: null }));
+        showInfo('Creating meeting and fetching data from Fathom...');
+      }
       
       const meetingData = {
         recording_url: formData.recording_url.trim() || null,
@@ -103,18 +127,49 @@ const MeetingForm = ({
         }
       });
 
+      let result;
       if (meeting) {
         // Update existing meeting
-        await meetingAPI.update(meeting.id, meetingData);
+        result = await meetingAPI.update(meeting.id, meetingData);
         showSuccess('Meeting updated successfully');
       } else {
         // Create new meeting
-        await meetingAPI.create(clientId, meetingData);
-        showSuccess('Meeting created successfully');
+        result = await meetingAPI.create(clientId, meetingData);
+        
+        // Check if Fathom data was fetched successfully
+        if (formData.source === 'fathom') {
+          const meetingResult = result;
+          if (meetingResult?.fathom_fetch_success) {
+            setFathomStatus(prev => ({ ...prev, success: true, fetching: false, attempted: true }));
+            showSuccess('Meeting created successfully with Fathom data imported!');
+          } else if (meetingResult?.fathom_fetch_attempted) {
+            setFathomStatus(prev => ({ 
+              ...prev, 
+              success: false, 
+              fetching: false, 
+              attempted: true,
+              error: 'Could not fetch data from Fathom URL. Meeting created with URL only.'
+            }));
+            showSuccess('Meeting created successfully, but Fathom data could not be imported.');
+          } else {
+            showSuccess('Meeting created successfully');
+          }
+        } else {
+          showSuccess('Meeting created successfully');
+        }
       }
       
       onSave();
     } catch (error) {
+      if (formData.source === 'fathom') {
+        setFathomStatus(prev => ({ 
+          ...prev, 
+          fetching: false, 
+          success: false, 
+          attempted: true,
+          error: 'Failed to create meeting or fetch Fathom data'
+        }));
+      }
       showError(meeting ? 'Failed to update meeting' : 'Failed to create meeting');
       console.error('Error saving meeting:', error);
     } finally {
@@ -128,6 +183,12 @@ const MeetingForm = ({
       transcript: '',
       summary: '',
       source: 'fathom'
+    });
+    setFathomStatus({
+      fetching: false,
+      success: false,
+      error: null,
+      attempted: false
     });
     onCancel();
   };
@@ -262,9 +323,40 @@ const MeetingForm = ({
                   <VideoCallIcon className="info-icon" />
                   <div className="info-content">
                     <h4>Fathom Integration</h4>
-                    <p>When using Fathom as the source, the transcript and summary will be automatically imported from the Fathom recording. You only need to provide the recording URL.</p>
+                    <p>When using Fathom as the source, the raw response from Fathom will be fetched and stored in the transcript field for inspection. You only need to provide the recording URL.</p>
                   </div>
                 </div>
+                
+                {/* Fathom Status Indicator */}
+                {(fathomStatus.fetching || fathomStatus.attempted) && (
+                  <div className={`fathom-status ${fathomStatus.success ? 'success' : fathomStatus.error ? 'error' : 'loading'}`}>
+                    <div className="status-icon">
+                      {fathomStatus.fetching && <RefreshIcon className="spinning" />}
+                      {fathomStatus.success && <SuccessIcon />}
+                      {fathomStatus.error && <ErrorIcon />}
+                    </div>
+                    <div className="status-content">
+                      {fathomStatus.fetching && (
+                        <>
+                          <span className="status-title">Fetching Fathom Data...</span>
+                          <span className="status-description">Fetching raw response from Fathom API</span>
+                        </>
+                      )}
+                      {fathomStatus.success && (
+                        <>
+                          <span className="status-title">Fathom Data Imported</span>
+                          <span className="status-description">Raw response successfully stored in transcript</span>
+                        </>
+                      )}
+                      {fathomStatus.error && (
+                        <>
+                          <span className="status-title">Fathom Import Failed</span>
+                          <span className="status-description">{fathomStatus.error}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
           </div>
