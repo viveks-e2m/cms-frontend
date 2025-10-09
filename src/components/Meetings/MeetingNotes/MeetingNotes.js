@@ -19,8 +19,8 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [editingNoteId, setEditingNoteId] = useState(null);
-  const [newNote, setNewNote] = useState({ title: '', content: '' });
-  const [editNote, setEditNote] = useState({ title: '', content: '' });
+  const [newNote, setNewNote] = useState({ note: '' });
+  const [editNote, setEditNote] = useState({ note: '' });
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
@@ -43,19 +43,18 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
   };
 
   const handleAddNote = async () => {
-    if (!newNote.title.trim() || !newNote.content.trim()) {
-      showError('Please provide both title and content for the note');
+    if (!newNote.note.trim()) {
+      showError('Please provide note content');
       return;
     }
 
     try {
       await meetingAPI.addNote(meetingId, {
-        title: newNote.title.trim(),
-        content: newNote.content.trim()
+        note: newNote.note.trim()
       });
       
       showSuccess('Note added successfully');
-      setNewNote({ title: '', content: '' });
+      setNewNote({ note: '' });
       setIsAddingNote(false);
       loadNotes();
       
@@ -69,68 +68,27 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
   };
 
   const handleEditNote = async (noteId) => {
-    if (!editNote.title.trim() || !editNote.content.trim()) {
-      showError('Please provide both title and content for the note');
-      return;
-    }
-
-    try {
-      // Note: This assumes there's an update note API endpoint
-      // You may need to implement this in your backend
-      await meetingAPI.updateNote(noteId, {
-        title: editNote.title.trim(),
-        content: editNote.content.trim()
-      });
-      
-      showSuccess('Note updated successfully');
-      setEditingNoteId(null);
-      setEditNote({ title: '', content: '' });
-      loadNotes();
-      
-      if (onNotesUpdate) {
-        onNotesUpdate();
-      }
-    } catch (error) {
-      showError('Failed to update note');
-      console.error('Error updating note:', error);
-    }
+    showError('Note editing is not available in the current backend implementation');
+    setEditingNoteId(null);
+    setEditNote({ note: '' });
   };
 
   const handleDeleteNote = async (noteId) => {
-    if (!window.confirm('Are you sure you want to delete this note?')) {
-      return;
-    }
-
-    try {
-      // Note: This assumes there's a delete note API endpoint
-      // You may need to implement this in your backend
-      await meetingAPI.deleteNote(noteId);
-      
-      showSuccess('Note deleted successfully');
-      loadNotes();
-      
-      if (onNotesUpdate) {
-        onNotesUpdate();
-      }
-    } catch (error) {
-      showError('Failed to delete note');
-      console.error('Error deleting note:', error);
-    }
+    showError('Note deletion is not available in the current backend implementation');
   };
 
   const startEditing = (note) => {
-    setEditingNoteId(note.id);
-    setEditNote({ title: note.title, content: note.content });
+    showError('Note editing is not available in the current backend implementation');
   };
 
   const cancelEditing = () => {
     setEditingNoteId(null);
-    setEditNote({ title: '', content: '' });
+    setEditNote({ note: '' });
   };
 
   const cancelAdding = () => {
     setIsAddingNote(false);
-    setNewNote({ title: '', content: '' });
+    setNewNote({ note: '' });
   };
 
   const formatDate = (dateString) => {
@@ -173,17 +131,10 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
               <h4>Add New Note</h4>
             </div>
             <div className="note-form-body">
-              <input
-                type="text"
-                placeholder="Note title..."
-                value={newNote.title}
-                onChange={(e) => setNewNote({ ...newNote, title: e.target.value })}
-                className="note-title-input"
-              />
               <textarea
-                placeholder="Write your note content here..."
-                value={newNote.content}
-                onChange={(e) => setNewNote({ ...newNote, content: e.target.value })}
+                placeholder="Write your note here..."
+                value={newNote.note}
+                onChange={(e) => setNewNote({ ...newNote, note: e.target.value })}
                 className="note-content-input"
                 rows={6}
               />
@@ -211,78 +162,27 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
           {notes.length > 0 ? (
             notes.map((note) => (
               <div key={note.id} className="note-item">
-                {editingNoteId === note.id ? (
-                  <div className="note-edit-form">
-                    <input
-                      type="text"
-                      value={editNote.title}
-                      onChange={(e) => setEditNote({ ...editNote, title: e.target.value })}
-                      className="note-title-input"
-                    />
-                    <textarea
-                      value={editNote.content}
-                      onChange={(e) => setEditNote({ ...editNote, content: e.target.value })}
-                      className="note-content-input"
-                      rows={6}
-                    />
-                    <div className="note-form-actions">
-                      <button 
-                        className="btn btn-primary btn-sm"
-                        onClick={() => handleEditNote(note.id)}
-                      >
-                        <SaveIcon />
-                        Save
-                      </button>
-                      <button 
-                        className="btn btn-secondary btn-sm"
-                        onClick={cancelEditing}
-                      >
-                        <CancelIcon />
-                        Cancel
-                      </button>
-                    </div>
+                <div className="note-header">
+                  <div className="note-title-section">
+                    <NotesIcon className="note-icon" />
+                    <h4 className="note-title">Note #{note.id?.slice(-8) || 'Unknown'}</h4>
                   </div>
-                ) : (
-                  <>
-                    <div className="note-header">
-                      <div className="note-title-section">
-                        <NotesIcon className="note-icon" />
-                        <h4 className="note-title">{note.title}</h4>
-                      </div>
-                      <div className="note-actions">
-                        <button 
-                          className="action-btn edit"
-                          onClick={() => startEditing(note)}
-                          title="Edit note"
-                        >
-                          <EditIcon />
-                        </button>
-                        <button 
-                          className="action-btn delete"
-                          onClick={() => handleDeleteNote(note.id)}
-                          title="Delete note"
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </div>
-                    </div>
-                    
-                    <div className="note-content">
-                      <p>{note.content}</p>
-                    </div>
-                    
-                    <div className="note-meta">
-                      <div className="note-author">
-                        <PersonIcon className="meta-icon" />
-                        <span>{note.author || 'Unknown'}</span>
-                      </div>
-                      <div className="note-date">
-                        <TimeIcon className="meta-icon" />
-                        <span>{formatDate(note.created_at)}</span>
-                      </div>
-                    </div>
-                  </>
-                )}
+                </div>
+                
+                <div className="note-content">
+                  <p>{note.note}</p>
+                </div>
+                
+                <div className="note-meta">
+                  <div className="note-author">
+                    <PersonIcon className="meta-icon" />
+                    <span>{note.created_by || 'Unknown'}</span>
+                  </div>
+                  <div className="note-date">
+                    <TimeIcon className="meta-icon" />
+                    <span>{formatDate(note.created_at)}</span>
+                  </div>
+                </div>
               </div>
             ))
           ) : (

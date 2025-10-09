@@ -132,32 +132,32 @@ const MeetingsList = ({
 
                 <div className="meeting-card-content">
                   <h4 className="meeting-title">
-                    {meeting.title || 'Untitled Meeting'}
+                    Meeting #{meeting.id?.slice(-8) || 'Unknown'}
                   </h4>
                   <p className="meeting-description">
-                    {meeting.description || 'No description provided'}
+                    {meeting.summary || 'No summary available'}
                   </p>
                   
                   <div className="meeting-meta">
                     <div className="meeting-date">
                       <CalendarIcon className="meta-icon" />
-                      <span>{formatDate(meeting.scheduled_at || meeting.created_at)}</span>
+                      <span>{formatDate(meeting.created_at)}</span>
                     </div>
-                    {meeting.duration && (
-                      <div className="meeting-duration">
-                        <span>{formatDuration(meeting.duration)}</span>
+                    {meeting.recording_url && (
+                      <div className="meeting-recording">
+                        <span>Has Recording</span>
                       </div>
                     )}
                   </div>
 
                   <div className="meeting-status">
-                    <span className={`status-badge ${meeting.status || 'scheduled'}`}>
-                      {meeting.status?.replace('_', ' ') || 'Scheduled'}
+                    <span className="status-badge completed">
+                      Recorded
                     </span>
-                    {meeting.notes_count > 0 && (
+                    {meeting.transcript && (
                       <div className="notes-indicator">
                         <NotesIcon className="notes-icon" />
-                        <span>{meeting.notes_count} notes</span>
+                        <span>Has Transcript</span>
                       </div>
                     )}
                   </div>

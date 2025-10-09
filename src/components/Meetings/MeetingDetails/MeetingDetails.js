@@ -107,7 +107,7 @@ const MeetingDetails = ({
             <VideoCallIcon />
           </div>
           <div className="meeting-title-section">
-            <h1>{meeting.title || 'Untitled Meeting'}</h1>
+            <h1>Meeting #{meeting.id?.slice(-8) || 'Unknown'}</h1>
             <p className="meeting-client">with {clientName}</p>
           </div>
         </div>
@@ -157,79 +157,58 @@ const MeetingDetails = ({
                   <div className="info-item">
                     <CalendarIcon className="info-icon" />
                     <div className="info-content">
-                      <label>Date</label>
-                      <span>{formatDate(meeting.scheduled_at)}</span>
+                      <label>Created Date</label>
+                      <span>{formatDate(meeting.created_at)}</span>
                     </div>
                   </div>
-                  
-                  <div className="info-item">
-                    <TimeIcon className="info-icon" />
-                    <div className="info-content">
-                      <label>Time</label>
-                      <span>{formatTime(meeting.scheduled_at)}</span>
-                    </div>
-                  </div>
-                  
-                  {meeting.duration && (
-                    <div className="info-item">
-                      <TimeIcon className="info-icon" />
-                      <div className="info-content">
-                        <label>Duration</label>
-                        <span>{formatDuration(meeting.duration)}</span>
-                      </div>
-                    </div>
-                  )}
                   
                   <div className="info-item">
                     <PersonIcon className="info-icon" />
                     <div className="info-content">
-                      <label>Status</label>
-                      <span className={`status-badge ${meeting.status || 'scheduled'}`}>
-                        {meeting.status?.replace('_', ' ') || 'Scheduled'}
-                      </span>
+                      <label>Meeting ID</label>
+                      <span>{meeting.id}</span>
+                    </div>
+                  </div>
+                  
+                  <div className="info-item">
+                    <PersonIcon className="info-icon" />
+                    <div className="info-content">
+                      <label>Client ID</label>
+                      <span>{meeting.client_id}</span>
                     </div>
                   </div>
                 </div>
               </div>
 
-              {meeting.description && (
+              {meeting.summary && (
                 <div className="meeting-info-card">
-                  <h3>Description</h3>
-                  <div className="meeting-description">
-                    <p>{meeting.description}</p>
+                  <h3>Meeting Summary</h3>
+                  <div className="meeting-summary">
+                    <p>{meeting.summary}</p>
                   </div>
                 </div>
               )}
 
-              {meeting.agenda && (
+              {meeting.transcript && (
                 <div className="meeting-info-card">
-                  <h3>Agenda</h3>
-                  <div className="meeting-agenda">
-                    <p>{meeting.agenda}</p>
+                  <h3>Meeting Transcript</h3>
+                  <div className="meeting-transcript">
+                    <p>{meeting.transcript}</p>
                   </div>
                 </div>
               )}
 
-              {meeting.location && (
+              {meeting.recording_url && (
                 <div className="meeting-info-card">
-                  <h3>Location</h3>
-                  <div className="meeting-location">
-                    <p>{meeting.location}</p>
-                  </div>
-                </div>
-              )}
-
-              {meeting.meeting_url && (
-                <div className="meeting-info-card">
-                  <h3>Meeting Link</h3>
-                  <div className="meeting-url">
+                  <h3>Recording</h3>
+                  <div className="meeting-recording">
                     <a 
-                      href={meeting.meeting_url} 
+                      href={meeting.recording_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                       className="meeting-link"
                     >
-                      Join Meeting
+                      View Recording
                     </a>
                   </div>
                 </div>

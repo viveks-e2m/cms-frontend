@@ -103,17 +103,7 @@ export const meetingAPI = {
     return handleApiResponse(response);
   },
 
-  // Update meeting note
-  updateNote: async (noteId, noteData) => {
-    const response = await api.put(`/meetings/notes/${noteId}`, noteData);
-    return handleApiResponse(response);
-  },
 
-  // Delete meeting note
-  deleteNote: async (noteId) => {
-    const response = await api.delete(`/meetings/notes/${noteId}`);
-    return handleApiResponse(response);
-  }
 };
 
 // Open Points (Tasks) API services

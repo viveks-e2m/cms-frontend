@@ -23,14 +23,9 @@ const MeetingForm = ({
   isOpen = false 
 }) => {
   const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    agenda: '',
-    scheduled_at: '',
-    duration: '',
-    location: '',
-    meeting_url: '',
-    status: 'scheduled'
+    recording_url: '',
+    transcript: '',
+    summary: ''
   });
   const [loading, setLoading] = useState(false);
   const { showError, showSuccess } = useNotificationContext();
@@ -39,26 +34,16 @@ const MeetingForm = ({
     if (meeting) {
       // Editing existing meeting
       setFormData({
-        title: meeting.title || '',
-        description: meeting.description || '',
-        agenda: meeting.agenda || '',
-        scheduled_at: meeting.scheduled_at ? formatDateTimeForInput(meeting.scheduled_at) : '',
-        duration: meeting.duration || '',
-        location: meeting.location || '',
-        meeting_url: meeting.meeting_url || '',
-        status: meeting.status || 'scheduled'
+        recording_url: meeting.recording_url || '',
+        transcript: meeting.transcript || '',
+        summary: meeting.summary || ''
       });
     } else {
       // Creating new meeting
       setFormData({
-        title: '',
-        description: '',
-        agenda: '',
-        scheduled_at: '',
-        duration: '',
-        location: '',
-        meeting_url: '',
-        status: 'scheduled'
+        recording_url: '',
+        transcript: '',
+        summary: ''
       });
     }
   }, [meeting, isOpen]);
@@ -79,25 +64,22 @@ const MeetingForm = ({
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
-    if (!formData.title.trim()) {
-      showError('Meeting title is required');
-      return;
-    }
 
     try {
       setLoading(true);
       
       const meetingData = {
-        ...formData,
-        title: formData.title.trim(),
-        description: formData.description.trim(),
-        agenda: formData.agenda.trim(),
-        location: formData.location.trim(),
-        meeting_url: formData.meeting_url.trim(),
-        duration: formData.duration ? parseInt(formData.duration) : null,
-        scheduled_at: formData.scheduled_at || null
+        recording_url: formData.recording_url.trim() || null,
+        transcript: formData.transcript.trim() || null,
+        summary: formData.summary.trim() || null
       };
+
+      // Remove null values
+      Object.keys(meetingData).forEach(key => {
+        if (meetingData[key] === null || meetingData[key] === '') {
+          delete meetingData[key];
+        }
+      });
 
       if (meeting) {
         // Update existing meeting
@@ -120,14 +102,9 @@ const MeetingForm = ({
 
   const handleCancel = () => {
     setFormData({
-      title: '',
-      description: '',
-      agenda: '',
-      scheduled_at: '',
-      duration: '',
-      location: '',
-      meeting_url: '',
-      status: 'scheduled'
+      recording_url: '',
+      transcript: '',
+      summary: ''
     });
     onCancel();
   };
@@ -148,134 +125,50 @@ const MeetingForm = ({
         </div>
 
         <form onSubmit={handleSubmit} className="meeting-form">
-          <div className="form-grid">
-            <div className="form-group full-width">
-              <label htmlFor="title">
-                <VideoCallIcon className="label-icon" />
-                Meeting Title *
-              </label>
-              <input
-                type="text"
-                id="title"
-                name="title"
-                value={formData.title}
-                onChange={handleInputChange}
-                placeholder="Enter meeting title..."
-                required
-                className="form-input"
-              />
-            </div>
-
+          <div className="form-grid single-column">
             <div className="form-group">
-              <label htmlFor="scheduled_at">
-                <CalendarIcon className="label-icon" />
-                Date & Time
-              </label>
-              <input
-                type="datetime-local"
-                id="scheduled_at"
-                name="scheduled_at"
-                value={formData.scheduled_at}
-                onChange={handleInputChange}
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="duration">
-                <TimeIcon className="label-icon" />
-                Duration (minutes)
-              </label>
-              <input
-                type="number"
-                id="duration"
-                name="duration"
-                value={formData.duration}
-                onChange={handleInputChange}
-                placeholder="60"
-                min="1"
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="status">
-                <AssignmentIcon className="label-icon" />
-                Status
-              </label>
-              <select
-                id="status"
-                name="status"
-                value={formData.status}
-                onChange={handleInputChange}
-                className="form-select"
-              >
-                <option value="scheduled">Scheduled</option>
-                <option value="in_progress">In Progress</option>
-                <option value="completed">Completed</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="location">
-                <LocationIcon className="label-icon" />
-                Location
-              </label>
-              <input
-                type="text"
-                id="location"
-                name="location"
-                value={formData.location}
-                onChange={handleInputChange}
-                placeholder="Meeting location..."
-                className="form-input"
-              />
-            </div>
-
-            <div className="form-group">
-              <label htmlFor="meeting_url">
+              <label htmlFor="recording_url">
                 <LinkIcon className="label-icon" />
-                Meeting Link
+                Recording URL
               </label>
               <input
                 type="url"
-                id="meeting_url"
-                name="meeting_url"
-                value={formData.meeting_url}
+                id="recording_url"
+                name="recording_url"
+                value={formData.recording_url}
                 onChange={handleInputChange}
-                placeholder="https://..."
+                placeholder="https://example.com/recording.mp4"
                 className="form-input"
               />
             </div>
 
-            <div className="form-group full-width">
-              <label htmlFor="description">
+            <div className="form-group">
+              <label htmlFor="transcript">
                 <DescriptionIcon className="label-icon" />
-                Description
+                Meeting Transcript
               </label>
               <textarea
-                id="description"
-                name="description"
-                value={formData.description}
+                id="transcript"
+                name="transcript"
+                value={formData.transcript}
                 onChange={handleInputChange}
-                placeholder="Meeting description..."
-                rows={3}
+                placeholder="Enter the meeting transcript here..."
+                rows={6}
                 className="form-textarea"
               />
             </div>
 
-            <div className="form-group full-width">
-              <label htmlFor="agenda">
+            <div className="form-group">
+              <label htmlFor="summary">
                 <AssignmentIcon className="label-icon" />
-                Agenda
+                Meeting Summary
               </label>
               <textarea
-                id="agenda"
-                name="agenda"
-                value={formData.agenda}
+                id="summary"
+                name="summary"
+                value={formData.summary}
                 onChange={handleInputChange}
-                placeholder="Meeting agenda items..."
+                placeholder="Enter a summary of the meeting..."
                 rows={4}
                 className="form-textarea"
               />
