@@ -7,54 +7,6 @@
 export { useNotificationContext } from '../contexts/NotificationContext';
 
 /**
- * Custom hook that provides a unified notification interface
- * This hook wraps the notification context and provides a single showNotification method
- * that automatically determines the notification type based on the second parameter
- */
-export const useNotifications = () => {
-  const { showSuccess, showError, showWarning, showInfo, ...rest } = useNotificationContext();
-
-  /**
-   * Unified notification method
-   * @param {string} message - The notification message
-   * @param {string} type - The notification type ('success', 'error', 'warning', 'info')
-   * @param {object} options - Additional options for the notification
-   */
-  const showNotification = (message, type = 'info', options = {}) => {
-    switch (type) {
-      case 'success':
-        return showSuccess(message, options);
-      case 'error':
-        return showError(message, options);
-      case 'warning':
-        return showWarning(message, options);
-      case 'info':
-      default:
-        return showInfo(message, options);
-    }
-  };
-
-  return {
-    showNotification,
-    showSuccess,
-    showError,
-    showWarning,
-    showInfo,
-    ...rest
-  };
-};
-
-/**
- * Notification helper functions for common use cases
- */
-export const notifications = {
-  success: (message, options) => showSuccess(message, options),
-  error: (message, options) => showError(message, options),
-  warning: (message, options) => showWarning(message, options),
-  info: (message, options) => showInfo(message, options),
-};
-
-/**
  * Common notification messages
  */
 export const NOTIFICATION_MESSAGES = {
@@ -81,6 +33,13 @@ export const NOTIFICATION_MESSAGES = {
   WORKFLOW_NOT_FOUND: 'Workflow not found',
   WORKFLOW_DETAILS_REFRESHED: 'Workflow details refreshed',
   WORKFLOW_DETAILS_ERROR: 'Failed to refresh workflow details',
+  
+  // Client workflow messages
+  CLIENT_WORKFLOW_CREATED: 'Workflow created successfully',
+  CLIENT_WORKFLOW_UPDATED: 'Workflow updated successfully',
+  CLIENT_WORKFLOW_DELETED: 'Workflow deleted successfully',
+  CLIENT_WORKFLOWS_LOADED: 'Client workflows loaded successfully',
+  CLIENT_WORKFLOWS_ERROR: 'Failed to load client workflows',
 };
 
-export default useNotifications;
+export default NOTIFICATION_MESSAGES;

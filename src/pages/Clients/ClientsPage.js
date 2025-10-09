@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { clientAPI, meetingAPI, openPointsAPI, secretsAPI } from "../../utils/apiServices";
+import { clientAPI, meetingAPI, openPointsAPI, secretsAPI, workflowAPI } from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   MeetingsList,
@@ -10,6 +10,7 @@ import {
 } from "../../components/Meetings";
 import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import SecretsManager from "../../components/Clients/SecretsManager";
+import WorkflowManager from "../../components/Clients/WorkflowManager/WorkflowManager";
 import ClientForm from "../../components/Clients/ClientForm";
 import {
   People as PeopleIcon,
@@ -85,9 +86,10 @@ const ClientsPage = () => {
       const client = clients.find((c) => c.id === clientId);
 
       // Load related data
-      const [meetings, tasks, secrets] = await Promise.all([
+      const [meetings, tasks, workflows, secrets] = await Promise.all([
         meetingAPI.getByClient(clientId).catch(() => []),
         openPointsAPI.getByClient(clientId).catch(() => []),
+        workflowAPI.getByClient(clientId).catch(() => []),
         secretsAPI.getByClient(clientId).catch(() => []),
       ]);
 
@@ -95,7 +97,7 @@ const ClientsPage = () => {
         ...client,
         meetings,
         tasks,
-        workflows: [], // Placeholder for workflows
+        workflows: workflows || [],
         secrets: secrets || [],
       });
     } catch (error) {
@@ -586,18 +588,10 @@ const ClientsPage = () => {
 
                 {activeTab === "workflows" && (
                   <div className="workflows-tab">
-                    <div className="tab-header">
-                      <h3>Workflows</h3>
-                      <button className="btn btn-primary">
-                        <AddIcon />
-                        Add Workflow
-                      </button>
-                    </div>
-                    <div className="empty-tab-state">
-                      <WorkflowIcon className="empty-icon" />
-                      <h4>No workflows found</h4>
-                      <p>Workflows feature coming soon.</p>
-                    </div>
+                    <WorkflowManager
+                      clientId={selectedClient.id}
+                      clientName={selectedClient.name}
+                    />
                   </div>
                 )}
 

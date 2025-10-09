@@ -171,6 +171,12 @@ export const workflowAPI = {
   updateStatus: async (workflowId, statusData) => {
     const response = await api.put(`/workflows/${workflowId}`, statusData);
     return handleApiResponse(response);
+  },
+
+  // Delete workflow
+  delete: async (workflowId) => {
+    const response = await api.delete(`/workflows/${workflowId}`);
+    return handleApiResponse(response);
   }
 };
 
