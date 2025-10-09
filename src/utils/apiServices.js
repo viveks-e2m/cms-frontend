@@ -200,3 +200,35 @@ export const secretsAPI = {
     return handleApiResponse(response);
   }
 };
+
+// N8N Workflows API services
+export const n8nAPI = {
+  // Get all workflows from n8n
+  getWorkflows: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.active !== undefined) queryParams.append('active', params.active);
+    if (params.name) queryParams.append('name', params.name);
+    if (params.tags) queryParams.append('tags', params.tags);
+    
+    const url = `/n8n/workflows${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await api.get(url);
+    return handleApiResponse(response);
+  },
+
+  // Get all executions from n8n
+  getExecutions: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.workflow_id) queryParams.append('workflow_id', params.workflow_id);
+    if (params.status) queryParams.append('status', params.status);
+    
+    const url = `/n8n/executions${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
+    const response = await api.get(url);
+    return handleApiResponse(response);
+  },
+
+  // Get executions for a specific workflow
+  getWorkflowExecutions: async (workflowId) => {
+    const response = await api.get(`/n8n/workflows/${workflowId}/executions`);
+    return handleApiResponse(response);
+  }
+};

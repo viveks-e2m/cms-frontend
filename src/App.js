@@ -10,6 +10,8 @@ import ClientsPage from './pages/Clients/ClientsPage';
 import MeetingsPage from './pages/Meetings/MeetingsPage';
 import TasksPage from './pages/Tasks/TasksPage';
 import SecretsPage from './pages/Secrets/SecretsPage';
+import N8nWorkflowsPage from './pages/N8nWorkflows/N8nWorkflowsPage';
+import WorkflowDetailsPage from './pages/N8nWorkflows/WorkflowDetailsPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute/ProtectedRoute';
 import './styles/App.css';
 
@@ -60,6 +62,22 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <SecretsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/n8n-workflows" 
+                element={
+                  <ProtectedRoute>
+                    <N8nWorkflowsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/n8n-workflows/:workflowId" 
+                element={
+                  <ProtectedRoute>
+                    <WorkflowDetailsPage />
                   </ProtectedRoute>
                 } 
               />

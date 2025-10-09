@@ -9,6 +9,7 @@ import {
   Logout as LogoutIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
+  AccountTree as WorkflowIcon,
 } from "@mui/icons-material";
 import "./Sidebar.css";
 
@@ -31,6 +32,13 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Manage Clients",
       path: "/clients",
       description: "Client management and assignments",
+    },
+    {
+      id: "n8n-workflows",
+      icon: <WorkflowIcon />,
+      label: "n8n Workflows",
+      path: "/n8n-workflows",
+      description: "Workflow automation and executions",
     },
   ];
 
