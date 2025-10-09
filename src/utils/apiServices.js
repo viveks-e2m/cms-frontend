@@ -43,6 +43,14 @@ export const clientAPI = {
     return handleApiResponse(response);
   },
 
+  // Fetch pre-onboarding info
+  fetchPreOnboardingInfo: async (clientId) => {
+    const response = await api.get(`/clients/${clientId}/fetch_pre_onboarding_info`, {
+      timeout: 30000 // 30 seconds timeout for onboarding fetch
+    });
+    return handleApiResponse(response);
+  },
+
   // Client-User assignments
   assignUser: async (clientId, userData) => {
     const response = await api.post(`/clients/${clientId}/users`, userData);

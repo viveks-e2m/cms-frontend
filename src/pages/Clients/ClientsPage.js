@@ -8,6 +8,7 @@ import {
   MeetingDetails,
   MeetingForm,
 } from "../../components/Meetings";
+import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -246,7 +247,6 @@ const ClientsPage = () => {
                 <p>{selectedClient.email}</p>
               </div>
             </div>
-
           </div>
 
           <div className="client-details-tabs">
@@ -380,6 +380,112 @@ const ClientsPage = () => {
                           </div>
                         </div>
                       </div>
+                    </div>
+
+                    {/* Recent Activity Section */}
+                    <div className="recent-activity-section">
+                      <h3>Recent Activity</h3>
+                      <div className="activity-cards">
+                        {/* Recent Meetings */}
+                        <div className="activity-card">
+                          <div className="activity-header">
+                            <VideoCallIcon className="activity-icon meetings" />
+                            <h4>Recent Meetings</h4>
+                            <button
+                              className="view-all-btn"
+                              onClick={() => setActiveTab("meetings")}
+                            >
+                              View All
+                            </button>
+                          </div>
+                          <div className="activity-content">
+                            {clientDetails?.meetings?.length > 0 ? (
+                              clientDetails.meetings
+                                .slice(0, 3)
+                                .map((meeting) => (
+                                  <div
+                                    key={meeting.id}
+                                    className="activity-item"
+                                  >
+                                    <div className="activity-item-info">
+                                      <h5>
+                                        {meeting.title || "Untitled Meeting"}
+                                      </h5>
+                                      <p>
+                                        {meeting.summary ||
+                                          "No summary available"}
+                                      </p>
+                                      <span className="activity-date">
+                                        {new Date(
+                                          meeting.created_at
+                                        ).toLocaleDateString()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="activity-empty">
+                                <VideoCallIcon className="empty-icon" />
+                                <p>No meetings yet</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Recent Open Points */}
+                        <div className="activity-card">
+                          <div className="activity-header">
+                            <AssignmentIcon className="activity-icon tasks" />
+                            <h4>Recent Open Points</h4>
+                            <button
+                              className="view-all-btn"
+                              onClick={() => setActiveTab("tasks")}
+                            >
+                              View All
+                            </button>
+                          </div>
+                          <div className="activity-content">
+                            {clientDetails?.tasks?.length > 0 ? (
+                              clientDetails.tasks.slice(0, 3).map((task) => (
+                                <div key={task.id} className="activity-item">
+                                  <div className="activity-item-info">
+                                    <h5>{task.message || "Untitled Task"}</h5>
+                                    <div className="task-meta">
+                                      <span
+                                        className={`task-status ${task.status}`}
+                                      >
+                                        {task.status?.replace("_", " ") ||
+                                          "Open"}
+                                      </span>
+                                      {task.due_date && (
+                                        <span className="due-date">
+                                          Due:{" "}
+                                          {new Date(
+                                            task.due_date
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                </div>
+                              ))
+                            ) : (
+                              <div className="activity-empty">
+                                <AssignmentIcon className="empty-icon" />
+                                <p>No open points yet</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Onboarding Information Section */}
+                    <div className="onboarding-section-wrapper">
+                      <OnboardingInfo
+                        clientId={selectedClient.id}
+                        existingOnboardingInfo={selectedClient.onboarding_info}
+                      />
                     </div>
                   </div>
                 )}
