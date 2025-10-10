@@ -251,17 +251,46 @@
 
 .meeting-description,
 .meeting-agenda,
-.meeting-location {
+.meeting-location,
+.meeting-summary {
   color: #374151;
   line-height: 1.6;
 }
 
 .meeting-description p,
 .meeting-agenda p,
-.meeting-location p {
+.meeting-location p,
+.meeting-summary p {
   margin: 0;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.full-width {
+  grid-column: 1 / -1;
+}
+
+.source-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: capitalize;
+  display: inline-block;
+}
+
+.source-badge.fathom {
+  background: #EBF8FF;
+  color: #1E40AF;
+}
+
+.source-badge.other {
+  background: #F3F4F6;
+  color: #6B7280;
+}
+
+.meeting-transcript-tab {
+  padding: 0;
 }
 
 .meeting-url {

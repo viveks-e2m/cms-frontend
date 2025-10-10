@@ -5,16 +5,15 @@ import {
   Delete as DeleteIcon,
   VideoCall as VideoCallIcon,
   CalendarToday as CalendarIcon,
-  AccessTime as TimeIcon,
   Person as PersonIcon,
   Notes as NotesIcon,
-  Add as AddIcon,
-  MoreVert as MoreVertIcon,
+  RecordVoiceOver as TranscriptIcon,
 } from "@mui/icons-material";
 import { meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
+import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -137,6 +136,13 @@ const MeetingDetails = ({
           Details
         </button>
         <button
+          className={`tab-btn ${activeTab === "transcript" ? "active" : ""}`}
+          onClick={() => setActiveTab("transcript")}
+        >
+          <TranscriptIcon />
+          Transcript
+        </button>
+        <button
           className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
           onClick={() => setActiveTab("notes")}
         >
@@ -175,26 +181,20 @@ const MeetingDetails = ({
                       <span>{meeting.client_id}</span>
                     </div>
                   </div>
+
+                  {meeting.source && (
+                    <div className="info-item">
+                      <VideoCallIcon className="info-icon" />
+                      <div className="info-content">
+                        <label>Source</label>
+                        <span className={`source-badge ${meeting.source}`}>
+                          {meeting.source === 'fathom' ? 'Fathom Recording' : 'Manual Entry'}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
-
-              {meeting.summary && (
-                <div className="meeting-info-card">
-                  <h3>Meeting Summary</h3>
-                  <div className="meeting-summary">
-                    <p>{meeting.summary}</p>
-                  </div>
-                </div>
-              )}
-
-              {meeting.transcript && (
-                <div className="meeting-info-card">
-                  <h3>Meeting Transcript</h3>
-                  <div className="meeting-transcript">
-                    <p>{meeting.transcript}</p>
-                  </div>
-                </div>
-              )}
 
               {meeting.recording_url && (
                 <div className="meeting-info-card">
@@ -211,7 +211,25 @@ const MeetingDetails = ({
                   </div>
                 </div>
               )}
+
+              {meeting.summary && (
+                <div className="meeting-info-card full-width">
+                  <h3>Meeting Summary</h3>
+                  <div className="meeting-summary">
+                    <p>{meeting.summary}</p>
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+        )}
+
+        {activeTab === "transcript" && (
+          <div className="meeting-transcript-tab">
+            <TranscriptDisplay 
+              transcript={meeting.transcript} 
+              rawTranscript={meeting.raw_transcript}
+            />
           </div>
         )}
 
