@@ -14,6 +14,7 @@ import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
 import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
+import MarkdownSummary from "../MarkdownSummary/MarkdownSummary";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -213,11 +214,11 @@ const MeetingDetails = ({
               )}
 
               {meeting.summary && (
-                <div className="meeting-info-card full-width">
-                  <h3>Meeting Summary</h3>
-                  <div className="meeting-summary">
-                    <p>{meeting.summary}</p>
-                  </div>
+                <div className="meeting-summary-container full-width">
+                  <MarkdownSummary 
+                    summary={meeting.summary}
+                    title="Meeting Summary"
+                  />
                 </div>
               )}
             </div>

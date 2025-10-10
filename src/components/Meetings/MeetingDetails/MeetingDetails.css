@@ -293,6 +293,18 @@
   padding: 0;
 }
 
+.meeting-summary-container {
+  /* Remove default card styling since MarkdownSummary has its own */
+  background: none;
+  border: none;
+  padding: 0;
+  box-shadow: none;
+}
+
+.meeting-summary-container.full-width {
+  grid-column: 1 / -1;
+}
+
 .meeting-url {
   margin-top: 8px;
 }
