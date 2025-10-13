@@ -194,6 +194,30 @@ const ClientsPage = () => {
     setEditingClient(null);
   };
 
+  const handleDeleteClient = async (client) => {
+    if (
+      !window.confirm(
+        `Are you sure you want to delete "${client.name}"? This will permanently delete the client and all associated data including meetings, workflows, and secrets.`
+      )
+    ) {
+      return;
+    }
+
+    try {
+      await clientAPI.delete(client.id);
+      showSuccess("Client deleted successfully");
+      loadClients(); // Reload the clients list
+      
+      // If the deleted client was currently selected, go back to list
+      if (selectedClient && selectedClient.id === client.id) {
+        handleBackToList();
+      }
+    } catch (error) {
+      showError("Failed to delete client");
+      console.error("Error deleting client:", error);
+    }
+  };
+
   // Enhanced filtering and sorting logic
   const getClientStatus = (client) => {
     // Determine client status based on various factors
@@ -673,6 +697,7 @@ const ClientsPage = () => {
                       <button
                         className="action-btn delete"
                         title="Delete Client"
+                        onClick={() => handleDeleteClient(client)}
                       >
                         <DeleteIcon />
                       </button>

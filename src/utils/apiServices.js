@@ -44,9 +44,10 @@ export const clientAPI = {
   },
 
   // Fetch pre-onboarding info
-  fetchPreOnboardingInfo: async (clientId) => {
-    const response = await api.get(`/clients/${clientId}/fetch_pre_onboarding_info`, {
-      timeout: 300000 // 30 seconds timeout for onboarding fetch
+  fetchPreOnboardingInfo: async (clientId, forceRefresh = false) => {
+    const params = forceRefresh ? '?force_refresh=true' : '';
+    const response = await api.get(`/clients/${clientId}/fetch_pre_onboarding_info${params}`, {
+      timeout: 300000 // 5 minutes timeout for onboarding fetch
     });
     return handleApiResponse(response);
   },
@@ -72,7 +73,9 @@ export const clientAPI = {
 export const meetingAPI = {
   // Create meeting for client
   create: async (clientId, meetingData) => {
-    const response = await api.post(`/clients/${clientId}/meetings`, meetingData);
+    const response = await api.post(`/clients/${clientId}/meetings`, meetingData, {
+      timeout: 300000 // 5 minutes timeout for Fathom data fetching
+    });
     return handleApiResponse(response);
   },
 
@@ -90,7 +93,9 @@ export const meetingAPI = {
 
   // Update meeting
   update: async (meetingId, meetingData) => {
-    const response = await api.put(`/meetings/${meetingId}`, meetingData);
+    const response = await api.put(`/meetings/${meetingId}`, meetingData, {
+      timeout: 300000 // 5 minutes timeout for Fathom data fetching
+    });
     return handleApiResponse(response);
   },
 

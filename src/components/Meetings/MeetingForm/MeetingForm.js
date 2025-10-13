@@ -3,16 +3,12 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   VideoCall as VideoCallIcon,
-  CalendarToday as CalendarIcon,
-  AccessTime as TimeIcon,
-  LocationOn as LocationIcon,
   Link as LinkIcon,
   Description as DescriptionIcon,
   Assignment as AssignmentIcon,
   Source as SourceIcon,
   RadioButtonChecked as RadioCheckedIcon,
   RadioButtonUnchecked as RadioUncheckedIcon,
-  CloudDownload as FetchIcon,
   CheckCircle as SuccessIcon,
   Error as ErrorIcon,
   Refresh as RefreshIcon,
@@ -64,12 +60,6 @@ const MeetingForm = ({
     }
   }, [meeting, isOpen]);
 
-  const formatDateTimeForInput = (dateString) => {
-    if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toISOString().slice(0, 16); // Format: YYYY-MM-DDTHH:MM
-  };
-
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
@@ -104,7 +94,9 @@ const MeetingForm = ({
       // Show different loading message for Fathom
       if (formData.source === "fathom") {
         setFathomStatus((prev) => ({ ...prev, fetching: true, error: null }));
-        showInfo("Creating meeting and fetching data from Fathom...");
+        showInfo(
+          "Creating meeting and fetching data from Fathom... This may take up to 5 minutes."
+        );
       }
 
       const meetingData = {
@@ -171,19 +163,29 @@ const MeetingForm = ({
 
       onSave();
     } catch (error) {
+      console.error("Error saving meeting:", error);
+
+      // Check if this is a network error or actual API failure
+      const errorMessage =
+        error?.response?.data?.error?.message ||
+        error?.message ||
+        "Unknown error";
+
       if (formData.source === "fathom") {
         setFathomStatus((prev) => ({
           ...prev,
           fetching: false,
           success: false,
           attempted: true,
-          error: "Failed to create meeting or fetch Fathom data",
+          error: `Failed to create meeting: ${errorMessage}`,
         }));
       }
+
       showError(
-        meeting ? "Failed to update meeting" : "Failed to create meeting"
+        meeting
+          ? `Failed to update meeting: ${errorMessage}`
+          : `Failed to create meeting: ${errorMessage}`
       );
-      console.error("Error saving meeting:", error);
     } finally {
       setLoading(false);
     }
@@ -428,7 +430,9 @@ const MeetingForm = ({
             >
               <SaveIcon />
               {loading
-                ? "Saving..."
+                ? formData.source === "fathom"
+                  ? "Creating & Fetching Fathom Data..."
+                  : "Saving..."
                 : meeting
                 ? "Update Meeting"
                 : "Create Meeting"}

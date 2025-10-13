@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useNotificationContext } from '../../contexts/NotificationContext';
-import { clientAPI, meetingAPI, openPointsAPI } from '../../utils/apiServices';
-import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useNotificationContext } from "../../contexts/NotificationContext";
+import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
+import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
+import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   People as PeopleIcon,
   VideoCall as VideoCallIcon,
@@ -11,25 +11,24 @@ import {
   CheckCircle as CheckCircleIcon,
   Person as PersonIcon,
   Email as EmailIcon,
-  WavingHand as WavingHandIcon
-} from '@mui/icons-material';
-import './DashboardPage.css';
+  WavingHand as WavingHandIcon,
+} from "@mui/icons-material";
+import "./DashboardPage.css";
 
 const DashboardPage = () => {
   const { user } = useAuth();
-  const { showError, showSuccess, showInfo } = useNotificationContext();
-  
+  const { showError } = useNotificationContext();
+
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     clients: [],
     recentMeetings: [],
-    openTasks: [],
     stats: {
       totalClients: 0,
       totalMeetings: 0,
       openTasks: 0,
-      completedTasks: 0
-    }
+      completedTasks: 0,
+    },
   });
 
   useEffect(() => {
@@ -39,33 +38,38 @@ const DashboardPage = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
+
       // Load clients data
       const clients = await clientAPI.getAll();
-      
+
       // Calculate stats
       const stats = {
         totalClients: clients.length,
         totalMeetings: 0,
         openTasks: 0,
-        completedTasks: 0
+        completedTasks: 0,
       };
 
-      // Load recent meetings and tasks for each client
+      // Load recent meetings and tasks for each client (for stats only)
       let allMeetings = [];
       let allTasks = [];
-      
-      for (const client of clients.slice(0, 5)) { // Limit to first 5 clients for performance
+
+      for (const client of clients.slice(0, 5)) {
+        // Limit to first 5 clients for performance
         try {
           const meetings = await meetingAPI.getByClient(client.id);
           const tasks = await openPointsAPI.getByClient(client.id);
-          
+
           allMeetings = [...allMeetings, ...meetings];
           allTasks = [...allTasks, ...tasks];
-          
+
           stats.totalMeetings += meetings.length;
-          stats.openTasks += tasks.filter(task => task.status === 'open' || task.status === 'in_progress').length;
-          stats.completedTasks += tasks.filter(task => task.status === 'completed').length;
+          stats.openTasks += tasks.filter(
+            (task) => task.status === "open" || task.status === "in_progress"
+          ).length;
+          stats.completedTasks += tasks.filter(
+            (task) => task.status === "completed"
+          ).length;
         } catch (error) {
           console.warn(`Failed to load data for client ${client.id}:`, error);
         }
@@ -74,13 +78,11 @@ const DashboardPage = () => {
       setDashboardData({
         clients,
         recentMeetings: allMeetings.slice(0, 5), // Show 5 most recent
-        openTasks: allTasks.filter(task => task.status !== 'completed').slice(0, 5),
-        stats
+        stats,
       });
-      
     } catch (error) {
-      showError('Failed to load dashboard data. Please try again.');
-      console.error('Dashboard data loading failed:', error);
+      showError("Failed to load dashboard data. Please try again.");
+      console.error("Dashboard data loading failed:", error);
     } finally {
       setLoading(false);
     }
@@ -101,115 +103,139 @@ const DashboardPage = () => {
   return (
     <DashboardLayout>
       <div className="dashboard-page">
-          {/* Welcome Message */}
-          <div className="dashboard-welcome">
-            <h1 className="welcome-title">
-              <WavingHandIcon className="welcome-icon" />
-              Welcome back, {user?.name || user?.email?.split('@')[0] || 'User'}!
-            </h1>
-            <p className="welcome-subtitle">
-              Here's an overview of your CMS activities and recent updates.
-            </p>
-          </div>
+        {/* Welcome Message */}
+        <div className="dashboard-welcome">
+          <h1 className="welcome-title">
+            <WavingHandIcon className="welcome-icon" />
+            Welcome back, {user?.name || user?.email?.split("@")[0] || "User"}!
+          </h1>
+          <p className="welcome-subtitle">
+            Here's an overview of your CMS activities and recent updates.
+          </p>
+        </div>
 
-          {/* Stats Grid */}
-          <div className="dashboard-stats">
-            <div className="stat-card clients">
-              <div className="stat-icon">
-                <PeopleIcon />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.stats.totalClients}</div>
-                <p className="stat-label">Total Clients</p>
-                <div className="stat-trend positive">+12% this month</div>
-              </div>
+        {/* Stats Grid */}
+        <div className="dashboard-stats">
+          <div className="stat-card clients">
+            <div className="stat-icon">
+              <PeopleIcon />
             </div>
-            <div className="stat-card meetings">
-              <div className="stat-icon">
-                <VideoCallIcon />
+            <div className="stat-content">
+              <div className="stat-number">
+                {dashboardData.stats.totalClients}
               </div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.stats.totalMeetings}</div>
-                <p className="stat-label">Total Meetings</p>
-                <div className="stat-trend positive">+8% this week</div>
-              </div>
-            </div>
-            <div className="stat-card tasks-open">
-              <div className="stat-icon">
-                <AssignmentIcon />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.stats.openTasks}</div>
-                <p className="stat-label">Open Tasks</p>
-                <div className="stat-trend neutral">No change</div>
-              </div>
-            </div>
-            <div className="stat-card tasks-completed">
-              <div className="stat-icon">
-                <CheckCircleIcon />
-              </div>
-              <div className="stat-content">
-                <div className="stat-number">{dashboardData.stats.completedTasks}</div>
-                <p className="stat-label">Completed Tasks</p>
-                <div className="stat-trend positive">+15% this week</div>
-              </div>
+              <p className="stat-label">Total Clients</p>
+              <div className="stat-trend positive">+12% this month</div>
             </div>
           </div>
+          <div className="stat-card meetings">
+            <div className="stat-icon">
+              <VideoCallIcon />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">
+                {dashboardData.stats.totalMeetings}
+              </div>
+              <p className="stat-label">Total Meetings</p>
+              <div className="stat-trend positive">+8% this week</div>
+            </div>
+          </div>
+          <div className="stat-card tasks-open">
+            <div className="stat-icon">
+              <AssignmentIcon />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">{dashboardData.stats.openTasks}</div>
+              <p className="stat-label">Open Tasks</p>
+              <div className="stat-trend neutral">No change</div>
+            </div>
+          </div>
+          <div className="stat-card tasks-completed">
+            <div className="stat-icon">
+              <CheckCircleIcon />
+            </div>
+            <div className="stat-content">
+              <div className="stat-number">
+                {dashboardData.stats.completedTasks}
+              </div>
+              <p className="stat-label">Completed Tasks</p>
+              <div className="stat-trend positive">+15% this week</div>
+            </div>
+          </div>
+        </div>
 
-          {/* Recent Activity Section */}
-          <div className="dashboard-sections">
-            <div className="dashboard-section">
+        {/* Recent Clients Section */}
+        <div className="dashboard-sections">
+          <div className="dashboard-section recent-clients-section">
+            <div className="section-header">
               <h3 className="section-title">Recent Clients</h3>
-              <div className="section-content">
-                {dashboardData.clients.length > 0 ? (
-                  dashboardData.clients.slice(0, 5).map((client) => (
-                    <div key={client.id} className="client-item">
-                      <div className="client-avatar">
-                        <PersonIcon />
-                      </div>
-                      <div className="client-info">
-                        <h4 className="client-name">{client.name}</h4>
-                        <p className="client-email">
-                          <EmailIcon className="email-icon" />
-                          {client.email}
-                        </p>
-                      </div>
-                      <div className="client-status">
-                        <span className="status-badge status-active">Active</span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-state">No clients found. Start by adding your first client!</p>
-                )}
-              </div>
+              <p className="section-subtitle">
+                Your most recently added clients
+              </p>
             </div>
-
-            <div className="dashboard-section">
-              <h3 className="section-title">Open Tasks</h3>
-              <div className="section-content">
-                {dashboardData.openTasks.length > 0 ? (
-                  dashboardData.openTasks.map((task) => (
-                    <div key={task.id} className="task-item">
-                      <div className="task-info">
-                        <h4 className="task-title">{task.title}</h4>
-                        <p className="task-description">{task.description}</p>
+            <div className="section-content">
+              {dashboardData.clients.length > 0 ? (
+                <div className="clients-grid">
+                  {dashboardData.clients.slice(0, 6).map((client) => (
+                    <div key={client.id} className="client-card">
+                      <div className="client-card-header">
+                        <div className="client-avatar">
+                          <PersonIcon />
+                        </div>
+                        <div className="client-status">
+                          <span className="status-badge status-active">
+                            Active
+                          </span>
+                        </div>
                       </div>
-                      <div className="task-status">
-                        <span className={`status-badge status-${task.status}`}>
-                          {task.status.replace('_', ' ')}
+                      <div className="client-card-body">
+                        <h4 className="client-name">{client.name}</h4>
+                        <div className="client-details">
+                          <div className="client-detail-item">
+                            <EmailIcon className="detail-icon" />
+                            <span className="client-email">{client.email}</span>
+                          </div>
+                          {client.phone && (
+                            <div className="client-detail-item">
+                              <span className="detail-label">Phone:</span>
+                              <span className="detail-value">
+                                {client.phone}
+                              </span>
+                            </div>
+                          )}
+                          {client.company && (
+                            <div className="client-detail-item">
+                              <span className="detail-label">Company:</span>
+                              <span className="detail-value">
+                                {client.company}
+                              </span>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                      <div className="client-card-footer">
+                        <span className="client-date">
+                          Added{" "}
+                          {new Date(
+                            client.created_at || Date.now()
+                          ).toLocaleDateString()}
                         </span>
                       </div>
                     </div>
-                  ))
-                ) : (
-                  <p className="empty-state">No open tasks. Great job staying on top of everything!</p>
-                )}
-              </div>
+                  ))}
+                </div>
+              ) : (
+                <div className="empty-state-card">
+                  <PeopleIcon className="empty-state-icon" />
+                  <h4 className="empty-state-title">No clients yet</h4>
+                  <p className="empty-state-description">
+                    Start by adding your first client to see them here
+                  </p>
+                </div>
+              )}
             </div>
           </div>
-
-
+        </div>
       </div>
     </DashboardLayout>
   );
