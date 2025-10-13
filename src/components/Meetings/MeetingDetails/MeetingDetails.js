@@ -8,6 +8,7 @@ import {
   Person as PersonIcon,
   Notes as NotesIcon,
   RecordVoiceOver as TranscriptIcon,
+  Assignment as AssignmentIcon,
 } from "@mui/icons-material";
 import { meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
@@ -15,6 +16,7 @@ import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
 import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
 import MarkdownSummary from "../MarkdownSummary/MarkdownSummary";
+import ActionItems from "../ActionItems/ActionItems";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -144,6 +146,13 @@ const MeetingDetails = ({
           Transcript
         </button>
         <button
+          className={`tab-btn ${activeTab === "action-items" ? "active" : ""}`}
+          onClick={() => setActiveTab("action-items")}
+        >
+          <AssignmentIcon />
+          Action Items
+        </button>
+        <button
           className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
           onClick={() => setActiveTab("notes")}
         >
@@ -232,6 +241,14 @@ const MeetingDetails = ({
               rawTranscript={meeting.raw_transcript}
             />
           </div>
+        )}
+
+        {activeTab === "action-items" && (
+          <ActionItems
+            meetingId={meetingId}
+            meeting={meeting}
+            onRefresh={loadMeetingDetails}
+          />
         )}
 
         {activeTab === "notes" && (

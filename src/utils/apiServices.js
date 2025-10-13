@@ -122,9 +122,24 @@ export const openPointsAPI = {
     return handleApiResponse(response);
   },
 
+  // Generate open points from Fathom webhook
+  generateFromFathomWebhook: async (meetingId, webhookUrl, clientId) => {
+    const response = await api.post(`/meetings/${meetingId}/fathom-open-points`, {
+      webhook_url: webhookUrl,
+      client_id: clientId
+    });
+    return handleApiResponse(response);
+  },
+
   // Get all open points for client
   getByClient: async (clientId) => {
     const response = await api.get(`/clients/${clientId}/open-points`);
+    return handleApiResponse(response);
+  },
+
+  // Get all open points for a specific meeting
+  getByMeeting: async (meetingId) => {
+    const response = await api.get(`/meetings/${meetingId}/open-points`);
     return handleApiResponse(response);
   },
 
