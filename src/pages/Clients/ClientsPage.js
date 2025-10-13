@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { clientAPI, meetingAPI, openPointsAPI, secretsAPI, workflowAPI } from "../../utils/apiServices";
+import { clientAPI, meetingAPI, secretsAPI, workflowAPI } from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   MeetingsList,
@@ -86,9 +86,8 @@ const ClientsPage = () => {
       const client = clients.find((c) => c.id === clientId);
 
       // Load related data
-      const [meetings, tasks, workflows, secrets] = await Promise.all([
+      const [meetings, workflows, secrets] = await Promise.all([
         meetingAPI.getByClient(clientId).catch(() => []),
-        openPointsAPI.getByClient(clientId).catch(() => []),
         workflowAPI.getByClient(clientId).catch(() => []),
         secretsAPI.getByClient(clientId).catch(() => []),
       ]);
@@ -96,7 +95,6 @@ const ClientsPage = () => {
       setClientDetails({
         ...client,
         meetings,
-        tasks,
         workflows: workflows || [],
         secrets: secrets || [],
       });
@@ -297,13 +295,7 @@ const ClientsPage = () => {
               <VideoCallIcon />
               Meetings
             </button>
-            <button
-              className={`tab-btn ${activeTab === "tasks" ? "active" : ""}`}
-              onClick={() => setActiveTab("tasks")}
-            >
-              <AssignmentIcon />
-              Open Points
-            </button>
+
             <button
               className={`tab-btn ${activeTab === "workflows" ? "active" : ""}`}
               onClick={() => setActiveTab("workflows")}
@@ -384,15 +376,7 @@ const ClientsPage = () => {
                               <label>Meetings</label>
                             </div>
                           </div>
-                          <div className="stat-item">
-                            <AssignmentIcon className="stat-icon tasks" />
-                            <div>
-                              <span className="stat-number">
-                                {clientDetails?.tasks?.length || 0}
-                              </span>
-                              <label>Open Points</label>
-                            </div>
-                          </div>
+
                           <div className="stat-item">
                             <WorkflowIcon className="stat-icon workflows" />
                             <div>
@@ -465,51 +449,7 @@ const ClientsPage = () => {
                           </div>
                         </div>
 
-                        {/* Recent Open Points */}
-                        <div className="activity-card">
-                          <div className="activity-header">
-                            <AssignmentIcon className="activity-icon tasks" />
-                            <h4>Recent Open Points</h4>
-                            <button
-                              className="view-all-btn"
-                              onClick={() => setActiveTab("tasks")}
-                            >
-                              View All
-                            </button>
-                          </div>
-                          <div className="activity-content">
-                            {clientDetails?.tasks?.length > 0 ? (
-                              clientDetails.tasks.slice(0, 3).map((task) => (
-                                <div key={task.id} className="activity-item">
-                                  <div className="activity-item-info">
-                                    <h5>{task.message || "Untitled Task"}</h5>
-                                    <div className="task-meta">
-                                      <span
-                                        className={`task-status ${task.status}`}
-                                      >
-                                        {task.status?.replace("_", " ") ||
-                                          "Open"}
-                                      </span>
-                                      {task.due_date && (
-                                        <span className="due-date">
-                                          Due:{" "}
-                                          {new Date(
-                                            task.due_date
-                                          ).toLocaleDateString()}
-                                        </span>
-                                      )}
-                                    </div>
-                                  </div>
-                                </div>
-                              ))
-                            ) : (
-                              <div className="activity-empty">
-                                <AssignmentIcon className="empty-icon" />
-                                <p>No open points yet</p>
-                              </div>
-                            )}
-                          </div>
-                        </div>
+
                       </div>
                     </div>
 
@@ -546,45 +486,6 @@ const ClientsPage = () => {
                   </div>
                 )}
 
-                {activeTab === "tasks" && (
-                  <div className="tasks-tab">
-                    <div className="tab-header">
-                      <h3>Open Points</h3>
-                      <button className="btn btn-primary">
-                        <AddIcon />
-                        Add Task
-                      </button>
-                    </div>
-                    <div className="tasks-list">
-                      {clientDetails?.tasks?.length > 0 ? (
-                        clientDetails.tasks.map((task) => (
-                          <div key={task.id} className="task-item">
-                            <AssignmentIcon className="task-icon" />
-                            <div className="task-info">
-                              <h4>{task.title || "Untitled Task"}</h4>
-                              <p>{task.description || "No description"}</p>
-                              <span className={`task-status ${task.status}`}>
-                                {task.status?.replace("_", " ") || "Open"}
-                              </span>
-                            </div>
-                            <button className="action-btn">
-                              <MoreVertIcon />
-                            </button>
-                          </div>
-                        ))
-                      ) : (
-                        <div className="empty-tab-state">
-                          <AssignmentIcon className="empty-icon" />
-                          <h4>No open points found</h4>
-                          <p>
-                            All tasks are completed or no tasks have been
-                            created yet.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                )}
 
                 {activeTab === "workflows" && (
                   <div className="workflows-tab">

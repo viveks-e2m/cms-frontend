@@ -8,7 +8,7 @@ import ForgotPasswordPage from './pages/ForgotPassword/ForgotPasswordPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import ClientsPage from './pages/Clients/ClientsPage';
 import MeetingsPage from './pages/Meetings/MeetingsPage';
-import TasksPage from './pages/Tasks/TasksPage';
+
 import SecretsPage from './pages/Secrets/SecretsPage';
 import N8nWorkflowsPage from './pages/N8nWorkflows/N8nWorkflowsPage';
 import WorkflowDetailsPage from './pages/N8nWorkflows/WorkflowDetailsPage';
@@ -49,14 +49,7 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-              <Route 
-                path="/tasks" 
-                element={
-                  <ProtectedRoute>
-                    <TasksPage />
-                  </ProtectedRoute>
-                } 
-              />
+
               <Route 
                 path="/secrets" 
                 element={
