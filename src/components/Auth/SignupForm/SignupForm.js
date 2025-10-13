@@ -10,6 +10,8 @@ const SignupForm = ({ onSuccess }) => {
   const navigate = useNavigate();
   
   const [formData, setFormData] = useState({
+    firstName: '',
+    lastName: '',
     email: '',
     password: '',
     confirmPassword: ''
@@ -37,6 +39,24 @@ const SignupForm = ({ onSuccess }) => {
 
   const validateForm = () => {
     const newErrors = {};
+    
+    // First name validation
+    if (!formData.firstName.trim()) {
+      newErrors.firstName = 'First name is required';
+    } else if (formData.firstName.trim().length < 2) {
+      newErrors.firstName = 'First name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formData.firstName.trim())) {
+      newErrors.firstName = 'First name can only contain letters, spaces, hyphens, and apostrophes';
+    }
+    
+    // Last name validation
+    if (!formData.lastName.trim()) {
+      newErrors.lastName = 'Last name is required';
+    } else if (formData.lastName.trim().length < 2) {
+      newErrors.lastName = 'Last name must be at least 2 characters';
+    } else if (!/^[a-zA-Z\s'-]+$/.test(formData.lastName.trim())) {
+      newErrors.lastName = 'Last name can only contain letters, spaces, hyphens, and apostrophes';
+    }
     
     // Email validation
     if (!formData.email.trim()) {
@@ -74,6 +94,8 @@ const SignupForm = ({ onSuccess }) => {
 
     // Prepare signup data
     const signupData = {
+      first_name: formData.firstName.trim(),
+      last_name: formData.lastName.trim(),
       email: formData.email.trim(),
       password: formData.password
     };
@@ -103,6 +125,42 @@ const SignupForm = ({ onSuccess }) => {
 
   return (
     <form onSubmit={handleSubmit} className="signup-form">
+      <div className="form-row">
+        <div className="form-group">
+          <label htmlFor="firstName" className="form-label">
+            First Name *
+          </label>
+          <input
+            type="text"
+            id="firstName"
+            name="firstName"
+            value={formData.firstName}
+            onChange={handleChange}
+            className={`form-input ${errors.firstName ? 'error' : ''}`}
+            placeholder="Enter your first name"
+            disabled={loading}
+          />
+          {errors.firstName && <div className="form-error">{errors.firstName}</div>}
+        </div>
+
+        <div className="form-group">
+          <label htmlFor="lastName" className="form-label">
+            Last Name *
+          </label>
+          <input
+            type="text"
+            id="lastName"
+            name="lastName"
+            value={formData.lastName}
+            onChange={handleChange}
+            className={`form-input ${errors.lastName ? 'error' : ''}`}
+            placeholder="Enter your last name"
+            disabled={loading}
+          />
+          {errors.lastName && <div className="form-error">{errors.lastName}</div>}
+        </div>
+      </div>
+
       <div className="form-group">
         <label htmlFor="email" className="form-label">
           Email Address *

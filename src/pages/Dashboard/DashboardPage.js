@@ -107,7 +107,7 @@ const DashboardPage = () => {
         <div className="dashboard-welcome">
           <h1 className="welcome-title">
             <WavingHandIcon className="welcome-icon" />
-            Welcome back, {user?.name || user?.email?.split("@")[0] || "User"}!
+            Welcome back, {user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || user?.email?.split("@")[0] || "User"}!
           </h1>
           <p className="welcome-subtitle">
             Here's an overview of your CMS activities and recent updates.

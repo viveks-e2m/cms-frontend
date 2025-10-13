@@ -90,10 +90,22 @@ export const AuthProvider = ({ children }) => {
       
       let errorMessage = 'Signup failed. Please try again.';
       
+      // Handle specific error cases
       if (error.response?.data?.error?.message) {
         errorMessage = error.response.data.error.message;
       } else if (error.message) {
-        errorMessage = error.message;
+        // Handle common Supabase Auth errors
+        if (error.message.includes('User already registered')) {
+          errorMessage = 'An account with this email already exists. Please try logging in instead.';
+        } else if (error.message.includes('Invalid email')) {
+          errorMessage = 'Please enter a valid email address.';
+        } else if (error.message.includes('Password should be at least')) {
+          errorMessage = 'Password must be at least 6 characters long.';
+        } else if (error.message.includes('signup is disabled')) {
+          errorMessage = 'Account registration is currently disabled. Please contact support.';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       return { 

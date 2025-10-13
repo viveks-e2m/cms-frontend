@@ -89,6 +89,9 @@ export const authAPI = {
       id: data.id,
       email: data.email,
       role: data.user_metadata?.role || 'user',
+      first_name: data.user_metadata?.first_name || data.first_name,
+      last_name: data.user_metadata?.last_name || data.last_name,
+      full_name: data.user_metadata?.full_name || data.full_name,
       ...data.user_metadata
     };
   },

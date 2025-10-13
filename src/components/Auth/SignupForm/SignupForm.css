@@ -3,7 +3,20 @@
   max-width: 100%;
 }
 
-/* Removed form-row styles - no longer needed for simplified form */
+/* Form Row for Name Fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
 
 /* Password Input Wrapper */
 .password-input-wrapper {
