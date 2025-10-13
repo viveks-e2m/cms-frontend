@@ -8,7 +8,6 @@ import {
   Chip,
   Button,
   IconButton,
-  Tooltip,
   Dialog,
   DialogTitle,
   DialogContent,
@@ -18,7 +17,6 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Alert,
   Divider,
 } from '@mui/material';
 import {
@@ -26,7 +24,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   AccountTree as WorkflowIcon,
-  PlayArrow as PlayIcon,
   Refresh as RefreshIcon,
   CheckCircle as ActiveIcon,
   Pause as InactiveIcon,
@@ -173,41 +170,39 @@ const WorkflowManager = ({ clientId, clientName }) => {
   return (
     <div className="workflow-manager">
       {/* Header */}
-      <Box className="workflow-manager-header">
-        <Box className="header-content">
+      <div className="workflow-manager-header">
+        <div className="header-content">
           <WorkflowIcon className="header-icon" />
-          <Box>
-            <Typography variant="h6" className="header-title">
+          <div>
+            <h3 className="header-title">
               Client Workflows
-            </Typography>
-            <Typography variant="body2" className="header-subtitle">
+            </h3>
+            <p className="header-subtitle">
               Manage automation workflows for {clientName}
-            </Typography>
-          </Box>
-        </Box>
-        <Box className="header-actions">
-          <Tooltip title="Refresh">
-            <IconButton 
-              onClick={handleRefresh} 
-              disabled={refreshing}
-              className="refresh-btn"
-            >
-              <RefreshIcon className={refreshing ? 'spinning' : ''} />
-            </IconButton>
-          </Tooltip>
-          <Button
-            variant="contained"
-            startIcon={<AddIcon />}
-            onClick={handleAddWorkflow}
-            className="add-workflow-btn"
+            </p>
+          </div>
+        </div>
+        <div className="header-actions">
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="refresh-btn"
+            title="Refresh"
           >
+            <RefreshIcon className={refreshing ? 'spinning' : ''} />
+          </button>
+          <button
+            className="btn btn-primary add-workflow-btn"
+            onClick={handleAddWorkflow}
+          >
+            <AddIcon />
             Add Workflow
-          </Button>
-        </Box>
-      </Box>
+          </button>
+        </div>
+      </div>
 
       {/* Workflows List */}
-      <Box className="workflows-content">
+      <div className="workflows-content">
         {loading ? (
           <WorkflowSkeleton count={3} />
         ) : workflows.length === 0 ? (
@@ -304,7 +299,7 @@ const WorkflowManager = ({ clientId, clientName }) => {
             ))}
           </Grid>
         )}
-      </Box>
+      </div>
 
       {/* Add/Edit Workflow Dialog */}
       <Dialog 

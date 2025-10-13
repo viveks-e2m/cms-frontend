@@ -1,76 +1,88 @@
 .workflow-manager {
-  padding: 0;
+  width: 100%;
+  position: relative;
+  overflow: visible;
 }
 
 .workflow-manager-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
+  align-items: flex-start;
   margin-bottom: 2rem;
-  padding: 1.5rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  color: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--neutral-light);
 }
 
 .header-content {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   gap: 1rem;
 }
 
 .header-icon {
-  font-size: 2rem !important;
-  background: rgba(255, 255, 255, 0.2);
-  padding: 0.5rem;
-  border-radius: 8px;
-  backdrop-filter: blur(10px);
+  width: 32px !important;
+  height: 32px !important;
+  color: #667eea;
+  margin-top: 0.25rem;
 }
 
 .header-title {
-  font-weight: 700 !important;
-  color: white;
-  margin: 0 !important;
+  color: var(--primary-navy);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0 !important;
 }
 
 .header-subtitle {
-  color: rgba(255, 255, 255, 0.9);
-  margin: 0.25rem 0 0 0 !important;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0 !important;
 }
 
 .header-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.5rem;
+  flex-shrink: 0;
 }
 
 .refresh-btn {
-  background: rgba(255, 255, 255, 0.2) !important;
-  color: white !important;
-  backdrop-filter: blur(10px);
-  border: 1px solid rgba(255, 255, 255, 0.3) !important;
-  transition: all 0.3s ease !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--neutral-medium);
+  background: var(--primary-white);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .refresh-btn:hover {
-  background: rgba(255, 255, 255, 0.3) !important;
   transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .add-workflow-btn {
-  background: rgba(255, 255, 255, 0.9) !important;
-  color: #667eea !important;
-  font-weight: 600 !important;
-  border-radius: 8px !important;
-  backdrop-filter: blur(10px);
-  transition: all 0.3s ease !important;
-}
-
-.add-workflow-btn:hover {
-  background: white !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
 }
 
 .spinning {
@@ -88,6 +100,10 @@
 
 .workflows-content {
   margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
 }
 
 .workflow-card {
@@ -247,6 +263,22 @@
 /* Empty State Overrides */
 .workflow-manager .empty-state-card {
   margin: 2rem 0;
+  width: 100%;
+}
+
+.workflow-manager .empty-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem !important;
+}
+
+.workflow-manager .empty-state-description {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
 }
 
 /* Responsive Design */
