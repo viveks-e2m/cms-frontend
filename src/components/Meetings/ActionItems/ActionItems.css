@@ -46,6 +46,54 @@
   gap: 8px;
 }
 
+/* Generation Status Styles */
+.generation-status {
+  margin-bottom: 24px;
+  padding: 16px;
+  border-radius: 8px;
+  border-left: 4px solid;
+}
+
+.generation-status.pending {
+  background: #EBF8FF;
+  border-left-color: #3B82F6;
+}
+
+.generation-status.error {
+  background: #FEF2F2;
+  border-left-color: #EF4444;
+}
+
+.status-indicator {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.status-indicator .spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #E5E7EB;
+  border-top: 2px solid #3B82F6;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.status-message {
+  margin: 0;
+  color: #6B7280;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
 .no-action-items {
   display: flex;
   flex-direction: column;

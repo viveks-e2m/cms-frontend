@@ -135,7 +135,20 @@ const MeetingForm = ({
         // Check if Fathom data was fetched successfully
         if (formData.source === "fathom") {
           const meetingResult = result;
-          if (meetingResult?.fathom_fetch_success) {
+          
+          // Check for background action items generation
+          if (meetingResult?.action_items_status === "generating_in_background") {
+            setFathomStatus((prev) => ({
+              ...prev,
+              success: true,
+              fetching: false,
+              attempted: true,
+            }));
+            showSuccess(
+              "Meeting created successfully! Action items are being generated in the background and will be available shortly."
+            );
+            showInfo("You can view the meeting details now. Action items will appear automatically once generated.");
+          } else if (meetingResult?.fathom_fetch_success) {
             setFathomStatus((prev) => ({
               ...prev,
               success: true,

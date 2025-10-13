@@ -9,7 +9,7 @@ import {
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { openPointsAPI } from "../../../utils/apiServices";
+import { openPointsAPI, meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./ActionItems.css";
@@ -17,14 +17,59 @@ import "./ActionItems.css";
 const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [actionItems, setActionItems] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [generationStatus, setGenerationStatus] = useState(null);
+  const [polling, setPolling] = useState(false);
 
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError, showInfo } = useNotificationContext();
 
   useEffect(() => {
     if (meetingId) {
       loadActionItems();
+      
+      // Start polling if this is a Fathom meeting and might have background generation
+      if (meeting?.source === "fathom") {
+        checkGenerationStatus();
+      }
     }
-  }, [meetingId]);
+  }, [meetingId, meeting]);
+
+  const checkGenerationStatus = async () => {
+    try {
+      const status = await meetingAPI.getActionItemsStatus(meetingId);
+      setGenerationStatus(status);
+      
+      if (status.status === "pending") {
+        // Start polling every 5 seconds
+        setPolling(true);
+        const pollInterval = setInterval(async () => {
+          try {
+            const updatedStatus = await meetingAPI.getActionItemsStatus(meetingId);
+            setGenerationStatus(updatedStatus);
+            
+            if (updatedStatus.status === "completed") {
+              clearInterval(pollInterval);
+              setPolling(false);
+              showInfo("Action items have been generated!");
+              await loadActionItems();
+            } else if (updatedStatus.status === "error") {
+              clearInterval(pollInterval);
+              setPolling(false);
+            }
+          } catch (error) {
+            console.error("Error polling action items status:", error);
+          }
+        }, 5000);
+        
+        // Stop polling after 5 minutes
+        setTimeout(() => {
+          clearInterval(pollInterval);
+          setPolling(false);
+        }, 300000);
+      }
+    } catch (error) {
+      console.error("Error checking action items generation status:", error);
+    }
+  };
 
   const loadActionItems = async () => {
     try {
@@ -128,6 +173,30 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
           </button>
         </div>
       </div>
+
+      {/* Generation Status Indicator */}
+      {generationStatus && generationStatus.status === "pending" && (
+        <div className="generation-status pending">
+          <div className="status-indicator">
+            <div className="spinner"></div>
+            <span>Generating action items in background...</span>
+          </div>
+          <p className="status-message">
+            Action items are being generated from the meeting transcript. This usually takes 1-2 minutes.
+          </p>
+        </div>
+      )}
+
+      {generationStatus && generationStatus.status === "error" && (
+        <div className="generation-status error">
+          <div className="status-indicator">
+            <span>⚠️ Action items generation failed</span>
+          </div>
+          <p className="status-message">
+            {generationStatus.message || "There was an error generating action items from the meeting transcript."}
+          </p>
+        </div>
+      )}
 
       {actionItems.length === 0 ? (
         <div className="no-action-items">

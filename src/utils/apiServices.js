@@ -116,6 +116,11 @@ export const meetingAPI = {
     return handleApiResponse(response);
   },
 
+  // Action items status
+  getActionItemsStatus: async (meetingId) => {
+    const response = await api.get(`/meetings/${meetingId}/action-items-status`);
+    return handleApiResponse(response);
+  },
 
 };
 
