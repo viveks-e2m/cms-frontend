@@ -132,7 +132,7 @@ const MeetingsList = ({
 
                 <div className="meeting-card-content">
                   <h4 className="meeting-title">
-                    Meeting #{meeting.id?.slice(-8) || 'Unknown'}
+                    {meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || 'Unknown'}`}
                   </h4>
                   <p className="meeting-description">
                     {meeting.summary || 'No summary available'}

@@ -29,6 +29,7 @@ const MeetingForm = ({
     recording_url: "",
     transcript: "",
     summary: "",
+    meeting_name: "",
     source: "fathom",
   });
   const [loading, setLoading] = useState(false);
@@ -47,6 +48,7 @@ const MeetingForm = ({
         recording_url: meeting.recording_url || "",
         transcript: meeting.transcript || "",
         summary: meeting.summary || "",
+        meeting_name: meeting.meeting_name || "",
         source: meeting.source || "other",
       });
     } else {
@@ -55,6 +57,7 @@ const MeetingForm = ({
         recording_url: "",
         transcript: "",
         summary: "",
+        meeting_name: "",
         source: "fathom",
       });
     }
@@ -103,6 +106,7 @@ const MeetingForm = ({
         recording_url: formData.recording_url.trim() || null,
         transcript: formData.transcript.trim() || null,
         summary: formData.summary.trim() || null,
+        meeting_name: formData.meeting_name.trim() || null,
         source: formData.source,
       };
 
@@ -196,6 +200,7 @@ const MeetingForm = ({
       recording_url: "",
       transcript: "",
       summary: "",
+      meeting_name: "",
       source: "fathom",
     });
     setFathomStatus({
@@ -268,6 +273,27 @@ const MeetingForm = ({
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Meeting Name - Optional */}
+            <div className="form-group">
+              <label htmlFor="meeting_name">
+                <AssignmentIcon className="label-icon" />
+                Meeting Name
+              </label>
+              <input
+                type="text"
+                id="meeting_name"
+                name="meeting_name"
+                value={formData.meeting_name}
+                onChange={handleInputChange}
+                placeholder="Enter a custom meeting name (optional)"
+                className="form-input"
+              />
+              <small className="field-hint">
+                If left empty, the meeting name will be automatically extracted
+                from the summary
+              </small>
             </div>
 
             {/* Recording URL - Always Required */}

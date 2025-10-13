@@ -107,21 +107,30 @@ const MeetingDetails = ({
             <VideoCallIcon />
           </div>
           <div className="meeting-title-section">
-            <h1>Meeting #{meeting.id?.slice(-8) || "Unknown"}</h1>
+            <h1>{meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || "Unknown"}`}</h1>
             <p className="meeting-client">with {clientName}</p>
           </div>
         </div>
 
         <div className="meeting-actions-header">
           <button
-            className="btn btn-secondary btn-sm"
+            className="btn btn-secondary btn-xs"
             onClick={() => onEdit(meeting)}
           >
             <EditIcon />
-            Edit Meeting
+            Edit
           </button>
+          {meeting.recording_url && (
+            <button
+              className="btn btn-primary btn-xs"
+              onClick={() => window.open(meeting.recording_url, '_blank')}
+            >
+              <VideoCallIcon />
+              View Recording
+            </button>
+          )}
           <button
-            className="btn btn-danger btn-sm"
+            className="btn btn-danger btn-xs"
             onClick={() => onDelete(meeting)}
           >
             <DeleteIcon />
@@ -165,63 +174,6 @@ const MeetingDetails = ({
         {activeTab === "details" && (
           <div className="meeting-details-tab">
             <div className="meeting-info-grid">
-              <div className="meeting-info-card">
-                <h3>Meeting Information</h3>
-                <div className="info-items">
-                  <div className="info-item">
-                    <CalendarIcon className="info-icon" />
-                    <div className="info-content">
-                      <label>Created Date</label>
-                      <span>{formatDate(meeting.created_at)}</span>
-                    </div>
-                  </div>
-
-                  <div className="info-item">
-                    <PersonIcon className="info-icon" />
-                    <div className="info-content">
-                      <label>Meeting ID</label>
-                      <span>{meeting.id}</span>
-                    </div>
-                  </div>
-
-                  <div className="info-item">
-                    <PersonIcon className="info-icon" />
-                    <div className="info-content">
-                      <label>Client ID</label>
-                      <span>{meeting.client_id}</span>
-                    </div>
-                  </div>
-
-                  {meeting.source && (
-                    <div className="info-item">
-                      <VideoCallIcon className="info-icon" />
-                      <div className="info-content">
-                        <label>Source</label>
-                        <span className={`source-badge ${meeting.source}`}>
-                          {meeting.source === 'fathom' ? 'Fathom Recording' : 'Manual Entry'}
-                        </span>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {meeting.recording_url && (
-                <div className="meeting-info-card">
-                  <h3>Recording</h3>
-                  <div className="meeting-recording">
-                    <a
-                      href={meeting.recording_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="meeting-link"
-                    >
-                      View Recording
-                    </a>
-                  </div>
-                </div>
-              )}
-
               {meeting.summary && (
                 <div className="meeting-summary-container full-width">
                   <MarkdownSummary 

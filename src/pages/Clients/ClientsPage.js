@@ -450,7 +450,7 @@ const ClientsPage = () => {
                                   >
                                     <div className="activity-item-info">
                                       <h5>
-                                        {meeting.title || "Untitled Meeting"}
+                                        {meeting.meeting_name || meeting.title || `Meeting #${meeting.id?.slice(-8) || "Unknown"}`}
                                       </h5>
                                       <p>
                                         {meeting.summary ||

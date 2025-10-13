@@ -129,8 +129,26 @@
 
 .meeting-actions-header {
   display: flex;
-  gap: 12px;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+/* Extra small button styles for meeting actions */
+.meeting-actions-header .btn-xs {
+  padding: 6px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-height: 32px;
+  transition: all 0.2s ease;
+}
+
+.meeting-actions-header .btn-xs svg {
+  width: 14px !important;
+  height: 14px !important;
 }
 
 .meeting-details-tabs {
