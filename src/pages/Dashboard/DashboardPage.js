@@ -4,6 +4,7 @@ import { useNotificationContext } from "../../contexts/NotificationContext";
 import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import ClientAvatar from "../../components/UI/ClientAvatar";
 import {
   People as PeopleIcon,
   VideoCall as VideoCallIcon,
@@ -179,9 +180,10 @@ const DashboardPage = () => {
                   {dashboardData.clients.slice(0, 6).map((client) => (
                     <div key={client.id} className="client-card">
                       <div className="client-card-header">
-                        <div className="client-avatar">
-                          <PersonIcon />
-                        </div>
+                        <ClientAvatar 
+                          client={client} 
+                          size="medium"
+                        />
                         <div className="client-status">
                           <span className="status-badge status-active">
                             Active

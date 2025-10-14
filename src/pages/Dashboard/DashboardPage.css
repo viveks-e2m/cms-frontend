@@ -249,23 +249,7 @@
   margin-bottom: 1rem;
 }
 
-.client-avatar {
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1), rgba(16, 185, 129, 0.1));
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #3B82F6;
-  flex-shrink: 0;
-  border: 2px solid rgba(59, 130, 246, 0.2);
-}
-
-.client-avatar svg {
-  width: 24px;
-  height: 24px;
-}
+/* Client avatar styles are now handled by ClientAvatar component */
 
 .client-status {
   margin-top: 0.25rem;

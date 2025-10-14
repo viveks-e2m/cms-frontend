@@ -17,6 +17,7 @@ import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import SecretsManager from "../../components/Clients/SecretsManager";
 import WorkflowManager from "../../components/Clients/WorkflowManager/WorkflowManager";
 import ClientForm from "../../components/Clients/ClientForm";
+import ClientAvatar from "../../components/UI/ClientAvatar";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -295,9 +296,11 @@ const ClientsPage = () => {
               <ArrowBackIcon />
             </button>
             <div className="client-details-title">
-              <div className="client-avatar-large">
-                <PersonOutlineIcon />
-              </div>
+              <ClientAvatar 
+                client={selectedClient} 
+                size="large" 
+                className="client-avatar-large"
+              />
               <div className="client-title-info">
                 <h1>{selectedClient.name || "Unnamed Client"}</h1>
                 <p>{selectedClient.email}</p>
@@ -624,9 +627,10 @@ const ClientsPage = () => {
                     className="client-card"
                     onClick={() => handleClientSelect(client)}
                   >
-                    <div className="client-avatar">
-                      <PersonOutlineIcon />
-                    </div>
+                    <ClientAvatar 
+                      client={client} 
+                      size="medium"
+                    />
                     <div className="client-info">
                       <h3 className="client-name">
                         {client.name || "Unnamed Client"}

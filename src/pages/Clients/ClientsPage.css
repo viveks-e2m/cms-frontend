@@ -214,34 +214,7 @@
   transition: all 0.1s ease;
 }
 
-.client-avatar {
-  width: 56px;
-  height: 56px;
-  background: var(--neutral-light);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: var(--text-secondary);
-  flex-shrink: 0;
-  border: 2px solid var(--neutral-medium);
-  transition: var(--transition);
-  position: relative;
-}
-
-.client-avatar:hover {
-  background: var(--primary-navy);
-  color: var(--primary-white);
-  border-color: var(--accent-gold);
-  transform: translateY(-1px);
-  box-shadow: 0 4px 12px rgba(0, 31, 63, 0.15);
-}
-
-.client-avatar svg {
-  width: 28px !important;
-  height: 28px !important;
-  transition: var(--transition);
-}
+/* Client avatar styles are now handled by ClientAvatar component */
 
 .client-info {
   flex: 1;
@@ -615,19 +588,11 @@
   z-index: 1;
 }
 
+/* Client avatar large styles are enhanced by ClientAvatar component */
 .client-avatar-large {
-  width: 80px;
-  height: 80px;
-  background: rgba(255, 255, 255, 0.2);
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: white;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-  border: 3px solid rgba(255, 255, 255, 0.3);
+  border: 3px solid rgba(255, 255, 255, 0.3) !important;
   backdrop-filter: blur(10px);
-  position: relative;
   transition: all 0.3s ease;
 }
 
@@ -636,9 +601,12 @@
   box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
 }
 
-.client-avatar-large svg {
-  width: 40px !important;
-  height: 40px !important;
+.client-avatar-large .avatar-icon {
+  color: white !important;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+.client-avatar-large .avatar-image {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
