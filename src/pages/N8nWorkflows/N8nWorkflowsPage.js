@@ -245,13 +245,13 @@ const N8nWorkflowsPage = () => {
                     onClearFilters={handleClearFilters}
                   />
                 ) : (
-                  <div className="workflows-list">
+                  <Grid container spacing={2} className="workflows-grid">
                     {filteredWorkflows.map((workflow) => (
-                      <Card 
-                        key={workflow.id} 
-                        className="workflow-item"
-                        onClick={() => navigate(`/n8n-workflows/${workflow.id}`)}
-                      >
+                      <Grid item xs={12} md={6} key={workflow.id}>
+                        <Card 
+                          className="workflow-item"
+                          onClick={() => navigate(`/n8n-workflows/${workflow.id}`)}
+                        >
                         <CardContent>
                           <Box className="workflow-header">
                             <Box className="workflow-info">
@@ -281,10 +281,10 @@ const N8nWorkflowsPage = () => {
                           
                           {/* Workflow Statistics */}
                           <Box className="workflow-stats" style={{ margin: '1rem 0' }}>
-                            <Grid container spacing={2}>
-                              <Grid item xs={3}>
+                            <Grid container spacing={1}>
+                              <Grid item xs={6}>
                                 <Box textAlign="center">
-                                  <Typography variant="h6" color="primary">
+                                  <Typography variant="h6" color="primary" style={{ fontSize: '1.1rem' }}>
                                     {workflow.nodes?.length || 0}
                                   </Typography>
                                   <Typography variant="caption" color="textSecondary">
@@ -292,9 +292,9 @@ const N8nWorkflowsPage = () => {
                                   </Typography>
                                 </Box>
                               </Grid>
-                              <Grid item xs={3}>
+                              <Grid item xs={6}>
                                 <Box textAlign="center">
-                                  <Typography variant="h6" color="primary">
+                                  <Typography variant="h6" color="primary" style={{ fontSize: '1.1rem' }}>
                                     {workflow.connections ? Object.keys(workflow.connections).length : 0}
                                   </Typography>
                                   <Typography variant="caption" color="textSecondary">
@@ -302,9 +302,9 @@ const N8nWorkflowsPage = () => {
                                   </Typography>
                                 </Box>
                               </Grid>
-                              <Grid item xs={3}>
+                              <Grid item xs={6}>
                                 <Box textAlign="center">
-                                  <Typography variant="h6" color="primary">
+                                  <Typography variant="h6" color="primary" style={{ fontSize: '1.1rem' }}>
                                     {workflow.nodes?.filter(node => node.credentials).length || 0}
                                   </Typography>
                                   <Typography variant="caption" color="textSecondary">
@@ -312,9 +312,9 @@ const N8nWorkflowsPage = () => {
                                   </Typography>
                                 </Box>
                               </Grid>
-                              <Grid item xs={3}>
+                              <Grid item xs={6}>
                                 <Box textAlign="center">
-                                  <Typography variant="h6" color="primary">
+                                  <Typography variant="h6" color="primary" style={{ fontSize: '1.1rem' }}>
                                     {workflow.nodes?.filter(node => node.type?.includes('trigger')).length || 0}
                                   </Typography>
                                   <Typography variant="caption" color="textSecondary">
@@ -388,9 +388,10 @@ const N8nWorkflowsPage = () => {
                             </Typography>
                           </Box>
                         </CardContent>
-                      </Card>
+                        </Card>
+                      </Grid>
                     ))}
-                  </div>
+                  </Grid>
                 )}
               </CardContent>
             </Card>
