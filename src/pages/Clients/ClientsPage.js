@@ -358,33 +358,6 @@ const ClientsPage = () => {
                               </span>
                             </div>
                           </div>
-                          <div className="info-item">
-                            <EmailIcon className="info-icon" />
-                            <div>
-                              <label>Email</label>
-                              <span>
-                                {selectedClient.email || "Not provided"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="info-item">
-                            <PhoneIcon className="info-icon" />
-                            <div>
-                              <label>Phone</label>
-                              <span>
-                                {selectedClient.phone || "Not provided"}
-                              </span>
-                            </div>
-                          </div>
-                          <div className="info-item">
-                            <BusinessIcon className="info-icon" />
-                            <div>
-                              <label>Company</label>
-                              <span>
-                                {selectedClient.company || "Not provided"}
-                              </span>
-                            </div>
-                          </div>
                         </div>
                       </div>
 
