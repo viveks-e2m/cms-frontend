@@ -134,9 +134,6 @@ const MeetingsList = ({
                   <h4 className="meeting-title">
                     {meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || 'Unknown'}`}
                   </h4>
-                  <p className="meeting-description">
-                    {meeting.summary || 'No summary available'}
-                  </p>
                   
                   <div className="meeting-meta">
                     <div className="meeting-date">
