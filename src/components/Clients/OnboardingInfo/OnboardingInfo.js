@@ -97,7 +97,7 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
     <div className="onboarding-info">
       <div className="onboarding-header">
         <div className="onboarding-title">
-          <CheckIcon className="success-icon" />
+          {/* <CheckIcon className="success-icon" /> */}
           <h3>Onboarding Information</h3>
         </div>
         <button 

@@ -769,6 +769,12 @@
   gap: 2rem;
 }
 
+/* Onboarding Tab */
+.onboarding-tab {
+  width: 100%;
+  padding: 1rem 0;
+}
+
 .onboarding-section-wrapper {
   width: 100%;
 }

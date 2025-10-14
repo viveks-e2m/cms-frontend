@@ -1,7 +1,12 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { clientAPI, meetingAPI, secretsAPI, workflowAPI } from "../../utils/apiServices";
+import {
+  clientAPI,
+  meetingAPI,
+  secretsAPI,
+  workflowAPI,
+} from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   MeetingsList,
@@ -22,18 +27,14 @@ import {
   Person as PersonIcon,
   PersonOutline as PersonOutlineIcon,
   Email as EmailIcon,
-  Phone as PhoneIcon,
   Business as BusinessIcon,
   VideoCall as VideoCallIcon,
-  Assignment as AssignmentIcon,
   Security as SecurityIcon,
   AccountTree as WorkflowIcon,
   ArrowBack as ArrowBackIcon,
-  MoreVert as MoreVertIcon,
   FilterList as FilterIcon,
   Sort as SortIcon,
-  ViewModule as GridViewIcon,
-  ViewList as ListViewIcon,
+  Info as OnboardingIcon,
 } from "@mui/icons-material";
 import "./ClientsPage.css";
 
@@ -207,7 +208,7 @@ const ClientsPage = () => {
       await clientAPI.delete(client.id);
       showSuccess("Client deleted successfully");
       loadClients(); // Reload the clients list
-      
+
       // If the deleted client was currently selected, go back to list
       if (selectedClient && selectedClient.id === client.id) {
         handleBackToList();
@@ -321,6 +322,15 @@ const ClientsPage = () => {
             </button>
 
             <button
+              className={`tab-btn ${
+                activeTab === "onboarding" ? "active" : ""
+              }`}
+              onClick={() => setActiveTab("onboarding")}
+            >
+              <OnboardingIcon />
+              Onboarding
+            </button>
+            <button
               className={`tab-btn ${activeTab === "workflows" ? "active" : ""}`}
               onClick={() => setActiveTab("workflows")}
             >
@@ -423,7 +433,11 @@ const ClientsPage = () => {
                                   >
                                     <div className="activity-item-info">
                                       <h5>
-                                        {meeting.meeting_name || meeting.title || `Meeting #${meeting.id?.slice(-8) || "Unknown"}`}
+                                        {meeting.meeting_name ||
+                                          meeting.title ||
+                                          `Meeting #${
+                                            meeting.id?.slice(-8) || "Unknown"
+                                          }`}
                                       </h5>
                                       <p>
                                         {meeting.summary ||
@@ -445,17 +459,7 @@ const ClientsPage = () => {
                             )}
                           </div>
                         </div>
-
-
                       </div>
-                    </div>
-
-                    {/* Onboarding Information Section */}
-                    <div className="onboarding-section-wrapper">
-                      <OnboardingInfo
-                        clientId={selectedClient.id}
-                        existingOnboardingInfo={selectedClient.onboarding_info}
-                      />
                     </div>
                   </div>
                 )}
@@ -483,6 +487,14 @@ const ClientsPage = () => {
                   </div>
                 )}
 
+                {activeTab === "onboarding" && (
+                  <div className="onboarding-tab">
+                    <OnboardingInfo
+                      clientId={selectedClient.id}
+                      existingOnboardingInfo={selectedClient.onboarding_info}
+                    />
+                  </div>
+                )}
 
                 {activeTab === "workflows" && (
                   <div className="workflows-tab">
@@ -514,7 +526,6 @@ const ClientsPage = () => {
             onCancel={handleMeetingFormCancel}
             isOpen={showMeetingForm}
           />
-
         </div>
       </DashboardLayout>
     );
@@ -533,10 +544,7 @@ const ClientsPage = () => {
               Manage your client information, assignments, and relationships
             </p>
           </div>
-          <button 
-            className="btn btn-primary"
-            onClick={handleAddClient}
-          >
+          <button className="btn btn-primary" onClick={handleAddClient}>
             <AddIcon />
             Add New Client
           </button>
@@ -653,8 +661,8 @@ const ClientsPage = () => {
                       className="client-actions"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button 
-                        className="action-btn edit" 
+                      <button
+                        className="action-btn edit"
                         title="Edit Client"
                         onClick={() => handleEditClient(client)}
                       >
@@ -688,10 +696,7 @@ const ClientsPage = () => {
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
                 {!searchTerm && !statusFilter && (
-                  <button 
-                    className="btn btn-primary"
-                    onClick={handleAddClient}
-                  >
+                  <button className="btn btn-primary" onClick={handleAddClient}>
                     <AddIcon />
                     Add Your First Client
                   </button>
