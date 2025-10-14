@@ -219,6 +219,156 @@
   border-radius: 8px !important;
 }
 
+/* New Workflow Details Styles */
+.workflow-nodes-card,
+.workflow-connections-card,
+.workflow-settings-card,
+.workflow-stats-card {
+  border-radius: 16px !important;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08) !important;
+  border: 1px solid rgba(255, 255, 255, 0.8) !important;
+  background: rgba(255, 255, 255, 0.95) !important;
+  backdrop-filter: blur(10px);
+  transition: all 0.3s ease !important;
+  height: fit-content;
+}
+
+.workflow-nodes-card:hover,
+.workflow-connections-card:hover,
+.workflow-settings-card:hover,
+.workflow-stats-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.12) !important;
+}
+
+.nodes-table,
+.connections-table {
+  border-radius: 12px !important;
+  overflow: hidden;
+  margin-top: 1rem;
+}
+
+.nodes-table .MuiTableHead-root {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.nodes-table .MuiTableHead-root .MuiTableCell-root {
+  color: white !important;
+  font-weight: 600 !important;
+  border-bottom: none !important;
+}
+
+.connections-table .MuiTableHead-root {
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+}
+
+.connections-table .MuiTableHead-root .MuiTableCell-root {
+  color: white !important;
+  font-weight: 600 !important;
+  border-bottom: none !important;
+}
+
+.node-name {
+  font-weight: 600 !important;
+  color: #2d3748;
+}
+
+.node-type-chip {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  color: white !important;
+  border: none !important;
+  font-size: 0.75rem !important;
+}
+
+.node-position {
+  font-family: 'Monaco', 'Menlo', monospace !important;
+  color: #718096;
+  font-size: 0.875rem !important;
+}
+
+.source-node,
+.target-node {
+  font-weight: 600 !important;
+  color: #2d3748;
+}
+
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.setting-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+  border-radius: 8px;
+  border: 1px solid rgba(102, 126, 234, 0.1);
+  transition: all 0.3s ease;
+}
+
+.setting-item:hover {
+  transform: translateX(4px);
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+}
+
+.setting-key {
+  font-weight: 600 !important;
+  color: #667eea;
+  text-transform: uppercase;
+  font-size: 0.75rem !important;
+  letter-spacing: 1px;
+}
+
+.setting-value {
+  color: #2d3748;
+  font-family: 'Monaco', 'Menlo', monospace !important;
+  font-size: 0.875rem !important;
+  word-break: break-all;
+  background: rgba(255, 255, 255, 0.8);
+  padding: 0.5rem;
+  border-radius: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.workflow-details-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+
+.workflow-details-stat-item {
+  text-align: center;
+  padding: 1.5rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 12px;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.workflow-details-stat-item:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.workflow-details-stat-number {
+  font-weight: 700 !important;
+  margin-bottom: 0.5rem !important;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.workflow-details-stat-label {
+  color: rgba(255, 255, 255, 0.9) !important;
+  font-weight: 500 !important;
+  text-transform: uppercase;
+  font-size: 0.75rem !important;
+  letter-spacing: 1px;
+}
+
 /* Responsive Design */
 @media (max-width: 768px) {
   .workflow-details-page {
@@ -269,5 +419,24 @@
 
   .tag-chip {
     align-self: flex-start;
+  }
+
+  .workflow-details-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .nodes-table,
+  .connections-table {
+    overflow-x: auto;
+  }
+
+  .nodes-table table,
+  .connections-table table {
+    min-width: 600px;
+  }
+
+  .setting-value {
+    font-size: 0.75rem !important;
   }
 }

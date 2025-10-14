@@ -268,8 +268,96 @@ const N8nWorkflowsPage = () => {
                                 color={workflow.active ? 'success' : 'default'}
                                 size="small"
                               />
+                              {workflow.isArchived && (
+                                <Chip
+                                  label="Archived"
+                                  color="warning"
+                                  size="small"
+                                  style={{ marginLeft: '0.5rem' }}
+                                />
+                              )}
                             </Box>
                           </Box>
+                          
+                          {/* Workflow Statistics */}
+                          <Box className="workflow-stats" style={{ margin: '1rem 0' }}>
+                            <Grid container spacing={2}>
+                              <Grid item xs={3}>
+                                <Box textAlign="center">
+                                  <Typography variant="h6" color="primary">
+                                    {workflow.nodes?.length || 0}
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    Nodes
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={3}>
+                                <Box textAlign="center">
+                                  <Typography variant="h6" color="primary">
+                                    {workflow.connections ? Object.keys(workflow.connections).length : 0}
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    Connections
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={3}>
+                                <Box textAlign="center">
+                                  <Typography variant="h6" color="primary">
+                                    {workflow.nodes?.filter(node => node.credentials).length || 0}
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    Credentials
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                              <Grid item xs={3}>
+                                <Box textAlign="center">
+                                  <Typography variant="h6" color="primary">
+                                    {workflow.nodes?.filter(node => node.type?.includes('trigger')).length || 0}
+                                  </Typography>
+                                  <Typography variant="caption" color="textSecondary">
+                                    Triggers
+                                  </Typography>
+                                </Box>
+                              </Grid>
+                            </Grid>
+                          </Box>
+
+                          {/* Node Types Summary */}
+                          {workflow.nodes && workflow.nodes.length > 0 && (
+                            <Box className="node-types-summary" style={{ margin: '1rem 0' }}>
+                              <Typography variant="body2" color="textSecondary" gutterBottom>
+                                Node Types:
+                              </Typography>
+                              <Box display="flex" flexWrap="wrap" gap={0.5}>
+                                {[...new Set(workflow.nodes.map(node => 
+                                  node.type?.split('.').pop() || 'Unknown'
+                                ))].slice(0, 5).map((nodeType, index) => (
+                                  <Chip
+                                    key={index}
+                                    label={nodeType}
+                                    size="small"
+                                    variant="outlined"
+                                    style={{ fontSize: '0.7rem' }}
+                                  />
+                                ))}
+                                {[...new Set(workflow.nodes.map(node => 
+                                  node.type?.split('.').pop() || 'Unknown'
+                                ))].length > 5 && (
+                                  <Chip
+                                    label={`+${[...new Set(workflow.nodes.map(node => 
+                                      node.type?.split('.').pop() || 'Unknown'
+                                    ))].length - 5} more`}
+                                    size="small"
+                                    variant="outlined"
+                                    style={{ fontSize: '0.7rem' }}
+                                  />
+                                )}
+                              </Box>
+                            </Box>
+                          )}
                           
                           {workflow.tags && workflow.tags.length > 0 && (
                             <Box className="workflow-tags">
@@ -286,6 +374,12 @@ const N8nWorkflowsPage = () => {
                           )}
                           
                           <Box className="workflow-meta">
+                            <Typography variant="caption" className="workflow-created">
+                              Created: {workflow.createdAt ? 
+                                new Date(workflow.createdAt).toLocaleDateString() : 
+                                'Unknown'
+                              }
+                            </Typography>
                             <Typography variant="caption" className="workflow-updated">
                               Updated: {workflow.updatedAt ? 
                                 new Date(workflow.updatedAt).toLocaleDateString() : 
@@ -295,53 +389,6 @@ const N8nWorkflowsPage = () => {
                           </Box>
                         </CardContent>
                       </Card>
-                    ))}
-                  </div>
-                )}
-              </CardContent>
-            </Card>
-          </Grid>
-
-          {/* Recent Executions Section */}
-          <Grid item xs={12} lg={4}>
-            <Card className="executions-card">
-              <CardContent>
-                <Typography variant="h6" className="section-title">
-                  Recent Executions
-                </Typography>
-                
-                {loading ? (
-                  <ExecutionSkeleton count={5} />
-                ) : filteredExecutions.length === 0 ? (
-                  <ExecutionsEmptyState 
-                    onRefresh={handleRefresh}
-                    hasFilters={hasExecutionFilters}
-                    onClearFilters={handleClearFilters}
-                  />
-                ) : (
-                  <div className="executions-list">
-                    {filteredExecutions.map((execution) => (
-                      <Box key={execution.id} className="execution-item">
-                        <Box className="execution-header">
-                          {getStatusIcon(execution.status)}
-                          <Box className="execution-info">
-                            <Typography variant="body2" className="execution-workflow">
-                              {execution.workflowData?.name || 'Unknown Workflow'}
-                            </Typography>
-                            <Typography variant="caption" className="execution-time">
-                              {execution.startedAt ? 
-                                new Date(execution.startedAt).toLocaleString() : 
-                                'Unknown time'
-                              }
-                            </Typography>
-                          </Box>
-                        </Box>
-                        <Chip
-                          label={execution.status || 'Unknown'}
-                          color={getStatusColor(execution.status)}
-                          size="small"
-                        />
-                      </Box>
                     ))}
                   </div>
                 )}

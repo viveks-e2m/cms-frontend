@@ -261,5 +261,30 @@ export const n8nAPI = {
   getWorkflowExecutions: async (workflowId) => {
     const response = await api.get(`/n8n/workflows/${workflowId}/executions`);
     return handleApiResponse(response);
+  },
+
+  // New N8N Workflow Details API methods
+  
+  // Get specific workflow details (with caching)
+  getWorkflowDetails: async (workflowId, forceRefresh = false) => {
+    const queryParams = forceRefresh ? '?force_refresh=true' : '';
+    const response = await api.get(`/n8n/workflows/${workflowId}/details${queryParams}`);
+    return handleApiResponse(response);
+  },
+
+  // Create or update workflow details
+  createOrUpdateWorkflowDetails: async (workflowId, workflowDetails) => {
+    const payload = {
+      n8n_workflow_id: workflowId,
+      n8n_workflow_details: workflowDetails
+    };
+    const response = await api.post(`/n8n/workflows/${workflowId}/details`, payload);
+    return handleApiResponse(response);
+  },
+
+  // Get all cached workflow details
+  getCachedWorkflowDetails: async () => {
+    const response = await api.get('/n8n/workflows/details/cached');
+    return handleApiResponse(response);
   }
 };
