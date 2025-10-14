@@ -197,12 +197,7 @@
   font-weight: 700;
 }
 
-.section-subtitle {
-  margin: 0;
-  color: var(--text-secondary);
-  font-size: 0.875rem;
-  font-weight: 500;
-}
+
 
 .section-content {
   padding: 2rem;
@@ -309,10 +304,6 @@
   font-weight: 500;
 }
 
-.client-card-footer {
-  padding-top: 1rem;
-  border-top: 1px solid var(--neutral-light);
-}
 
 .client-date {
   color: var(--text-muted);

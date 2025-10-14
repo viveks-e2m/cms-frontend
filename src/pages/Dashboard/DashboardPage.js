@@ -170,9 +170,6 @@ const DashboardPage = () => {
           <div className="dashboard-section recent-clients-section">
             <div className="section-header">
               <h3 className="section-title">Recent Clients</h3>
-              <p className="section-subtitle">
-                Your most recently added clients
-              </p>
             </div>
             <div className="section-content">
               {dashboardData.clients.length > 0 ? (
@@ -184,27 +181,10 @@ const DashboardPage = () => {
                           client={client} 
                           size="medium"
                         />
-                        <div className="client-status">
-                          <span className="status-badge status-active">
-                            Active
-                          </span>
-                        </div>
                       </div>
                       <div className="client-card-body">
                         <h4 className="client-name">{client.name}</h4>
                         <div className="client-details">
-                          <div className="client-detail-item">
-                            <EmailIcon className="detail-icon" />
-                            <span className="client-email">{client.email}</span>
-                          </div>
-                          {client.phone && (
-                            <div className="client-detail-item">
-                              <span className="detail-label">Phone:</span>
-                              <span className="detail-value">
-                                {client.phone}
-                              </span>
-                            </div>
-                          )}
                           {client.company && (
                             <div className="client-detail-item">
                               <span className="detail-label">Company:</span>
@@ -214,14 +194,14 @@ const DashboardPage = () => {
                             </div>
                           )}
                         </div>
-                      </div>
-                      <div className="client-card-footer">
+                        <div>
                         <span className="client-date">
                           Added{" "}
                           {new Date(
                             client.created_at || Date.now()
                           ).toLocaleDateString()}
                         </span>
+                      </div>
                       </div>
                     </div>
                   ))}
