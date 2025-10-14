@@ -635,10 +635,6 @@ const ClientsPage = () => {
                       <h3 className="client-name">
                         {client.name || "Unnamed Client"}
                       </h3>
-                      <p className="client-email">
-                        <EmailIcon className="email-icon" />
-                        {client.email}
-                      </p>
                       {client.company && (
                         <p className="client-company">
                           <BusinessIcon className="company-icon" />
