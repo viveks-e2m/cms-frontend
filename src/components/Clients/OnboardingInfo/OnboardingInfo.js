@@ -25,7 +25,7 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
     try {
       setLoading(true);
       setError(null);
-      
+
       const response = await clientAPI.fetchPreOnboardingInfo(clientId);
       setOnboardingData(response.onboarding_info);
       showSuccess("Onboarding information fetched successfully");
@@ -39,7 +39,8 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
   };
 
   // Check if we need to fetch onboarding info
-  const needsOnboardingInfo = !onboardingData || Object.keys(onboardingData).length === 0;
+  const needsOnboardingInfo =
+    !onboardingData || Object.keys(onboardingData).length === 0;
 
   if (loading) {
     return (
@@ -56,10 +57,11 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
           <BusinessIcon className="empty-icon" />
           <h3>No Onboarding Information Available</h3>
           <p>
-            Fetch detailed company information, team details, and AI opportunities
-            for this client. This process may take up to 30 seconds.
+            Fetch detailed company information, team details, and AI
+            opportunities for this client. This process may take up to 30
+            seconds.
           </p>
-          <button 
+          <button
             className="btn btn-primary fetch-btn"
             onClick={fetchOnboardingInfo}
             disabled={loading}
@@ -78,7 +80,7 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
         <ErrorIcon className="error-icon" />
         <h3>Failed to Load Onboarding Information</h3>
         <p>{error}</p>
-        <button 
+        <button
           className="btn btn-secondary"
           onClick={fetchOnboardingInfo}
           disabled={loading}
@@ -100,7 +102,7 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
           {/* <CheckIcon className="success-icon" /> */}
           <h3>Onboarding Information</h3>
         </div>
-        <button 
+        <button
           className="btn btn-outline refresh-btn"
           onClick={fetchOnboardingInfo}
           disabled={loading}
@@ -129,9 +131,9 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
                     <div className="info-row">
                       <WebsiteIcon className="info-icon" />
                       <label>Website</label>
-                      <a 
-                        href={company.website} 
-                        target="_blank" 
+                      <a
+                        href={company.website}
+                        target="_blank"
                         rel="noopener noreferrer"
                         className="website-link"
                       >
@@ -239,12 +241,14 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
             <div className="report-info">
               <span className="report-label">Report Generated:</span>
               <span className="report-date">
-                {new Date(onboardingData.report_generated_at).toLocaleDateString('en-US', {
-                  year: 'numeric',
-                  month: 'long',
-                  day: 'numeric',
-                  hour: '2-digit',
-                  minute: '2-digit'
+                {new Date(
+                  onboardingData.report_generated_at
+                ).toLocaleDateString("en-US", {
+                  year: "numeric",
+                  month: "long",
+                  day: "numeric",
+                  hour: "2-digit",
+                  minute: "2-digit",
                 })}
               </span>
             </div>

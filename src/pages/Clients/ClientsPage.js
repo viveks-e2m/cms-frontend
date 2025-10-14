@@ -439,10 +439,6 @@ const ClientsPage = () => {
                                             meeting.id?.slice(-8) || "Unknown"
                                           }`}
                                       </h5>
-                                      <p>
-                                        {meeting.summary ||
-                                          "No summary available"}
-                                      </p>
                                       <span className="activity-date">
                                         {new Date(
                                           meeting.created_at

@@ -364,4 +364,169 @@
   .status-select {
     width: 100%;
   }
+}/*
+ Edit Form Styles */
+.item-edit-form {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.edit-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.edit-field label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.edit-input {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: border-color 0.2s ease;
+}
+
+.edit-input:focus {
+  outline: none;
+  border-color: #001F3F;
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+.edit-textarea {
+  padding: 8px 12px;
+  border: 1px solid #D1D5DB;
+  border-radius: 6px;
+  font-size: 14px;
+  font-family: inherit;
+  resize: vertical;
+  min-height: 60px;
+  transition: border-color 0.2s ease;
+}
+
+.edit-textarea:focus {
+  outline: none;
+  border-color: #001F3F;
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+}
+
+/* Item Display Styles */
+.item-display {
+  width: 100%;
+}
+
+.item-notes {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  margin: 8px 0 12px 0;
+  padding: 8px 12px;
+  background: #F8FAFC;
+  border-radius: 6px;
+  border-left: 3px solid #D4AF37;
+}
+
+.item-notes .notes-icon {
+  font-size: 16px;
+  color: #D4AF37;
+  margin-top: 2px;
+  flex-shrink: 0;
+}
+
+.item-notes span {
+  font-size: 13px;
+  color: #374151;
+  line-height: 1.4;
+}
+
+/* Action Button Styles */
+.edit-actions,
+.display-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: none;
+}
+
+.btn-icon.btn-edit {
+  color: #6B7280;
+}
+
+.btn-icon.btn-edit:hover {
+  background: #EBF8FF;
+  color: #3B82F6;
+}
+
+.btn-icon.btn-success {
+  color: #059669;
+}
+
+.btn-icon.btn-success:hover {
+  background: #ECFDF5;
+  color: #047857;
+}
+
+.btn-icon.btn-secondary {
+  color: #6B7280;
+}
+
+.btn-icon.btn-secondary:hover {
+  background: #F3F4F6;
+  color: #374151;
+}
+
+.btn-icon.btn-danger {
+  color: #6B7280;
+}
+
+.btn-icon.btn-danger:hover {
+  background: #FEF2F2;
+  color: #DC2626;
+}
+
+.btn-icon svg {
+  font-size: 16px;
+}
+
+/* Responsive Design for Edit Form */
+@media (max-width: 768px) {
+  .item-edit-form {
+    gap: 12px;
+  }
+  
+  .edit-actions,
+  .display-actions {
+    flex-direction: column;
+    gap: 4px;
+  }
+  
+  .item-actions {
+    align-items: stretch;
+  }
+  
+  .status-dropdown {
+    width: 100%;
+  }
+  
+  .status-select {
+    width: 100%;
+  }
 }

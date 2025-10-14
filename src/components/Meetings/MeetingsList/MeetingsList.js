@@ -84,79 +84,65 @@ const MeetingsList = ({
 
       <div className="meetings-list-content">
         {meetings.length > 0 ? (
-          <div className="meetings-grid">
+          <div className="meetings-list-container">
             {meetings.map((meeting) => (
               <div 
                 key={meeting.id} 
-                className="meeting-card"
+                className="meeting-card horizontal"
                 onClick={() => onMeetingSelect(meeting)}
               >
-                <div className="meeting-card-header">
+                <div className="meeting-card-left">
                   <div className="meeting-icon-wrapper">
                     <VideoCallIcon className="meeting-icon" />
                   </div>
-                  <div className="meeting-actions">
-                    <button 
-                      className="action-btn dropdown-toggle"
-                      onClick={(e) => handleDropdownToggle(meeting.id, e)}
-                    >
-                      <MoreVertIcon />
-                    </button>
-                    {activeDropdown === meeting.id && (
-                      <div className="dropdown-menu">
-                        <button 
-                          className="dropdown-item"
-                          onClick={(e) => handleActionClick('view', meeting, e)}
-                        >
-                          <VisibilityIcon />
-                          View Details
-                        </button>
-                        <button 
-                          className="dropdown-item"
-                          onClick={(e) => handleActionClick('edit', meeting, e)}
-                        >
-                          <EditIcon />
-                          Edit Meeting
-                        </button>
-                        <button 
-                          className="dropdown-item delete"
-                          onClick={(e) => handleActionClick('delete', meeting, e)}
-                        >
-                          <DeleteIcon />
-                          Delete Meeting
-                        </button>
+                  
+                  <div className="meeting-card-content">
+                    <h4 className="meeting-title">
+                      {meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || 'Unknown'}`}
+                    </h4>
+                    
+                    <div className="meeting-meta">
+                      <div className="meeting-date">
+                        <CalendarIcon className="meta-icon" />
+                        <span>{formatDate(meeting.created_at)}</span>
                       </div>
-                    )}
+                      {meeting.recording_url && (
+                        <div className="meeting-recording">
+                          <span>Has Recording</span>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="meeting-status">
+                      <span className="status-badge completed">
+                        Recorded
+                      </span>
+                      {meeting.transcript && (
+                        <div className="notes-indicator">
+                          <NotesIcon className="notes-icon" />
+                          <span>Has Transcript</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
 
-                <div className="meeting-card-content">
-                  <h4 className="meeting-title">
-                    {meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || 'Unknown'}`}
-                  </h4>
-                  
-                  <div className="meeting-meta">
-                    <div className="meeting-date">
-                      <CalendarIcon className="meta-icon" />
-                      <span>{formatDate(meeting.created_at)}</span>
-                    </div>
-                    {meeting.recording_url && (
-                      <div className="meeting-recording">
-                        <span>Has Recording</span>
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="meeting-status">
-                    <span className="status-badge completed">
-                      Recorded
-                    </span>
-                    {meeting.transcript && (
-                      <div className="notes-indicator">
-                        <NotesIcon className="notes-icon" />
-                        <span>Has Transcript</span>
-                      </div>
-                    )}
+                <div className="meeting-card-right">
+                  <div className="meeting-actions">
+                    <button 
+                      className="action-btn edit"
+                      onClick={(e) => handleActionClick('edit', meeting, e)}
+                      title="Edit Meeting"
+                    >
+                      <EditIcon />
+                    </button>
+                    <button 
+                      className="action-btn delete"
+                      onClick={(e) => handleActionClick('delete', meeting, e)}
+                      title="Delete Meeting"
+                    >
+                      <DeleteIcon />
+                    </button>
                   </div>
                 </div>
               </div>

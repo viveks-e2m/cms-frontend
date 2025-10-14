@@ -8,6 +8,10 @@ import {
   Schedule as ScheduleIcon,
   Delete as DeleteIcon,
   Refresh as RefreshIcon,
+  Edit as EditIcon,
+  Save as SaveIcon,
+  Cancel as CancelIcon,
+  Notes as NotesIcon,
 } from "@mui/icons-material";
 import { openPointsAPI, meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
@@ -19,6 +23,12 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [loading, setLoading] = useState(true);
   const [generationStatus, setGenerationStatus] = useState(null);
   const [polling, setPolling] = useState(false);
+  const [editingItem, setEditingItem] = useState(null);
+  const [editForm, setEditForm] = useState({
+    message: '',
+    due_date: '',
+    notes: ''
+  });
 
   const { showSuccess, showError, showInfo } = useNotificationContext();
 
@@ -111,6 +121,49 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       showError("Failed to delete action item");
       console.error("Error deleting item:", error);
     }
+  };
+
+  const startEditing = (item) => {
+    setEditingItem(item.id);
+    setEditForm({
+      message: item.message || '',
+      due_date: item.due_date ? item.due_date.split('T')[0] : '', // Format for date input
+      notes: item.notes || ''
+    });
+  };
+
+  const cancelEditing = () => {
+    setEditingItem(null);
+    setEditForm({
+      message: '',
+      due_date: '',
+      notes: ''
+    });
+  };
+
+  const saveItem = async (itemId) => {
+    try {
+      const updateData = {
+        message: editForm.message.trim(),
+        due_date: editForm.due_date || null,
+        notes: editForm.notes.trim() || null
+      };
+
+      await openPointsAPI.updateStatus(itemId, updateData);
+      showSuccess("Action item updated successfully");
+      setEditingItem(null);
+      await loadActionItems();
+    } catch (error) {
+      showError("Failed to update action item");
+      console.error("Error updating item:", error);
+    }
+  };
+
+  const handleEditFormChange = (field, value) => {
+    setEditForm(prev => ({
+      ...prev,
+      [field]: value
+    }));
   };
 
   const formatDate = (dateString) => {
@@ -222,44 +275,114 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
                   {getStatusIcon(item.status)}
                 </div>
                 <div className="item-content">
-                  <h4 className="item-message">{item.message}</h4>
-                  <div className="item-meta">
-                    {item.assignee && (
-                      <span className="item-assignee">
-                        <PersonIcon />
-                        Assigned to: {item.assignee}
-                      </span>
-                    )}
-                    {item.due_date && (
-                      <span className="item-due-date">
-                        <CalendarIcon />
-                        Due: {formatDate(item.due_date)}
-                      </span>
-                    )}
-                    <span className="item-created">
-                      Created: {formatDate(item.created_at)}
-                    </span>
-                  </div>
+                  {editingItem === item.id ? (
+                    <div className="item-edit-form">
+                      <div className="edit-field">
+                        <label>Action Item:</label>
+                        <input
+                          type="text"
+                          value={editForm.message}
+                          onChange={(e) => handleEditFormChange('message', e.target.value)}
+                          className="edit-input"
+                          placeholder="Enter action item description"
+                        />
+                      </div>
+                      <div className="edit-field">
+                        <label>Due Date:</label>
+                        <input
+                          type="date"
+                          value={editForm.due_date}
+                          onChange={(e) => handleEditFormChange('due_date', e.target.value)}
+                          className="edit-input"
+                        />
+                      </div>
+                      <div className="edit-field">
+                        <label>Notes:</label>
+                        <textarea
+                          value={editForm.notes}
+                          onChange={(e) => handleEditFormChange('notes', e.target.value)}
+                          className="edit-textarea"
+                          placeholder="Add notes or additional details..."
+                          rows={3}
+                        />
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="item-display">
+                      <h4 className="item-message">{item.message}</h4>
+                      {item.notes && (
+                        <div className="item-notes">
+                          <NotesIcon className="notes-icon" />
+                          <span>{item.notes}</span>
+                        </div>
+                      )}
+                      <div className="item-meta">
+                        {item.assignee && (
+                          <span className="item-assignee">
+                            <PersonIcon />
+                            Assigned to: {item.assignee}
+                          </span>
+                        )}
+                        {item.due_date && (
+                          <span className="item-due-date">
+                            <CalendarIcon />
+                            Due: {formatDate(item.due_date)}
+                          </span>
+                        )}
+                        <span className="item-created">
+                          Created: {formatDate(item.created_at)}
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="item-actions">
-                  <div className="status-dropdown">
-                    <select
-                      value={item.status}
-                      onChange={(e) => updateItemStatus(item.id, e.target.value)}
-                      className="status-select"
-                    >
-                      <option value="open">Open</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                  <button
-                    className="btn-icon btn-danger"
-                    onClick={() => deleteItem(item.id)}
-                    title="Delete action item"
-                  >
-                    <DeleteIcon />
-                  </button>
+                  {editingItem === item.id ? (
+                    <div className="edit-actions">
+                      <button
+                        className="btn-icon btn-success"
+                        onClick={() => saveItem(item.id)}
+                        title="Save changes"
+                      >
+                        <SaveIcon />
+                      </button>
+                      <button
+                        className="btn-icon btn-secondary"
+                        onClick={cancelEditing}
+                        title="Cancel editing"
+                      >
+                        <CancelIcon />
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="display-actions">
+                      <div className="status-dropdown">
+                        <select
+                          value={item.status}
+                          onChange={(e) => updateItemStatus(item.id, e.target.value)}
+                          className="status-select"
+                        >
+                          <option value="open">Open</option>
+                          <option value="in_progress">In Progress</option>
+                          <option value="completed">Completed</option>
+                        </select>
+                      </div>
+                      <button
+                        className="btn-icon btn-edit"
+                        onClick={() => startEditing(item)}
+                        title="Edit action item"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        className="btn-icon btn-danger"
+                        onClick={() => deleteItem(item.id)}
+                        title="Delete action item"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
