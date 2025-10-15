@@ -19,6 +19,7 @@ const ActionItemsPage = () => {
   const [actionItems, setActionItems] = useState([]);
   const [clients, setClients] = useState([]);
   const [meetings, setMeetings] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -33,9 +34,13 @@ const ActionItemsPage = () => {
     try {
       setLoading(true);
 
-      // Load clients first
-      const clientsData = await clientAPI.getAll();
+      // Load clients and users
+      const [clientsData, usersData] = await Promise.all([
+        clientAPI.getAll(),
+        clientAPI.getAllUsers(),
+      ]);
       setClients(clientsData || []);
+      setUsers(usersData || []);
 
       // Load all action items for all clients
       const allActionItems = [];
@@ -60,10 +65,11 @@ const ActionItemsPage = () => {
         }
       }
 
-      console.log('Loaded action items:', allActionItems);
-      console.log('Loaded meetings:', allMeetings);
-      console.log('Loaded clients:', clientsData);
-      
+      console.log("Loaded action items:", allActionItems);
+      console.log("Loaded meetings:", allMeetings);
+      console.log("Loaded clients:", clientsData);
+      console.log("Loaded users:", usersData);
+
       setActionItems(allActionItems);
       setMeetings(allMeetings);
     } catch (error) {
@@ -220,6 +226,7 @@ const ActionItemsPage = () => {
             onRefresh={loadData}
             meetings={meetings}
             clients={clients}
+            users={users}
           />
         </div>
       </div>

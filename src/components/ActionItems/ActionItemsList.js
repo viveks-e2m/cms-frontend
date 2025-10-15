@@ -16,13 +16,14 @@ import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import "../Meetings/ActionItems/ActionItems.css";
 
-const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
+const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = [] }) => {
+  console.log('ActionItemsList received users:', users);
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
-    task: "",
+    message: "",
     due_date: "",
-    assigned_to: "",
-    status: "pending",
+    assignee: null,
+    status: "open",
   });
 
   const { showSuccess, showError } = useNotificationContext();
@@ -39,6 +40,14 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
     const client = clients.find((c) => c.id === clientId);
     console.log("Found client:", client);
     return client?.name || "Unknown Client";
+  };
+
+  const getUserName = (userId) => {
+    if (!userId) return null;
+    console.log('Looking for user ID:', userId, 'in users:', users);
+    const user = users.find(u => u.id === userId);
+    console.log('Found user:', user);
+    return user ? (user.full_name || user.name || user.email) : 'Unknown User';
   };
 
   const updateItemStatus = async (itemId, newStatus) => {
@@ -75,29 +84,29 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
   const startEdit = (item) => {
     setEditingItem(item.id);
     setEditForm({
-      task: item.message || item.task || "",
+      message: item.message || item.task || "",
       due_date: item.due_date ? item.due_date.split("T")[0] : "",
-      assigned_to: item.assigned_to || "",
-      status: item.status || "pending",
+      assignee: item.assignee || null,
+      status: item.status || "open",
     });
   };
 
   const cancelEdit = () => {
     setEditingItem(null);
     setEditForm({
-      task: "",
+      message: "",
       due_date: "",
-      assigned_to: "",
-      status: "pending",
+      assignee: null,
+      status: "open",
     });
   };
 
   const saveEdit = async (itemId) => {
     try {
       const updateData = {
-        message: editForm.task, // Use 'message' field like the original component
+        message: editForm.message,
         status: editForm.status,
-        assigned_to: editForm.assigned_to || null,
+        assignee: editForm.assignee || null,
         due_date: editForm.due_date || null,
       };
 
@@ -164,9 +173,9 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
                     <label>Task</label>
                     <textarea
                       className="edit-textarea"
-                      value={editForm.task}
+                      value={editForm.message}
                       onChange={(e) =>
-                        setEditForm({ ...editForm, task: e.target.value })
+                        setEditForm({ ...editForm, message: e.target.value })
                       }
                       rows={3}
                     />
@@ -187,18 +196,26 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
                   </div>
                   <div className="edit-field">
                     <label>Assigned To</label>
-                    <input
-                      type="text"
+                    <select
                       className="edit-input"
-                      value={editForm.assigned_to}
+                      value={editForm.assignee || ""}
                       onChange={(e) =>
                         setEditForm({
                           ...editForm,
-                          assigned_to: e.target.value,
+                          assignee: e.target.value || null,
                         })
                       }
-                      placeholder="Enter assignee name"
-                    />
+                    >
+                      <option value="">Select assignee...</option>
+                      {users.length === 0 && (
+                        <option value="" disabled>Loading users...</option>
+                      )}
+                      {users.map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.full_name || user.name || user.email}
+                        </option>
+                      ))}
+                    </select>
                   </div>
                   <div className="edit-field">
                     <label>Due Date</label>
@@ -214,39 +231,89 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients }) => {
                 </div>
               ) : (
                 <div className="item-display">
-                  <div className="item-message">
-                    {item.message || item.task}
+                  <div className="item-header">
+                    <div className="item-message">
+                      {item.message || item.task}
+                    </div>
+                    <div className={`status-badge status-${item.status || 'open'}`}>
+                      {item.status === 'in_progress' ? 'In Progress' : 
+                       item.status === 'completed' ? 'Completed' : 'Open'}
+                    </div>
                   </div>
-                  <div className="item-meta">
-                    <div className="item-client">
-                      <PersonIcon />
-                      <span>{getClientName(item.client_id)}</span>
-                    </div>
-                    <div className="item-meeting">
-                      <MeetingIcon />
-                      <span>{getMeetingTitle(item.meeting_id)}</span>
-                    </div>
-                    {item.assigned_to && (
-                      <div className="item-assignee">
-                        <PersonIcon />
-                        <span>{item.assigned_to}</span>
+                  
+                  <div className="item-metadata">
+                    <div className="metadata-grid">
+                      <div className="metadata-item">
+                        <div className="metadata-icon">
+                          <PersonIcon />
+                        </div>
+                        <div className="metadata-content">
+                          <span className="metadata-label">Client</span>
+                          <span className="metadata-value">{getClientName(item.client_id)}</span>
+                        </div>
                       </div>
-                    )}
-                    {item.due_date && (
-                      <div className="item-due-date">
-                        <CalendarIcon />
-                        <span>
-                          {new Date(item.due_date).toLocaleDateString()}
-                        </span>
+                      
+                      <div className="metadata-item">
+                        <div className="metadata-icon">
+                          <MeetingIcon />
+                        </div>
+                        <div className="metadata-content">
+                          <span className="metadata-label">Meeting</span>
+                          <span className="metadata-value">{getMeetingTitle(item.meeting_id)}</span>
+                        </div>
                       </div>
-                    )}
-                    <div className="item-created">
-                      <span>
-                        Created:{" "}
-                        {item.created_at
-                          ? new Date(item.created_at).toLocaleDateString()
-                          : "Unknown"}
-                      </span>
+                      
+                      {item.task_owner && (
+                        <div className="metadata-item">
+                          <div className="metadata-icon">
+                            <PersonIcon />
+                          </div>
+                          <div className="metadata-content">
+                            <span className="metadata-label">Owner</span>
+                            <span className="metadata-value">{getUserName(item.task_owner)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {item.assignee && (
+                        <div className="metadata-item">
+                          <div className="metadata-icon">
+                            <PersonIcon />
+                          </div>
+                          <div className="metadata-content">
+                            <span className="metadata-label">Assigned</span>
+                            <span className="metadata-value">{getUserName(item.assignee)}</span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      {item.due_date && (
+                        <div className="metadata-item">
+                          <div className="metadata-icon">
+                            <CalendarIcon />
+                          </div>
+                          <div className="metadata-content">
+                            <span className="metadata-label">Due Date</span>
+                            <span className="metadata-value">
+                              {new Date(item.due_date).toLocaleDateString()}
+                            </span>
+                          </div>
+                        </div>
+                      )}
+                      
+                      <div className="metadata-item">
+                        <div className="metadata-icon">
+                          <CalendarIcon />
+                        </div>
+                        <div className="metadata-content">
+                          <span className="metadata-label">Created</span>
+                          <span className="metadata-value">
+                            {item.created_at
+                              ? new Date(item.created_at).toLocaleDateString()
+                              : "Unknown"}
+                          </span>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 </div>
