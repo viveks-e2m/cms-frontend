@@ -59,7 +59,11 @@ const testOnboardingIntegration = () => {
               {"name": "Adam Burrage", "role": "Managing Director Head of Marketing and Client Success"}
             ],
             "overview": "Trident is a digital marketing and web design agency...",
-            "ai_services": []
+            "ai_services": [
+              "AI-powered content generation for social media campaigns",
+              "Automated email marketing personalization",
+              "Chatbot integration for customer support"
+            ]
           },
           "ai_opportunities": [
             "Implement AI-driven marketing analytics...",
@@ -87,7 +91,7 @@ const testOnboardingIntegration = () => {
   console.log('- ✅ Professional styling with responsive design');
   console.log('- ✅ Loading states and error handling');
   console.log('- ✅ Integration with ClientsPage overview tab');
-  console.log('- ✅ Support for company info, team, regions, clients, and AI opportunities');
+  console.log('- ✅ Support for company info, team, regions, clients, AI services, and AI opportunities');
   
   return true;
 };

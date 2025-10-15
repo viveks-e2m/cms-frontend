@@ -99,7 +99,6 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
     <div className="onboarding-info">
       <div className="onboarding-header">
         <div className="onboarding-title">
-          {/* <CheckIcon className="success-icon" /> */}
           <h3>Onboarding Information</h3>
         </div>
         <button
@@ -208,6 +207,24 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
                         <h5>{member.name}</h5>
                         <p>{member.role}</p>
                       </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* AI Services */}
+            {company.ai_services && company.ai_services.length > 0 && (
+              <div className="onboarding-section">
+                <div className="section-header">
+                  <AIIcon className="section-icon ai-icon" />
+                  <h4>AI Services</h4>
+                </div>
+                <div className="ai-services">
+                  {company.ai_services.map((service, index) => (
+                    <div key={index} className="service-item">
+                      <CheckIcon className="service-check" />
+                      <p>{service}</p>
                     </div>
                   ))}
                 </div>
