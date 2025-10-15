@@ -7,6 +7,8 @@ import {
   Save as SaveIcon,
   Person as PersonIcon,
   Language as WebsiteIcon,
+  AccountCircle as AccountManagerIcon,
+  Support as AdoptionSpecialistIcon,
 } from "@mui/icons-material";
 import "./ClientForm.css";
 
@@ -14,32 +16,56 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: "",
     website: "",
-    status: "pre-boarding"
+    status: "pre-boarding",
+    account_manager: "",
+    adoption_specialist: ""
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
+  const [users, setUsers] = useState([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
     if (isOpen) {
+      // Load users for dropdowns
+      loadUsers();
+      
       if (client) {
         // Editing existing client
         setFormData({
           name: client.name || "",
           website: client.website || "",
-          status: client.status || "pre-boarding"
+          status: client.status || "pre-boarding",
+          account_manager: client.account_manager || "",
+          adoption_specialist: client.adoption_specialist || ""
         });
       } else {
-        // Adding new client
+        // Adding new client - account_manager will default to current user on backend
         setFormData({
           name: "",
           website: "",
-          status: "pre-boarding"
+          status: "pre-boarding",
+          account_manager: "", // Will be set to current user by backend
+          adoption_specialist: ""
         });
       }
       setErrors({});
     }
   }, [client, isOpen]);
+
+  const loadUsers = async () => {
+    try {
+      setLoadingUsers(true);
+      const response = await clientAPI.getAllUsers();
+      setUsers(response || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+      showError("Failed to load users for selection");
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
 
   const validateForm = () => {
     const newErrors = {};
@@ -83,7 +109,9 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       const clientData = {
         name: formData.name.trim(),
         website: website,
-        status: formData.status
+        status: formData.status,
+        account_manager: formData.account_manager || "",
+        adoption_specialist: formData.adoption_specialist || ""
       };
 
       if (client) {
@@ -205,6 +233,59 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
             </select>
             <div className="form-help">
               Set the client status (defaults to Pre-boarding)
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="account_manager" className="form-label">
+              <AccountManagerIcon className="label-icon" />
+              Account Manager
+            </label>
+            <select
+              id="account_manager"
+              className="form-select"
+              value={formData.account_manager}
+              onChange={(e) => handleInputChange("account_manager", e.target.value)}
+              disabled={loading || loadingUsers}
+            >
+              <option value="">
+                {client ? "Select Account Manager" : "Default to Current User"}
+              </option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name || user.email}
+                </option>
+              ))}
+            </select>
+            <div className="form-help">
+              {client 
+                ? "Select the account manager for this client"
+                : "Leave empty to default to current user"
+              }
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="adoption_specialist" className="form-label">
+              <AdoptionSpecialistIcon className="label-icon" />
+              Adoption Specialist
+            </label>
+            <select
+              id="adoption_specialist"
+              className="form-select"
+              value={formData.adoption_specialist}
+              onChange={(e) => handleInputChange("adoption_specialist", e.target.value)}
+              disabled={loading || loadingUsers}
+            >
+              <option value="">Select Adoption Specialist (Optional)</option>
+              {users.map((user) => (
+                <option key={user.id} value={user.id}>
+                  {user.name || user.email}
+                </option>
+              ))}
+            </select>
+            <div className="form-help">
+              Optionally assign an adoption specialist to this client
             </div>
           </div>
 

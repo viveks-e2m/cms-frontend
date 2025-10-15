@@ -29,6 +29,9 @@ import {
   PersonOutline as PersonOutlineIcon,
   Email as EmailIcon,
   Business as BusinessIcon,
+  AccountCircle as AccountManagerIcon,
+  Support as AdoptionSpecialistIcon,
+  Language as WebsiteIcon,
   VideoCall as VideoCallIcon,
   Security as SecurityIcon,
   AccountTree as WorkflowIcon,
@@ -50,6 +53,7 @@ const ClientsPage = () => {
   const [clientDetails, setClientDetails] = useState(null);
   const [detailsLoading, setDetailsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
+  const [users, setUsers] = useState([]);
 
   // Meeting-related state
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -65,7 +69,17 @@ const ClientsPage = () => {
 
   useEffect(() => {
     loadClients();
+    loadUsers();
   }, []);
+
+  const loadUsers = async () => {
+    try {
+      const usersData = await clientAPI.getAllUsers();
+      setUsers(usersData || []);
+    } catch (error) {
+      console.error('Error loading users:', error);
+    }
+  };
 
   const loadClients = async () => {
     try {
@@ -260,6 +274,12 @@ const ClientsPage = () => {
     }
   };
 
+  const getUserName = (userId) => {
+    if (!userId) return null;
+    const user = users.find(u => u.id === userId);
+    return user ? (user.name || user.email) : 'Unknown User';
+  };
+
   const filteredAndSortedClients = clients
     .filter((client) => {
       // Search filter
@@ -395,6 +415,45 @@ const ClientsPage = () => {
                               <label>Name</label>
                               <span>
                                 {selectedClient.name || "Not provided"}
+                              </span>
+                            </div>
+                          </div>
+                          
+                          <div className="info-item">
+                            <WebsiteIcon className="info-icon" />
+                            <div>
+                              <label>Website</label>
+                              <span>
+                                {selectedClient.website ? (
+                                  <a 
+                                    href={selectedClient.website} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="website-link"
+                                  >
+                                    {selectedClient.website}
+                                  </a>
+                                ) : "Not provided"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="info-item">
+                            <AccountManagerIcon className="info-icon" />
+                            <div>
+                              <label>Account Manager</label>
+                              <span>
+                                {getUserName(selectedClient.account_manager) || "Not assigned"}
+                              </span>
+                            </div>
+                          </div>
+
+                          <div className="info-item">
+                            <AdoptionSpecialistIcon className="info-icon" />
+                            <div>
+                              <label>Adoption Specialist</label>
+                              <span>
+                                {getUserName(selectedClient.adoption_specialist) || "Not assigned"}
                               </span>
                             </div>
                           </div>

@@ -66,6 +66,12 @@ export const clientAPI = {
   removeUserAssignment: async (clientId, userId) => {
     const response = await api.delete(`/clients/${clientId}/users/${userId}`);
     return handleApiResponse(response);
+  },
+
+  // Get all users for dropdowns
+  getAllUsers: async () => {
+    const response = await api.get('/clients/users/all');
+    return handleApiResponse(response);
   }
 };
 
