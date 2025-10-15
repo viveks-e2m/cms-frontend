@@ -285,14 +285,24 @@
   border: 1px solid transparent;
 }
 
+.client-status.pre-boarding {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+}
+
+.client-status.onboarding {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+}
+
+.client-status.assessment {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6B7280;
+}
+
 .client-status.active {
   background: rgba(16, 185, 129, 0.1);
   color: #10B981;
-}
-
-.client-status.inactive {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6B7280;
 }
 
 .client-date {
@@ -1294,16 +1304,28 @@
   box-shadow: 0 4px 12px rgba(0, 31, 63, 0.15);
 }
 
+.client-status.pre-boarding {
+  background: rgba(245, 158, 11, 0.1);
+  color: #F59E0B;
+  border-color: rgba(245, 158, 11, 0.3);
+}
+
+.client-status.onboarding {
+  background: rgba(59, 130, 246, 0.1);
+  color: #3B82F6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.client-status.assessment {
+  background: rgba(107, 114, 128, 0.1);
+  color: #6B7280;
+  border-color: rgba(107, 114, 128, 0.3);
+}
+
 .client-status.active {
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
   border-color: rgba(16, 185, 129, 0.3);
-}
-
-.client-status.inactive {
-  background: rgba(107, 114, 128, 0.1);
-  color: #6B7280;
-  border-color: rgba(107, 114, 128, 0.3);
 }
 
 /* Loading Animation */

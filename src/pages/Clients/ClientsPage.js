@@ -222,15 +222,42 @@ const ClientsPage = () => {
 
   // Enhanced filtering and sorting logic
   const getClientStatus = (client) => {
-    // Determine client status based on various factors
+    // Return the actual status from the client object
     if (client.status) {
       return client.status.toLowerCase();
     }
-    // Default logic: consider active if created within last 90 days or has recent activity
-    const createdDate = new Date(client.created_at);
-    const daysSinceCreated =
-      (Date.now() - createdDate.getTime()) / (1000 * 60 * 60 * 24);
-    return daysSinceCreated <= 90 ? "active" : "inactive";
+    // Default to pre-boarding for new clients
+    return "pre-boarding";
+  };
+
+  const getStatusLabel = (status) => {
+    switch (status) {
+      case 'pre-boarding':
+        return 'Pre-boarding';
+      case 'onboarding':
+        return 'Onboarding';
+      case 'assessment':
+        return 'Assessment';
+      case 'active':
+        return 'Active';
+      default:
+        return 'Pre-boarding';
+    }
+  };
+
+  const getStatusColor = (status) => {
+    switch (status) {
+      case 'pre-boarding':
+        return 'warning';
+      case 'onboarding':
+        return 'info';
+      case 'assessment':
+        return 'secondary';
+      case 'active':
+        return 'success';
+      default:
+        return 'warning';
+    }
   };
 
   const filteredAndSortedClients = clients
@@ -574,8 +601,10 @@ const ClientsPage = () => {
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
                     <option value="">All Status</option>
+                    <option value="pre-boarding">Pre-boarding</option>
+                    <option value="onboarding">Onboarding</option>
+                    <option value="assessment">Assessment</option>
                     <option value="active">Active</option>
-                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
 
@@ -643,7 +672,7 @@ const ClientsPage = () => {
                       )}
                       <div className="client-meta">
                         <span className={`client-status ${clientStatus}`}>
-                          {clientStatus === "active" ? "Active" : "Inactive"}
+                          {getStatusLabel(clientStatus)}
                         </span>
                         <span className="client-date">
                           Added{" "}

@@ -10,6 +10,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   AccountTree as WorkflowIcon,
+  Assignment as ActionItemsIcon,
 } from "@mui/icons-material";
 import "./Sidebar.css";
 
@@ -32,6 +33,13 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Manage Clients",
       path: "/clients",
       description: "Client management and assignments",
+    },
+    {
+      id: "action-items",
+      icon: <ActionItemsIcon />,
+      label: "Action Items",
+      path: "/action-items",
+      description: "All action items across meetings",
     },
     {
       id: "n8n-workflows",

@@ -14,7 +14,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
     name: "",
     website: "",
-    status: "active"
+    status: "pre-boarding"
   });
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
@@ -27,14 +27,14 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
         setFormData({
           name: client.name || "",
           website: client.website || "",
-          status: client.status || "active"
+          status: client.status || "pre-boarding"
         });
       } else {
         // Adding new client
         setFormData({
           name: "",
           website: "",
-          status: "active"
+          status: "pre-boarding"
         });
       }
       setErrors({});
@@ -198,11 +198,13 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) => handleInputChange("status", e.target.value)}
               disabled={loading}
             >
+              <option value="pre-boarding">Pre-boarding</option>
+              <option value="onboarding">Onboarding</option>
+              <option value="assessment">Assessment</option>
               <option value="active">Active</option>
-              <option value="inactive">Inactive</option>
             </select>
             <div className="form-help">
-              Set the client status (defaults to Active)
+              Set the client status (defaults to Pre-boarding)
             </div>
           </div>
 

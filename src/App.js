@@ -10,6 +10,7 @@ import ClientsPage from './pages/Clients/ClientsPage';
 import MeetingsPage from './pages/Meetings/MeetingsPage';
 
 import SecretsPage from './pages/Secrets/SecretsPage';
+import { ActionItemsPage } from './pages/ActionItems';
 import N8nWorkflowsPage from './pages/N8nWorkflows/N8nWorkflowsPage';
 import WorkflowDetailsPage from './pages/N8nWorkflows/WorkflowDetailsPage';
 import ProtectedRoute from './components/Auth/ProtectedRoute/ProtectedRoute';
@@ -55,6 +56,14 @@ function App() {
                 element={
                   <ProtectedRoute>
                     <SecretsPage />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/action-items" 
+                element={
+                  <ProtectedRoute>
+                    <ActionItemsPage />
                   </ProtectedRoute>
                 } 
               />
