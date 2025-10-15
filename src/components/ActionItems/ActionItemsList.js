@@ -259,7 +259,7 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
                         </div>
                         <div className="metadata-content">
                           <span className="metadata-label">Meeting</span>
-                          <span className="metadata-value">{getMeetingTitle(item.meeting_id)}</span>
+                          <span className="metadata-value">{item.meeting_id || 'Unknown'}</span>
                         </div>
                       </div>
                       
