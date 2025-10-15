@@ -234,12 +234,13 @@ export const secretsAPI = {
 
 // N8N Workflows API services
 export const n8nAPI = {
-  // Get all workflows from n8n
+  // Get all workflows from n8n (database by default, API with force_refresh=true)
   getWorkflows: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.active !== undefined) queryParams.append('active', params.active);
     if (params.name) queryParams.append('name', params.name);
     if (params.tags) queryParams.append('tags', params.tags);
+    if (params.force_refresh) queryParams.append('force_refresh', 'true');
     
     const url = `/n8n/workflows${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await api.get(url);

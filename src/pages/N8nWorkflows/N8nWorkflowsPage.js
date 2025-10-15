@@ -51,21 +51,43 @@ const N8nWorkflowsPage = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [activeFilter, setActiveFilter] = useState('all');
+  const [dataSource, setDataSource] = useState('database'); // Track data source
 
   useEffect(() => {
-    loadData();
+    // Detect if this is a hard refresh (page reload)
+    const isHardRefresh = window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD ||
+                         !window.history.state;
+    
+    loadData(isHardRefresh);
   }, []);
 
-  const loadData = async () => {
+  const loadData = async (forceRefresh = false) => {
     try {
       setLoading(true);
       const [workflowsData, executionsData] = await Promise.all([
-        n8nAPI.getWorkflows(),
+        n8nAPI.getWorkflows({ force_refresh: forceRefresh }),
         n8nAPI.getExecutions()
       ]);
       
-      setWorkflows(workflowsData?.data || workflowsData || []);
+      // Extract workflows data and source information
+      const workflowsResult = workflowsData?.data || workflowsData || [];
+      const workflowsList = workflowsResult.data || workflowsResult;
+      const source = workflowsResult.source || (forceRefresh ? 'api' : 'database');
+      
+      setWorkflows(workflowsList);
       setExecutions(executionsData || []);
+      setDataSource(source);
+      
+      // Show appropriate success message
+      if (forceRefresh && workflowsResult.sync_stats) {
+        const { new_workflows, updated_workflows, total_processed } = workflowsResult.sync_stats;
+        showSuccess(`Workflows synced: ${new_workflows} new, ${updated_workflows} updated (${total_processed} total)`);
+      } else if (source === 'database') {
+        console.log('Workflows loaded from database cache');
+      } else if (source === 'api_fallback') {
+        showError('Database unavailable, showing live data from n8n API');
+      }
+      
     } catch (error) {
       console.error('Error loading n8n data:', error);
       showError(NOTIFICATION_MESSAGES.N8N_WORKFLOWS_ERROR);
@@ -77,8 +99,8 @@ const N8nWorkflowsPage = () => {
   const handleRefresh = async () => {
     try {
       setRefreshing(true);
-      await loadData();
-      showSuccess(NOTIFICATION_MESSAGES.DATA_REFRESHED);
+      // Force refresh from API when user clicks refresh button
+      await loadData(true);
     } catch (error) {
       showError(NOTIFICATION_MESSAGES.DATA_REFRESH_ERROR);
     } finally {
@@ -161,10 +183,18 @@ const N8nWorkflowsPage = () => {
               <Typography variant="body2" className="page-subtitle">
                 Manage and monitor your automation workflows
               </Typography>
+              {dataSource && (
+                <Chip
+                  label={dataSource === 'database' ? 'Cached Data' : 'Live Data'}
+                  color={dataSource === 'database' ? 'default' : 'primary'}
+                  size="small"
+                  style={{ marginTop: '0.5rem' }}
+                />
+              )}
             </Box>
           </Box>
           <Box className="header-actions">
-            <Tooltip title="Refresh Data">
+            <Tooltip title={refreshing ? "Syncing from n8n..." : "Sync from n8n API"}>
               <IconButton 
                 onClick={handleRefresh} 
                 disabled={refreshing}
@@ -223,6 +253,13 @@ const N8nWorkflowsPage = () => {
             </Grid>
           </CardContent>
         </Card>
+
+        {/* Data Source Alert */}
+        {dataSource === 'database' && !loading && (
+          <Alert severity="info" style={{ marginBottom: '1rem' }}>
+            Showing cached workflow data. Click refresh to sync with n8n API for latest updates.
+          </Alert>
+        )}
 
         {/* Execution Statistics */}
         {loading ? <StatsSkeleton /> : <ExecutionStats executions={executions} />}

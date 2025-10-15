@@ -74,8 +74,10 @@ const WorkflowManager = ({ clientId, clientName }) => {
 
   const loadN8nWorkflows = async () => {
     try {
+      // Use database-first approach (no force_refresh for sidebar)
       const data = await n8nAPI.getWorkflows();
-      setN8nWorkflows(data?.data || data || []);
+      const workflowsList = data?.data?.data || data?.data || data || [];
+      setN8nWorkflows(workflowsList);
     } catch (error) {
       console.error('Error loading n8n workflows:', error);
     }
