@@ -11,13 +11,20 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
   Event as MeetingIcon,
+  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import "../Meetings/ActionItems/ActionItems.css";
+import "./ActionItemsList.css";
 
-const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = [] }) => {
-  console.log('ActionItemsList received users:', users);
+const ActionItemsList = ({
+  actionItems,
+  onRefresh,
+  meetings,
+  clients,
+  users = [],
+}) => {
+  console.log("ActionItemsList received users:", users);
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
     message: "",
@@ -44,10 +51,10 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
 
   const getUserName = (userId) => {
     if (!userId) return null;
-    console.log('Looking for user ID:', userId, 'in users:', users);
-    const user = users.find(u => u.id === userId);
-    console.log('Found user:', user);
-    return user ? (user.full_name || user.name || user.email) : 'Unknown User';
+    console.log("Looking for user ID:", userId, "in users:", users);
+    const user = users.find((u) => u.id === userId);
+    console.log("Found user:", user);
+    return user ? user.full_name || user.name || user.email : "Unknown User";
   };
 
   const updateItemStatus = async (itemId, newStatus) => {
@@ -158,46 +165,45 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
   }
 
   return (
-    <div className="action-items-list">
-      {actionItems.map((item) => (
-        <div
-          key={item.id}
-          className={`action-item ${getStatusClass(item.status)}`}
-        >
-          <div className="item-header">
-            <div className="item-status">{getStatusIcon(item.status)}</div>
-            <div className="item-content">
+    <div className="action-items-table-container">
+      <table className="action-items-table">
+        <thead>
+          <tr>
+            <th className="col-task">Task Name</th>
+            <th className="col-client">Client</th>
+            <th className="col-assignee">Assignee</th>
+            <th className="col-status">Status</th>
+            <th className="col-priority">Priority</th>
+            <th className="col-due">Due Date</th>
+            <th className="col-actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {actionItems.map((item) => (
+            <tr
+              key={item.id}
+              className={`action-item-row ${getStatusClass(item.status)}`}
+            >
               {editingItem === item.id ? (
-                <div className="item-edit-form">
-                  <div className="edit-field">
-                    <label>Task</label>
+                // Edit Form
+                <>
+                  <td className="col-task">
                     <textarea
                       className="edit-textarea"
                       value={editForm.message}
                       onChange={(e) =>
                         setEditForm({ ...editForm, message: e.target.value })
                       }
-                      rows={3}
+                      rows={2}
+                      placeholder="Task description..."
                     />
-                  </div>
-                  <div className="edit-field">
-                    <label>Status</label>
+                  </td>
+                  <td className="col-client">
+                    {getClientName(item.client_id)}
+                  </td>
+                  <td className="col-assignee">
                     <select
-                      className="edit-input"
-                      value={editForm.status}
-                      onChange={(e) =>
-                        setEditForm({ ...editForm, status: e.target.value })
-                      }
-                    >
-                      <option value="open">Open</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
-                  </div>
-                  <div className="edit-field">
-                    <label>Assigned To</label>
-                    <select
-                      className="edit-input"
+                      className="edit-select"
                       value={editForm.assignee || ""}
                       onChange={(e) =>
                         setEditForm({
@@ -207,18 +213,28 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
                       }
                     >
                       <option value="">Select assignee...</option>
-                      {users.length === 0 && (
-                        <option value="" disabled>Loading users...</option>
-                      )}
                       {users.map((user) => (
                         <option key={user.id} value={user.id}>
                           {user.full_name || user.name || user.email}
                         </option>
                       ))}
                     </select>
-                  </div>
-                  <div className="edit-field">
-                    <label>Due Date</label>
+                  </td>
+                  <td className="col-status">
+                    <select
+                      className="edit-select"
+                      value={editForm.status}
+                      onChange={(e) =>
+                        setEditForm({ ...editForm, status: e.target.value })
+                      }
+                    >
+                      <option value="open">Open</option>
+                      <option value="in_progress">In Progress</option>
+                      <option value="completed">Completed</option>
+                    </select>
+                  </td>
+                  <td className="col-priority">—</td>
+                  <td className="col-due">
                     <input
                       type="date"
                       className="edit-input"
@@ -227,122 +243,56 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
                         setEditForm({ ...editForm, due_date: e.target.value })
                       }
                     />
-                  </div>
-                </div>
+                  </td>
+                  <td className="col-actions">
+                    <div className="actions-cell">
+                      <button
+                        className="btn-icon btn-success"
+                        onClick={() => saveEdit(item.id)}
+                        title="Save"
+                      >
+                        <SaveIcon />
+                      </button>
+                      <button
+                        className="btn-icon btn-secondary"
+                        onClick={cancelEdit}
+                        title="Cancel"
+                      >
+                        <CancelIcon />
+                      </button>
+                    </div>
+                  </td>
+                </>
               ) : (
-                <div className="item-display">
-                  <div className="item-header">
-                    <div className="item-message">
-                      {item.message || item.task}
-                    </div>
-                    <div className={`status-badge status-${item.status || 'open'}`}>
-                      {item.status === 'in_progress' ? 'In Progress' : 
-                       item.status === 'completed' ? 'Completed' : 'Open'}
-                    </div>
-                  </div>
-                  
-                  <div className="item-metadata">
-                    <div className="metadata-grid">
-                      <div className="metadata-item">
-                        <div className="metadata-icon">
-                          <PersonIcon />
-                        </div>
-                        <div className="metadata-content">
-                          <span className="metadata-label">Client</span>
-                          <span className="metadata-value">{getClientName(item.client_id)}</span>
-                        </div>
+                // Display Mode
+                <>
+                  <td className="col-task">
+                    <div className="task-cell">
+                      <div className="task-name">
+                        {item.message || item.task}
                       </div>
-                      
-                      <div className="metadata-item">
-                        <div className="metadata-icon">
-                          <MeetingIcon />
-                        </div>
-                        <div className="metadata-content">
-                          <span className="metadata-label">Meeting</span>
-                          <span className="metadata-value">{item.meeting_id || 'Unknown'}</span>
-                        </div>
-                      </div>
-                      
-                      {item.task_owner && (
-                        <div className="metadata-item">
-                          <div className="metadata-icon">
-                            <PersonIcon />
-                          </div>
-                          <div className="metadata-content">
-                            <span className="metadata-label">Owner</span>
-                            <span className="metadata-value">{getUserName(item.task_owner)}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {item.assignee && (
-                        <div className="metadata-item">
-                          <div className="metadata-icon">
-                            <PersonIcon />
-                          </div>
-                          <div className="metadata-content">
-                            <span className="metadata-label">Assigned</span>
-                            <span className="metadata-value">{getUserName(item.assignee)}</span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      {item.due_date && (
-                        <div className="metadata-item">
-                          <div className="metadata-icon">
-                            <CalendarIcon />
-                          </div>
-                          <div className="metadata-content">
-                            <span className="metadata-label">Due Date</span>
-                            <span className="metadata-value">
-                              {new Date(item.due_date).toLocaleDateString()}
-                            </span>
-                          </div>
-                        </div>
-                      )}
-                      
-                      <div className="metadata-item">
-                        <div className="metadata-icon">
-                          <CalendarIcon />
-                        </div>
-                        <div className="metadata-content">
-                          <span className="metadata-label">Created</span>
-                          <span className="metadata-value">
-                            {item.created_at
-                              ? new Date(item.created_at).toLocaleDateString()
-                              : "Unknown"}
-                          </span>
-                        </div>
+                      <div className="task-meta">
+                        Meeting: {item.meeting_id}
                       </div>
                     </div>
-                  </div>
-                </div>
-              )}
-            </div>
-            <div className="item-actions">
-              {editingItem === item.id ? (
-                <div className="edit-actions">
-                  <button
-                    className="btn-icon btn-success"
-                    onClick={() => saveEdit(item.id)}
-                    title="Save"
-                  >
-                    <SaveIcon />
-                  </button>
-                  <button
-                    className="btn-icon btn-secondary"
-                    onClick={cancelEdit}
-                    title="Cancel"
-                  >
-                    <CancelIcon />
-                  </button>
-                </div>
-              ) : (
-                <div className="display-actions">
-                  <div className="status-dropdown">
+                  </td>
+
+                  <td className="col-client">
+                    <div className="client-cell">
+                      {getClientName(item.client_id)}
+                    </div>
+                  </td>
+
+                  <td className="col-assignee">
+                    {item.assignee ? getUserName(item.assignee) : "Unassigned"}
+                  </td>
+
+                  <td className="col-status">
                     <select
-                      className="status-select"
-                      value={item.status || "pending"}
+                      className={`status-select status-${
+                        item.status || "open"
+                      }`}
+                      value={item.status || "open"}
                       onChange={(e) =>
                         updateItemStatus(item.id, e.target.value)
                       }
@@ -351,27 +301,70 @@ const ActionItemsList = ({ actionItems, onRefresh, meetings, clients, users = []
                       <option value="in_progress">In Progress</option>
                       <option value="completed">Completed</option>
                     </select>
-                  </div>
-                  <button
-                    className="btn-icon btn-edit"
-                    onClick={() => startEdit(item)}
-                    title="Edit"
-                  >
-                    <EditIcon />
-                  </button>
-                  <button
-                    className="btn-icon btn-danger"
-                    onClick={() => deleteItem(item.id)}
-                    title="Delete"
-                  >
-                    <DeleteIcon />
-                  </button>
-                </div>
+                  </td>
+
+                  <td className="col-priority">
+                    <div className="priority-cell">
+                      {item.due_date && new Date(item.due_date) < new Date() ? (
+                        <span className="priority-high">High</span>
+                      ) : item.due_date &&
+                        new Date(item.due_date) <=
+                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? (
+                        <span className="priority-medium">⚡ Medium</span>
+                      ) : (
+                        <span className="priority-low">— Low</span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="col-due">
+                    <div className="due-cell">
+                      {item.due_date ? (
+                        <span
+                          className={`due-date ${
+                            new Date(item.due_date) < new Date()
+                              ? "overdue"
+                              : new Date(item.due_date) <=
+                                new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                              ? "due-soon"
+                              : ""
+                          }`}
+                        >
+                          {new Date(item.due_date).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                          })}
+                        </span>
+                      ) : (
+                        <span className="no-due-date">—</span>
+                      )}
+                    </div>
+                  </td>
+
+                  <td className="col-actions">
+                    <div className="actions-cell">
+                      <button
+                        className="btn-icon btn-edit"
+                        onClick={() => startEdit(item)}
+                        title="Edit"
+                      >
+                        <EditIcon />
+                      </button>
+                      <button
+                        className="btn-icon btn-danger"
+                        onClick={() => deleteItem(item.id)}
+                        title="Delete"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+                  </td>
+                </>
               )}
-            </div>
-          </div>
-        </div>
-      ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
   );
 };

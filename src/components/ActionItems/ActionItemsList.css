@@ -1,0 +1,447 @@
+/* Action Items Table Styles */
+.action-items-table-container {
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  border: 1px solid #e2e8f0;
+  overflow: hidden;
+  margin: 1.5rem;
+}
+
+.action-items-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.875rem;
+}
+
+/* Table Header */
+.action-items-table thead {
+  background: #f8fafc;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.action-items-table th {
+  padding: 1rem 1.25rem;
+  text-align: left;
+  font-weight: 600;
+  color: #374151;
+  font-size: 0.75rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+/* Column Widths */
+.col-task { width: 32%; }
+.col-client { width: 14%; }
+.col-assignee { width: 18%; }
+.col-status { width: 12%; }
+.col-priority { width: 10%; }
+.col-due { width: 8%; }
+.col-actions { width: 6%; }
+
+/* Table Rows */
+.action-item-row {
+  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.2s ease;
+}
+
+.action-item-row:hover {
+  background: #f8fafc;
+}
+
+.action-item-row:last-child {
+  border-bottom: none;
+}
+
+.action-items-table td {
+  padding: 1rem 1.25rem;
+  vertical-align: middle;
+  height: 60px;
+}
+
+/* Edit mode row styling */
+.action-items-table tr:has(.edit-textarea) {
+  background: #f8fafc;
+  border: 2px solid #e2e8f0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+.action-items-table tr:has(.edit-textarea) td {
+  padding: 1.25rem;
+  vertical-align: top;
+  height: auto;
+  border-bottom: none;
+}
+
+/* Task Cell - Scoped to table only */
+.action-items-table .task-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.action-items-table .task-name {
+  font-weight: 500;
+  color: #1e293b;
+  line-height: 1.4;
+}
+
+.action-items-table .task-meta {
+  font-size: 0.75rem;
+  color: #64748b;
+}
+
+/* Client Cell - Scoped to table only */
+.action-items-table .client-cell {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Assignee Cell - Simple text display */
+.action-items-table .col-assignee {
+  font-weight: 500;
+  color: #374151;
+  font-size: 0.875rem;
+}
+
+/* Status Select */
+.status-select {
+  padding: 0.375rem 0.75rem;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #ffffff;
+}
+
+.status-select:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1);
+}
+
+.status-select.status-open {
+  background: #dbeafe;
+  color: #1e40af;
+  border-color: #93c5fd;
+}
+
+.status-select.status-in_progress {
+  background: #fef3c7;
+  color: #d97706;
+  border-color: #fcd34d;
+}
+
+.status-select.status-completed {
+  background: #d1fae5;
+  color: #059669;
+  border-color: #86efac;
+}
+
+/* Priority Cell - Scoped to table only */
+.action-items-table .priority-cell {
+  display: flex;
+  align-items: center;
+}
+
+.action-items-table .priority-high {
+  color: #dc2626;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.action-items-table .priority-medium {
+  color: #d97706;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.action-items-table .priority-low {
+  color: #6b7280;
+  font-weight: 500;
+  font-size: 0.75rem;
+}
+
+/* Due Date Cell - Scoped to table only */
+.action-items-table .due-cell {
+  display: flex;
+  align-items: center;
+}
+
+.action-items-table .due-date {
+  font-weight: 500;
+  font-size: 0.8rem;
+  color: #374151;
+}
+
+.action-items-table .due-date.overdue {
+  color: #dc2626;
+  font-weight: 600;
+}
+
+.action-items-table .due-date.due-soon {
+  color: #d97706;
+  font-weight: 600;
+}
+
+.action-items-table .no-due-date {
+  color: #9ca3af;
+  font-size: 0.8rem;
+}
+
+/* Actions Cell - Scoped to table only */
+.action-items-table .actions-cell {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+/* Edit Form Styles - Professional and clean */
+.action-items-table .edit-textarea {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  font-weight: 500;
+  color: #1e293b;
+  background: #ffffff;
+  resize: vertical;
+  min-height: 50px;
+  line-height: 1.4;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.action-items-table .edit-select {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  background: #ffffff;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  appearance: none;
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e");
+  background-position: right 0.75rem center;
+  background-repeat: no-repeat;
+  background-size: 1.5em 1.5em;
+  padding-right: 2.5rem;
+}
+
+.action-items-table .edit-input {
+  width: 100%;
+  padding: 0.75rem;
+  border: 2px solid #e2e8f0;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #1e293b;
+  background: #ffffff;
+  transition: all 0.2s ease;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.action-items-table .edit-textarea:focus,
+.action-items-table .edit-select:focus,
+.action-items-table .edit-input:focus {
+  outline: none;
+  border-color: #4f46e5;
+  box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1), 0 1px 3px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.action-items-table .edit-textarea:hover,
+.action-items-table .edit-select:hover,
+.action-items-table .edit-input:hover {
+  border-color: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Edit row styling */
+.action-items-table .action-item-row td {
+  vertical-align: top;
+  padding: 1rem;
+}
+
+/* Specific styling for edit mode cells */
+.action-items-table tr:has(.edit-textarea) td,
+.action-items-table tr:has(.edit-select) td,
+.action-items-table tr:has(.edit-input) td {
+  background: #f8fafc;
+  border-top: 2px solid #e2e8f0;
+  border-bottom: 2px solid #e2e8f0;
+}
+
+.action-items-table tr:has(.edit-textarea) td:first-child {
+  border-left: 2px solid #e2e8f0;
+  border-top-left-radius: 8px;
+  border-bottom-left-radius: 8px;
+}
+
+.action-items-table tr:has(.edit-textarea) td:last-child {
+  border-right: 2px solid #e2e8f0;
+  border-top-right-radius: 8px;
+  border-bottom-right-radius: 8px;
+}
+
+.action-items-table .btn-icon {
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: transparent;
+}
+
+.action-items-table .btn-icon:hover {
+  background: #f1f5f9;
+}
+
+.action-items-table .btn-icon.btn-edit {
+  color: #4f46e5;
+}
+
+.action-items-table .btn-icon.btn-edit:hover {
+  background: rgba(79, 70, 229, 0.1);
+}
+
+.action-items-table .btn-icon.btn-danger {
+  color: #dc2626;
+}
+
+.action-items-table .btn-icon.btn-danger:hover {
+  background: rgba(220, 38, 38, 0.1);
+}
+
+.action-items-table .btn-icon.btn-success {
+  background: #10b981;
+  color: #ffffff;
+  border: 2px solid #10b981;
+  box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
+}
+
+.action-items-table .btn-icon.btn-success:hover {
+  background: #059669;
+  border-color: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
+}
+
+.action-items-table .btn-icon.btn-secondary {
+  background: #6b7280;
+  color: #ffffff;
+  border: 2px solid #6b7280;
+  box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
+}
+
+.action-items-table .btn-icon.btn-secondary:hover {
+  background: #4b5563;
+  border-color: #4b5563;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
+}
+
+.action-items-table .btn-icon svg {
+  width: 16px !important;
+  height: 16px !important;
+}
+
+/* Row Status Classes */
+.action-item-row.completed {
+  opacity: 0.7;
+}
+
+.action-item-row.completed .task-name {
+  text-decoration: line-through;
+  color: #6b7280;
+}
+
+/* Empty State */
+.no-action-items {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 4rem 2rem;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.no-items-icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 64px;
+  height: 64px;
+  background: #f1f5f9;
+  border-radius: 50%;
+  margin-bottom: 1rem;
+}
+
+.no-items-icon svg {
+  color: #9ca3af;
+  font-size: 32px;
+}
+
+.no-action-items h4 {
+  margin: 0 0 0.5rem 0;
+  color: #374151;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.no-action-items p {
+  margin: 0;
+  color: #6b7280;
+  max-width: 400px;
+  line-height: 1.5;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .action-items-table {
+    font-size: 0.8rem;
+  }
+  
+  .action-items-table th,
+  .action-items-table td {
+    padding: 0.75rem 1rem;
+  }
+  
+  .col-task { width: 40%; }
+  .col-client { width: 20%; }
+  .col-assignee { width: 15%; }
+  .col-status { width: 15%; }
+  .col-priority { width: 10%; }
+}
+
+@media (max-width: 768px) {
+  .action-items-table-container {
+    overflow-x: auto;
+  }
+  
+  .action-items-table {
+    min-width: 800px;
+  }
+  
+  .action-items-table th,
+  .action-items-table td {
+    padding: 0.5rem 0.75rem;
+  }
+}
