@@ -177,16 +177,18 @@ const WorkflowDetailsPage = () => {
   };
 
   const renderParameterValue = (value) => {
-    if (typeof value === 'object' && value !== null) {
+    if (typeof value === "object" && value !== null) {
       return (
-        <pre style={{ 
-          fontSize: '0.75rem', 
-          background: '#f5f5f5', 
-          padding: '0.5rem', 
-          borderRadius: '4px',
-          overflow: 'auto',
-          maxHeight: '200px'
-        }}>
+        <pre
+          style={{
+            fontSize: "0.75rem",
+            background: "#f5f5f5",
+            padding: "0.5rem",
+            borderRadius: "4px",
+            overflow: "auto",
+            maxHeight: "200px",
+          }}
+        >
           {JSON.stringify(value, null, 2)}
         </pre>
       );
@@ -334,7 +336,8 @@ const WorkflowDetailsPage = () => {
                       Connections
                     </Typography>
                     <Typography variant="body2" className="info-value">
-                      {Object.keys(workflow.connections).length} connection points
+                      {Object.keys(workflow.connections).length} connection
+                      points
                     </Typography>
                   </Box>
                 )}
@@ -345,7 +348,8 @@ const WorkflowDetailsPage = () => {
                       Settings
                     </Typography>
                     <Typography variant="body2" className="info-value">
-                      {Object.keys(workflow.settings).length} configuration items
+                      {Object.keys(workflow.settings).length} configuration
+                      items
                     </Typography>
                   </Box>
                 )}
@@ -360,7 +364,7 @@ const WorkflowDetailsPage = () => {
                 <Typography variant="h6" className="section-title">
                   Workflow Nodes ({workflow.nodes?.length || 0})
                 </Typography>
-                
+
                 {workflow.nodes && workflow.nodes.length > 0 ? (
                   <TableContainer component={Paper} className="nodes-table">
                     <Table size="small">
@@ -375,15 +379,18 @@ const WorkflowDetailsPage = () => {
                       </TableHead>
                       <TableBody>
                         {workflow.nodes.map((node, index) => (
-                          <TableRow 
+                          <TableRow
                             key={node.id || index}
                             hover
-                            style={{ cursor: 'pointer' }}
+                            style={{ cursor: "pointer" }}
                             onClick={() => handleNodeClick(node)}
                           >
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
-                                <Typography variant="body2" className="node-name">
+                                <Typography
+                                  variant="body2"
+                                  className="node-name"
+                                >
                                   {node.name || `Node ${index + 1}`}
                                 </Typography>
                                 <InfoIcon fontSize="small" color="action" />
@@ -391,7 +398,7 @@ const WorkflowDetailsPage = () => {
                             </TableCell>
                             <TableCell>
                               <Chip
-                                label={node.type?.split('.').pop() || 'Unknown'}
+                                label={node.type?.split(".").pop() || "Unknown"}
                                 size="small"
                                 variant="outlined"
                                 className="node-type-chip"
@@ -399,18 +406,26 @@ const WorkflowDetailsPage = () => {
                             </TableCell>
                             <TableCell>
                               <Typography variant="body2">
-                                v{node.typeVersion || 'N/A'}
+                                v{node.typeVersion || "N/A"}
                               </Typography>
                             </TableCell>
                             <TableCell>
-                              <Typography variant="body2" className="node-position">
-                                {node.position ? `(${node.position[0]}, ${node.position[1]})` : 'N/A'}
+                              <Typography
+                                variant="body2"
+                                className="node-position"
+                              >
+                                {node.position
+                                  ? `(${node.position[0]}, ${node.position[1]})`
+                                  : "N/A"}
                               </Typography>
                             </TableCell>
                             <TableCell>
                               <Box display="flex" alignItems="center" gap={1}>
                                 <Typography variant="body2">
-                                  {node.parameters ? Object.keys(node.parameters).length : 0} params
+                                  {node.parameters
+                                    ? Object.keys(node.parameters).length
+                                    : 0}{" "}
+                                  params
                                 </Typography>
                                 {node.credentials && (
                                   <Chip
@@ -437,65 +452,83 @@ const WorkflowDetailsPage = () => {
           </Grid>
 
           {/* Workflow Connections */}
-          {workflow.connections && Object.keys(workflow.connections).length > 0 && (
-            <Grid item xs={12}>
-              <Card className="workflow-connections-card">
-                <CardContent>
-                  <Typography variant="h6" className="section-title">
-                    Node Connections
-                  </Typography>
-                  
-                  <TableContainer component={Paper} className="connections-table">
-                    <Table size="small">
-                      <TableHead>
-                        <TableRow>
-                          <TableCell>Source Node</TableCell>
-                          <TableCell>Target Node</TableCell>
-                          <TableCell>Connection Type</TableCell>
-                          <TableCell>Index</TableCell>
-                        </TableRow>
-                      </TableHead>
-                      <TableBody>
-                        {Object.entries(workflow.connections).map(([sourceNode, connections]) =>
-                          Object.entries(connections).map(([connectionType, targets]) =>
-                            targets.map((targetList, listIndex) =>
-                              targetList.map((target, targetIndex) => (
-                                <TableRow key={`${sourceNode}-${connectionType}-${listIndex}-${targetIndex}`}>
-                                  <TableCell>
-                                    <Typography variant="body2" className="source-node">
-                                      {sourceNode}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Typography variant="body2" className="target-node">
-                                      {target.node}
-                                    </Typography>
-                                  </TableCell>
-                                  <TableCell>
-                                    <Chip
-                                      label={target.type || connectionType}
-                                      size="small"
-                                      color="primary"
-                                      variant="outlined"
-                                    />
-                                  </TableCell>
-                                  <TableCell>
-                                    <Typography variant="body2">
-                                      {target.index !== undefined ? target.index : 'N/A'}
-                                    </Typography>
-                                  </TableCell>
-                                </TableRow>
-                              ))
-                            )
-                          )
-                        )}
-                      </TableBody>
-                    </Table>
-                  </TableContainer>
-                </CardContent>
-              </Card>
-            </Grid>
-          )}
+          {workflow.connections &&
+            Object.keys(workflow.connections).length > 0 && (
+              <Grid item xs={12}>
+                <Card className="workflow-connections-card">
+                  <CardContent>
+                    <Typography variant="h6" className="section-title">
+                      Node Connections
+                    </Typography>
+
+                    <TableContainer
+                      component={Paper}
+                      className="connections-table"
+                    >
+                      <Table size="small">
+                        <TableHead>
+                          <TableRow>
+                            <TableCell>Source Node</TableCell>
+                            <TableCell>Target Node</TableCell>
+                            <TableCell>Connection Type</TableCell>
+                            <TableCell>Index</TableCell>
+                          </TableRow>
+                        </TableHead>
+                        <TableBody>
+                          {Object.entries(workflow.connections).map(
+                            ([sourceNode, connections]) =>
+                              Object.entries(connections).map(
+                                ([connectionType, targets]) =>
+                                  targets.map((targetList, listIndex) =>
+                                    targetList.map((target, targetIndex) => (
+                                      <TableRow
+                                        key={`${sourceNode}-${connectionType}-${listIndex}-${targetIndex}`}
+                                      >
+                                        <TableCell>
+                                          <Typography
+                                            variant="body2"
+                                            className="source-node"
+                                          >
+                                            {sourceNode}
+                                          </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Typography
+                                            variant="body2"
+                                            className="target-node"
+                                          >
+                                            {target.node}
+                                          </Typography>
+                                        </TableCell>
+                                        <TableCell>
+                                          <Chip
+                                            label={
+                                              target.type || connectionType
+                                            }
+                                            size="small"
+                                            color="primary"
+                                            variant="outlined"
+                                          />
+                                        </TableCell>
+                                        <TableCell>
+                                          <Typography variant="body2">
+                                            {target.index !== undefined
+                                              ? target.index
+                                              : "N/A"}
+                                          </Typography>
+                                        </TableCell>
+                                      </TableRow>
+                                    ))
+                                  )
+                              )
+                          )}
+                        </TableBody>
+                      </Table>
+                    </TableContainer>
+                  </CardContent>
+                </Card>
+              </Grid>
+            )}
 
           {/* Workflow Settings */}
           {workflow.settings && Object.keys(workflow.settings).length > 0 && (
@@ -505,7 +538,7 @@ const WorkflowDetailsPage = () => {
                   <Typography variant="h6" className="section-title">
                     Workflow Settings
                   </Typography>
-                  
+
                   <Box className="settings-list">
                     {Object.entries(workflow.settings).map(([key, value]) => (
                       <Box key={key} className="setting-item">
@@ -513,7 +546,9 @@ const WorkflowDetailsPage = () => {
                           {key}:
                         </Typography>
                         <Typography variant="body2" className="setting-value">
-                          {typeof value === 'object' ? JSON.stringify(value) : String(value)}
+                          {typeof value === "object"
+                            ? JSON.stringify(value)
+                            : String(value)}
                         </Typography>
                       </Box>
                     ))}
@@ -530,41 +565,74 @@ const WorkflowDetailsPage = () => {
                 <Typography variant="h6" className="section-title">
                   Workflow Statistics
                 </Typography>
-                
+
                 <Box className="workflow-details-stats-grid">
                   <Box className="workflow-details-stat-item">
-                    <Typography variant="h4" className="workflow-details-stat-number">
+                    <Typography
+                      variant="h4"
+                      className="workflow-details-stat-number"
+                    >
                       {workflow.nodes?.length || 0}
                     </Typography>
-                    <Typography variant="body2" className="workflow-details-stat-label">
+                    <Typography
+                      variant="body2"
+                      className="workflow-details-stat-label"
+                    >
                       Total Nodes
                     </Typography>
                   </Box>
-                  
+
                   <Box className="workflow-details-stat-item">
-                    <Typography variant="h4" className="workflow-details-stat-number">
-                      {workflow.connections ? Object.keys(workflow.connections).length : 0}
+                    <Typography
+                      variant="h4"
+                      className="workflow-details-stat-number"
+                    >
+                      {workflow.connections
+                        ? Object.keys(workflow.connections).length
+                        : 0}
                     </Typography>
-                    <Typography variant="body2" className="workflow-details-stat-label">
+                    <Typography
+                      variant="body2"
+                      className="workflow-details-stat-label"
+                    >
                       Connection Points
                     </Typography>
                   </Box>
-                  
+
                   <Box className="workflow-details-stat-item">
-                    <Typography variant="h4" className="workflow-details-stat-number">
-                      {workflow.nodes?.filter(node => node.credentials).length || 0}
+                    <Typography
+                      variant="h4"
+                      className="workflow-details-stat-number"
+                    >
+                      {workflow.nodes?.filter((node) => node.credentials)
+                        .length || 0}
                     </Typography>
-                    <Typography variant="body2" className="workflow-details-stat-label">
+                    <Typography
+                      variant="body2"
+                      className="workflow-details-stat-label"
+                    >
                       Nodes with Credentials
                     </Typography>
                   </Box>
-                  
+
                   <Box className="workflow-details-stat-item">
-                    <Typography variant="h4" className="workflow-details-stat-number">
-                      {workflow.nodes?.reduce((count, node) => 
-                        count + (node.parameters ? Object.keys(node.parameters).length : 0), 0) || 0}
+                    <Typography
+                      variant="h4"
+                      className="workflow-details-stat-number"
+                    >
+                      {workflow.nodes?.reduce(
+                        (count, node) =>
+                          count +
+                          (node.parameters
+                            ? Object.keys(node.parameters).length
+                            : 0),
+                        0
+                      ) || 0}
                     </Typography>
-                    <Typography variant="body2" className="workflow-details-stat-label">
+                    <Typography
+                      variant="body2"
+                      className="workflow-details-stat-label"
+                    >
                       Total Parameters
                     </Typography>
                   </Box>
@@ -582,9 +650,9 @@ const WorkflowDetailsPage = () => {
           fullWidth
           PaperProps={{
             style: {
-              borderRadius: '16px',
-              maxHeight: '80vh'
-            }
+              borderRadius: "16px",
+              maxHeight: "80vh",
+            },
           }}
         >
           <DialogTitle>
@@ -592,7 +660,7 @@ const WorkflowDetailsPage = () => {
               <CodeIcon color="primary" />
               <Box>
                 <Typography variant="h6">
-                  {selectedNode?.name || 'Node Details'}
+                  {selectedNode?.name || "Node Details"}
                 </Typography>
                 <Typography variant="body2" color="textSecondary">
                   {selectedNode?.type}
@@ -600,7 +668,7 @@ const WorkflowDetailsPage = () => {
               </Box>
             </Box>
           </DialogTitle>
-          
+
           <DialogContent dividers>
             {selectedNode && (
               <Box>
@@ -612,27 +680,46 @@ const WorkflowDetailsPage = () => {
                   <AccordionDetails>
                     <Grid container spacing={2}>
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="textSecondary">Node ID</Typography>
-                        <Typography variant="body1" style={{ fontFamily: 'monospace' }}>
+                        <Typography variant="body2" color="textSecondary">
+                          Node ID
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          style={{ fontFamily: "monospace" }}
+                        >
                           {selectedNode.id}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="textSecondary">Type Version</Typography>
+                        <Typography variant="body2" color="textSecondary">
+                          Type Version
+                        </Typography>
                         <Typography variant="body1">
-                          v{selectedNode.typeVersion || 'N/A'}
+                          v{selectedNode.typeVersion || "N/A"}
                         </Typography>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <Typography variant="body2" color="textSecondary">Position</Typography>
-                        <Typography variant="body1" style={{ fontFamily: 'monospace' }}>
-                          {selectedNode.position ? `(${selectedNode.position[0]}, ${selectedNode.position[1]})` : 'N/A'}
+                        <Typography variant="body2" color="textSecondary">
+                          Position
+                        </Typography>
+                        <Typography
+                          variant="body1"
+                          style={{ fontFamily: "monospace" }}
+                        >
+                          {selectedNode.position
+                            ? `(${selectedNode.position[0]}, ${selectedNode.position[1]})`
+                            : "N/A"}
                         </Typography>
                       </Grid>
                       {selectedNode.webhookId && (
                         <Grid item xs={12} sm={6}>
-                          <Typography variant="body2" color="textSecondary">Webhook ID</Typography>
-                          <Typography variant="body1" style={{ fontFamily: 'monospace' }}>
+                          <Typography variant="body2" color="textSecondary">
+                            Webhook ID
+                          </Typography>
+                          <Typography
+                            variant="body1"
+                            style={{ fontFamily: "monospace" }}
+                          >
                             {selectedNode.webhookId}
                           </Typography>
                         </Grid>
@@ -642,29 +729,35 @@ const WorkflowDetailsPage = () => {
                 </Accordion>
 
                 {/* Node Parameters */}
-                {selectedNode.parameters && Object.keys(selectedNode.parameters).length > 0 && (
-                  <Accordion>
-                    <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-                      <Typography variant="h6">
-                        Parameters ({Object.keys(selectedNode.parameters).length})
-                      </Typography>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box>
-                        {Object.entries(selectedNode.parameters).map(([key, value]) => (
-                          <Box key={key} mb={2}>
-                            <Typography variant="body2" color="textSecondary" gutterBottom>
-                              {key}
-                            </Typography>
-                            <Box>
-                              {renderParameterValue(value)}
-                            </Box>
-                          </Box>
-                        ))}
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                )}
+                {selectedNode.parameters &&
+                  Object.keys(selectedNode.parameters).length > 0 && (
+                    <Accordion>
+                      <AccordionSummary expandIcon={<ExpandMoreIcon />}>
+                        <Typography variant="h6">
+                          Parameters (
+                          {Object.keys(selectedNode.parameters).length})
+                        </Typography>
+                      </AccordionSummary>
+                      <AccordionDetails>
+                        <Box>
+                          {Object.entries(selectedNode.parameters).map(
+                            ([key, value]) => (
+                              <Box key={key} mb={2}>
+                                <Typography
+                                  variant="body2"
+                                  color="textSecondary"
+                                  gutterBottom
+                                >
+                                  {key}
+                                </Typography>
+                                <Box>{renderParameterValue(value)}</Box>
+                              </Box>
+                            )
+                          )}
+                        </Box>
+                      </AccordionDetails>
+                    </Accordion>
+                  )}
 
                 {/* Node Credentials */}
                 {selectedNode.credentials && (
@@ -674,27 +767,29 @@ const WorkflowDetailsPage = () => {
                     </AccordionSummary>
                     <AccordionDetails>
                       <Box>
-                        {Object.entries(selectedNode.credentials).map(([key, credential]) => (
-                          <Box key={key} mb={2}>
-                            <Typography variant="body2" color="textSecondary">
-                              {key}
-                            </Typography>
-                            <Box mt={1}>
-                              <Chip
-                                label={`ID: ${credential.id}`}
-                                size="small"
-                                variant="outlined"
-                                style={{ marginRight: '0.5rem' }}
-                              />
-                              <Chip
-                                label={`Name: ${credential.name}`}
-                                size="small"
-                                color="primary"
-                                variant="outlined"
-                              />
+                        {Object.entries(selectedNode.credentials).map(
+                          ([key, credential]) => (
+                            <Box key={key} mb={2}>
+                              <Typography variant="body2" color="textSecondary">
+                                {key}
+                              </Typography>
+                              <Box mt={1}>
+                                <Chip
+                                  label={`ID: ${credential.id}`}
+                                  size="small"
+                                  variant="outlined"
+                                  style={{ marginRight: "0.5rem" }}
+                                />
+                                <Chip
+                                  label={`Name: ${credential.name}`}
+                                  size="small"
+                                  color="primary"
+                                  variant="outlined"
+                                />
+                              </Box>
                             </Box>
-                          </Box>
-                        ))}
+                          )
+                        )}
                       </Box>
                     </AccordionDetails>
                   </Accordion>
@@ -706,15 +801,17 @@ const WorkflowDetailsPage = () => {
                     <Typography variant="h6">Raw Node Data (JSON)</Typography>
                   </AccordionSummary>
                   <AccordionDetails>
-                    <pre style={{
-                      fontSize: '0.75rem',
-                      background: '#f5f5f5',
-                      padding: '1rem',
-                      borderRadius: '8px',
-                      overflow: 'auto',
-                      maxHeight: '400px',
-                      border: '1px solid #e0e0e0'
-                    }}>
+                    <pre
+                      style={{
+                        fontSize: "0.75rem",
+                        background: "#f5f5f5",
+                        padding: "1rem",
+                        borderRadius: "8px",
+                        overflow: "auto",
+                        maxHeight: "400px",
+                        border: "1px solid #e0e0e0",
+                      }}
+                    >
                       {JSON.stringify(selectedNode, null, 2)}
                     </pre>
                   </AccordionDetails>
@@ -722,7 +819,7 @@ const WorkflowDetailsPage = () => {
               </Box>
             )}
           </DialogContent>
-          
+
           <DialogActions>
             <Button onClick={handleCloseNodeDialog} color="primary">
               Close

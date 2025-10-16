@@ -10,7 +10,10 @@ import {
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
-import { ActionItemsList, ActionItemsKanban } from "../../components/ActionItems";
+import {
+  ActionItemsList,
+  ActionItemsKanban,
+} from "../../components/ActionItems";
 import { openPointsAPI, clientAPI, meetingAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import "./ActionItemsPage.css";
@@ -27,7 +30,7 @@ const ActionItemsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
-  const [viewMode, setViewMode] = useState("list"); // "list" or "kanban"
+  const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
 
   useEffect(() => {
     loadData();
@@ -150,7 +153,9 @@ const ActionItemsPage = () => {
           <div className="header-actions">
             <div className="view-toggle">
               <button
-                className={`btn btn-outline view-btn ${viewMode === "list" ? "active" : ""}`}
+                className={`btn btn-outline view-btn ${
+                  viewMode === "list" ? "active" : ""
+                }`}
                 onClick={() => setViewMode("list")}
                 title="List View"
               >
@@ -158,7 +163,9 @@ const ActionItemsPage = () => {
                 List
               </button>
               <button
-                className={`btn btn-outline view-btn ${viewMode === "kanban" ? "active" : ""}`}
+                className={`btn btn-outline view-btn ${
+                  viewMode === "kanban" ? "active" : ""
+                }`}
                 onClick={() => setViewMode("kanban")}
                 title="Kanban View"
               >
@@ -170,10 +177,9 @@ const ActionItemsPage = () => {
               className="btn btn-outline refresh-btn"
               onClick={handleRefresh}
               disabled={refreshing}
-              title="Refresh Action Items"
+              title={refreshing ? "Refreshing..." : "Refresh Action Items"}
             >
               <RefreshIcon className={refreshing ? "spinning" : ""} />
-              {refreshing ? "Refreshing..." : "Refresh"}
             </button>
           </div>
         </div>
@@ -235,7 +241,11 @@ const ActionItemsPage = () => {
         </div>
 
         {/* Action Items Container */}
-        <div className={`action-items-container ${viewMode === "kanban" ? "kanban-mode" : ""}`}>
+        <div
+          className={`action-items-container ${
+            viewMode === "kanban" ? "kanban-mode" : ""
+          }`}
+        >
           {viewMode === "list" && (
             <div className="action-items-header">
               <div className="header-info">
