@@ -5,10 +5,12 @@ import {
   Search as SearchIcon,
   FilterList as FilterIcon,
   Person as PersonIcon,
+  ViewList as ListViewIcon,
+  ViewModule as KanbanViewIcon,
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
-import { ActionItemsList } from "../../components/ActionItems";
+import { ActionItemsList, ActionItemsKanban } from "../../components/ActionItems";
 import { openPointsAPI, clientAPI, meetingAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import "./ActionItemsPage.css";
@@ -25,6 +27,7 @@ const ActionItemsPage = () => {
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
+  const [viewMode, setViewMode] = useState("list"); // "list" or "kanban"
 
   useEffect(() => {
     loadData();
@@ -98,6 +101,10 @@ const ActionItemsPage = () => {
     setClientFilter("all");
   };
 
+  const toggleViewMode = () => {
+    setViewMode(viewMode === "list" ? "kanban" : "list");
+  };
+
   const filteredActionItems = actionItems.filter((item) => {
     const matchesSearch =
       item.task?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -141,6 +148,24 @@ const ActionItemsPage = () => {
             </div>
           </div>
           <div className="header-actions">
+            <div className="view-toggle">
+              <button
+                className={`btn btn-outline view-btn ${viewMode === "list" ? "active" : ""}`}
+                onClick={() => setViewMode("list")}
+                title="List View"
+              >
+                <ListViewIcon />
+                List
+              </button>
+              <button
+                className={`btn btn-outline view-btn ${viewMode === "kanban" ? "active" : ""}`}
+                onClick={() => setViewMode("kanban")}
+                title="Kanban View"
+              >
+                <KanbanViewIcon />
+                Kanban
+              </button>
+            </div>
             <button
               className="btn btn-outline refresh-btn"
               onClick={handleRefresh}
@@ -210,24 +235,36 @@ const ActionItemsPage = () => {
         </div>
 
         {/* Action Items Container */}
-        <div className="action-items-container">
-          <div className="action-items-header">
-            <div className="header-info">
-              <h3>Action Items</h3>
-              <span className="items-count">
-                {filteredActionItems.length}{" "}
-                {filteredActionItems.length === 1 ? "item" : "items"}
-              </span>
+        <div className={`action-items-container ${viewMode === "kanban" ? "kanban-mode" : ""}`}>
+          {viewMode === "list" && (
+            <div className="action-items-header">
+              <div className="header-info">
+                <h3>Action Items</h3>
+                <span className="items-count">
+                  {filteredActionItems.length}{" "}
+                  {filteredActionItems.length === 1 ? "item" : "items"}
+                </span>
+              </div>
             </div>
-          </div>
+          )}
 
-          <ActionItemsList
-            actionItems={filteredActionItems}
-            onRefresh={loadData}
-            meetings={meetings}
-            clients={clients}
-            users={users}
-          />
+          {viewMode === "list" ? (
+            <ActionItemsList
+              actionItems={filteredActionItems}
+              onRefresh={loadData}
+              meetings={meetings}
+              clients={clients}
+              users={users}
+            />
+          ) : (
+            <ActionItemsKanban
+              actionItems={filteredActionItems}
+              onRefresh={loadData}
+              meetings={meetings}
+              clients={clients}
+              users={users}
+            />
+          )}
         </div>
       </div>
     </DashboardLayout>
