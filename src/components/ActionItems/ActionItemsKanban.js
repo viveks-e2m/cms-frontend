@@ -267,19 +267,37 @@ const ActionItemsKanban = ({
           <div className="card-details">
             <div className="detail-row">
               <div className="detail-item">
-                <PersonIcon className="detail-icon" />
-                <span className="detail-label">Client:</span>
+                <div className="detail-left">
+                  <PersonIcon className="detail-icon" />
+                  <span className="detail-label">Client:</span>
+                </div>
                 <span className="detail-value">
                   {getClientName(item.client_id)}
                 </span>
               </div>
             </div>
 
+            {item.task_owner && (
+              <div className="detail-row">
+                <div className="detail-item">
+                  <div className="detail-left">
+                    <PersonIcon className="detail-icon" />
+                    <span className="detail-label">Owner:</span>
+                  </div>
+                  <span className="detail-value">
+                    {getUserName(item.task_owner)}
+                  </span>
+                </div>
+              </div>
+            )}
+
             {item.assignee && (
               <div className="detail-row">
                 <div className="detail-item">
-                  <PersonIcon className="detail-icon" />
-                  <span className="detail-label">Assigned:</span>
+                  <div className="detail-left">
+                    <PersonIcon className="detail-icon" />
+                    <span className="detail-label">Assigned:</span>
+                  </div>
                   <span className="detail-value">
                     {getUserName(item.assignee)}
                   </span>
@@ -290,8 +308,10 @@ const ActionItemsKanban = ({
             {item.due_date && (
               <div className="detail-row">
                 <div className="detail-item">
-                  <CalendarIcon className="detail-icon" />
-                  <span className="detail-label">Due:</span>
+                  <div className="detail-left">
+                    <CalendarIcon className="detail-icon" />
+                    <span className="detail-label">Due:</span>
+                  </div>
                   <span
                     className={`detail-value ${
                       new Date(item.due_date) < new Date()
@@ -313,7 +333,7 @@ const ActionItemsKanban = ({
             <div className="footer-left">
               <MeetingIcon className="meeting-icon" />
               <span className="meeting-name">
-                {getMeetingTitle(item.meeting_id)}
+                Meeting: {item.meeting_id || "Unknown"}
               </span>
             </div>
             <div className="footer-right">
