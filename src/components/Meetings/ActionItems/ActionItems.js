@@ -13,13 +13,14 @@ import {
   Cancel as CancelIcon,
   Notes as NotesIcon,
 } from "@mui/icons-material";
-import { openPointsAPI, meetingAPI } from "../../../utils/apiServices";
+import { openPointsAPI, meetingAPI, clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./ActionItems.css";
 
 const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [actionItems, setActionItems] = useState([]);
+  const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [generationStatus, setGenerationStatus] = useState(null);
   const [polling, setPolling] = useState(false);
@@ -27,14 +28,22 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [editForm, setEditForm] = useState({
     message: '',
     due_date: '',
+    assignee: null,
     notes: ''
   });
 
   const { showSuccess, showError, showInfo } = useNotificationContext();
 
+  const getUserName = (userId) => {
+    if (!userId) return null;
+    const user = users.find(u => u.id === userId);
+    return user ? (user.full_name || user.name || user.email) : 'Unknown User';
+  };
+
   useEffect(() => {
     if (meetingId) {
       loadActionItems();
+      loadUsers();
       
       // Start polling if this is a Fathom meeting and might have background generation
       if (meeting?.source === "fathom") {
@@ -42,6 +51,15 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       }
     }
   }, [meetingId, meeting]);
+
+  const loadUsers = async () => {
+    try {
+      const usersData = await clientAPI.getAllUsers();
+      setUsers(usersData || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+  };
 
   const checkGenerationStatus = async () => {
     try {
@@ -128,6 +146,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
     setEditForm({
       message: item.message || '',
       due_date: item.due_date ? item.due_date.split('T')[0] : '', // Format for date input
+      assignee: item.assignee || null,
       notes: item.notes || ''
     });
   };
@@ -137,6 +156,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
     setEditForm({
       message: '',
       due_date: '',
+      assignee: null,
       notes: ''
     });
   };
@@ -146,6 +166,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       const updateData = {
         message: editForm.message.trim(),
         due_date: editForm.due_date || null,
+        assignee: editForm.assignee || null,
         notes: editForm.notes.trim() || null
       };
 
@@ -288,6 +309,24 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
                         />
                       </div>
                       <div className="edit-field">
+                        <label>Assigned To:</label>
+                        <select
+                          value={editForm.assignee || ""}
+                          onChange={(e) => handleEditFormChange('assignee', e.target.value || null)}
+                          className="edit-input"
+                        >
+                          <option value="">Select assignee...</option>
+                          {users.length === 0 && (
+                            <option value="" disabled>Loading users...</option>
+                          )}
+                          {users.map((user) => (
+                            <option key={user.id} value={user.id}>
+                              {user.full_name || user.name || user.email}
+                            </option>
+                          ))}
+                        </select>
+                      </div>
+                      <div className="edit-field">
                         <label>Due Date:</label>
                         <input
                           type="date"
@@ -309,29 +348,71 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
                     </div>
                   ) : (
                     <div className="item-display">
-                      <h4 className="item-message">{item.message}</h4>
+                      <div className="item-header">
+                        <div className="item-message">
+                          {item.message}
+                        </div>
+                        <div className={`status-badge status-${item.status || 'open'}`}>
+                          {item.status === 'in_progress' ? 'In Progress' : 
+                           item.status === 'completed' ? 'Completed' : 'Open'}
+                        </div>
+                      </div>
+                      
                       {item.notes && (
                         <div className="item-notes">
                           <NotesIcon className="notes-icon" />
                           <span>{item.notes}</span>
                         </div>
                       )}
-                      <div className="item-meta">
-                        {item.assignee && (
-                          <span className="item-assignee">
-                            <PersonIcon />
-                            Assigned to: {item.assignee}
-                          </span>
-                        )}
-                        {item.due_date && (
-                          <span className="item-due-date">
-                            <CalendarIcon />
-                            Due: {formatDate(item.due_date)}
-                          </span>
-                        )}
-                        <span className="item-created">
-                          Created: {formatDate(item.created_at)}
-                        </span>
+                      
+                      <div className="item-metadata">
+                        <div className="metadata-grid">
+                          {item.task_owner && (
+                            <div className="metadata-item">
+                              <div className="metadata-icon">
+                                <PersonIcon />
+                              </div>
+                              <div className="metadata-content">
+                                <span className="metadata-label">Owner</span>
+                                <span className="metadata-value">{getUserName(item.task_owner)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {item.assignee && (
+                            <div className="metadata-item">
+                              <div className="metadata-icon">
+                                <PersonIcon />
+                              </div>
+                              <div className="metadata-content">
+                                <span className="metadata-label">Assigned</span>
+                                <span className="metadata-value">{getUserName(item.assignee)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          {item.due_date && (
+                            <div className="metadata-item">
+                              <div className="metadata-icon">
+                                <CalendarIcon />
+                              </div>
+                              <div className="metadata-content">
+                                <span className="metadata-label">Due Date</span>
+                                <span className="metadata-value">{formatDate(item.due_date)}</span>
+                              </div>
+                            </div>
+                          )}
+                          
+                          <div className="metadata-item">
+                            <div className="metadata-icon">
+                              <CalendarIcon />
+                            </div>
+                            <div className="metadata-content">
+                              <span className="metadata-label">Created</span>
+                              <span className="metadata-value">{formatDate(item.created_at)}</span>
+                            </div>
+                          </div>
+                        </div>
                       </div>
                     </div>
                   )}
