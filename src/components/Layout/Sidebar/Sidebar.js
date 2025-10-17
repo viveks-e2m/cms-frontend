@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
+import { PermissionGuard } from "../../PermissionGuard";
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -11,13 +12,16 @@ import {
   ChevronRight as ChevronRightIcon,
   AccountTree as WorkflowIcon,
   Assignment as ActionItemsIcon,
+  AdminPanelSettings as AdminIcon,
+  Security as SecurityIcon,
+  VideoCall as MeetingIcon,
 } from "@mui/icons-material";
 import "./Sidebar.css";
 
 const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, logout } = useAuth();
+  const { user, role, logout, hasPermission, hasRole } = useAuth();
 
   const menuItems = [
     {
@@ -26,6 +30,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Dashboard",
       path: "/dashboard",
       description: "Overview and analytics",
+      show: true, // Always show dashboard
     },
     {
       id: "clients",
@@ -33,6 +38,16 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Manage Clients",
       path: "/clients",
       description: "Client management and assignments",
+      permissions: ["manage_clients"],
+      roles: ["admin", "account_manager"],
+    },
+    {
+      id: "meetings",
+      icon: <MeetingIcon />,
+      label: "Meetings",
+      path: "/meetings",
+      description: "Meeting notes and summaries",
+      show: true, // Most users can access meetings
     },
     {
       id: "action-items",
@@ -40,6 +55,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Action Items",
       path: "/action-items",
       description: "All action items across meetings",
+      show: true, // Most users can view action items
     },
     {
       id: "n8n-workflows",
@@ -47,8 +63,41 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "n8n Workflows",
       path: "/n8n-workflows",
       description: "Workflow automation and executions",
+      permissions: ["view_workflows"],
+      roles: ["admin", "ai_intern"],
+    },
+    {
+      id: "secrets",
+      icon: <SecurityIcon />,
+      label: "Secrets",
+      path: "/secrets",
+      description: "Manage client secrets and API keys",
+      roles: ["admin", "account_manager"],
+    },
+    {
+      id: "admin",
+      icon: <AdminIcon />,
+      label: "Admin Panel",
+      path: "/admin",
+      description: "User and role management",
+      roles: ["admin"],
     },
   ];
+
+  // Filter menu items based on user permissions and roles
+  const visibleMenuItems = menuItems.filter(item => {
+    if (item.show) return true;
+    
+    if (item.roles && item.roles.length > 0) {
+      return item.roles.includes(role?.name);
+    }
+    
+    if (item.permissions && item.permissions.length > 0) {
+      return item.permissions.some(permission => hasPermission(permission));
+    }
+    
+    return false;
+  });
 
   const handleNavigation = (path) => {
     navigate(path);
@@ -97,7 +146,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       {/* Navigation Menu */}
       <nav className="sidebar-nav">
         <ul className="nav-list">
-          {menuItems.map((item) => (
+          {visibleMenuItems.map((item) => (
             <li key={item.id} className="nav-item">
               <button
                 className={`nav-link ${isActive(item.path) ? "active" : ""}`}
@@ -128,9 +177,14 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
           {!isCollapsed && (
             <div className="user-info">
               <div className="user-name">
-                {user?.name || user?.email?.split("@")[0] || "User"}
+                {user?.first_name || user?.full_name || user?.email?.split("@")[0] || "User"}
               </div>
               <div className="user-email">{user?.email}</div>
+              {role && (
+                <div className="user-role">
+                  {role.display_name || role.name}
+                </div>
+              )}
             </div>
           )}
         </div>
@@ -139,10 +193,10 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
           <div className="sidebar-actions">
             <button
               className="sidebar-settings-btn"
-              onClick={() => navigate("/settings")}
-              title="Settings"
+              onClick={() => navigate("/profile")}
+              title="Profile"
             >
-              <SettingsIcon className="sidebar-btn-icon" /> Settings
+              <SettingsIcon className="sidebar-btn-icon" /> Profile
             </button>
             <button
               className="sidebar-logout-btn"
@@ -158,8 +212,8 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
           <div className="sidebar-actions-collapsed">
             <button
               className="sidebar-settings-icon-btn"
-              onClick={() => navigate("/settings")}
-              title="Settings"
+              onClick={() => navigate("/profile")}
+              title="Profile"
             >
               <SettingsIcon />
             </button>

@@ -1,0 +1,338 @@
+.admin-panel {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.admin-header {
+  text-align: center;
+  margin-bottom: 30px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e5e7eb;
+}
+
+.admin-header h1 {
+  color: #1f2937;
+  font-size: 2.5rem;
+  margin-bottom: 10px;
+}
+
+.admin-header p {
+  color: #6b7280;
+  font-size: 1.1rem;
+}
+
+.admin-tabs {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 30px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.admin-tabs button {
+  background: none;
+  border: none;
+  padding: 12px 24px;
+  font-size: 1rem;
+  color: #6b7280;
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: all 0.3s ease;
+}
+
+.admin-tabs button:hover {
+  color: #3b82f6;
+}
+
+.admin-tabs button.active {
+  color: #3b82f6;
+  border-bottom-color: #3b82f6;
+}
+
+.admin-content {
+  background: white;
+  border-radius: 8px;
+  padding: 30px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+/* User Management Styles */
+.user-management h2 {
+  color: #1f2937;
+  margin-bottom: 20px;
+}
+
+.user-selector {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.user-selector label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 500;
+  color: #374151;
+}
+
+.user-selector input {
+  width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  margin-right: 10px;
+}
+
+.user-selector button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-selector button:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.user-role-assignment,
+.user-permission-management {
+  margin: 20px 0;
+  padding: 20px;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+}
+
+.user-role-assignment h3,
+.user-permission-management h3 {
+  color: #1f2937;
+  margin-bottom: 15px;
+}
+
+.user-role-assignment select {
+  width: 100%;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+}
+
+.permission-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.permission-form select,
+.permission-form input {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  min-width: 150px;
+}
+
+.permission-form button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.user-permissions-display {
+  margin-top: 20px;
+  padding: 20px;
+  background: #f0f9ff;
+  border-radius: 6px;
+  border: 1px solid #0ea5e9;
+}
+
+.user-info p {
+  margin: 8px 0;
+  color: #374151;
+}
+
+.permissions-list h4 {
+  color: #1f2937;
+  margin: 15px 0 10px 0;
+}
+
+.permissions-list ul {
+  list-style: none;
+  padding: 0;
+}
+
+.permissions-list li {
+  background: #dbeafe;
+  padding: 4px 8px;
+  margin: 4px 0;
+  border-radius: 4px;
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 0.9rem;
+}
+
+/* Role Management Styles */
+.create-role {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.create-role h3 {
+  color: #1f2937;
+  margin-bottom: 15px;
+}
+
+.create-role form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.create-role input,
+.create-role textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.create-role textarea {
+  min-height: 80px;
+  resize: vertical;
+}
+
+.create-role button {
+  background: #3b82f6;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+.roles-grid,
+.permissions-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 20px;
+}
+
+.role-card,
+.permission-card {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 20px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.role-card h4,
+.permission-card h4 {
+  color: #1f2937;
+  margin-bottom: 12px;
+  font-size: 1.2rem;
+}
+
+.role-card p,
+.permission-card p {
+  margin: 6px 0;
+  color: #6b7280;
+  font-size: 0.9rem;
+}
+
+/* Permission Management Styles */
+.create-permission {
+  margin-bottom: 30px;
+  padding: 20px;
+  background: #f9fafb;
+  border-radius: 6px;
+}
+
+.create-permission h3 {
+  color: #1f2937;
+  margin-bottom: 15px;
+}
+
+.create-permission form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 400px;
+}
+
+.create-permission input,
+.create-permission textarea {
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 4px;
+  font-size: 1rem;
+}
+
+.create-permission button {
+  background: #10b981;
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 1rem;
+}
+
+/* Access Denied Styles */
+.admin-panel-denied {
+  text-align: center;
+  padding: 60px 20px;
+  color: #6b7280;
+}
+
+.admin-panel-denied h2 {
+  color: #ef4444;
+  font-size: 2rem;
+  margin-bottom: 15px;
+}
+
+.admin-panel-loading {
+  text-align: center;
+  padding: 60px 20px;
+  font-size: 1.2rem;
+  color: #6b7280;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .admin-panel {
+    padding: 10px;
+  }
+  
+  .admin-tabs {
+    flex-direction: column;
+  }
+  
+  .admin-tabs button {
+    text-align: left;
+    border-bottom: 1px solid #e5e7eb;
+    border-radius: 0;
+  }
+  
+  .permission-form {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  
+  .roles-grid,
+  .permissions-grid {
+    grid-template-columns: 1fr;
+  }
+}

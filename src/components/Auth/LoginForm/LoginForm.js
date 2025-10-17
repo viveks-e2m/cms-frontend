@@ -55,6 +55,7 @@ const LoginForm = ({ onSuccess }) => {
       return;
     }
 
+    console.log('Form data being sent to login:', formData);
     const result = await login(formData);
 
     if (result.success) {

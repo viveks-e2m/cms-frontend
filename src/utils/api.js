@@ -46,24 +46,59 @@ api.interceptors.response.use(
 // Auth API functions
 export const authAPI = {
   login: async (credentials) => {
-    const response = await api.post('/auth/login', credentials);
-    const { success, data, error } = response.data;
+    console.log('Login credentials received:', credentials);
+    console.log('Type of credentials:', typeof credentials);
     
-    if (!success) {
-      throw new Error(error?.message || 'Login failed');
+    // Validate input
+    if (!credentials || typeof credentials !== 'object') {
+      throw new Error('Invalid credentials format');
     }
     
-    // Extract token and user info from Supabase response
-    const { access_token, user } = data;
-    return {
-      token: access_token,
-      user: {
-        id: user.id,
-        email: user.email,
-        role: user.user_metadata?.role || 'user',
-        ...user.user_metadata
-      }
+    if (!credentials.email || !credentials.password) {
+      throw new Error('Email and password are required');
+    }
+    
+    // Create clean login data object
+    const loginData = {
+      email: String(credentials.email).trim(),
+      password: String(credentials.password)
     };
+    
+    console.log('Clean login data being sent:', loginData);
+    console.log('Email type:', typeof loginData.email);
+    console.log('Password type:', typeof loginData.password);
+    
+    try {
+      // Log the exact request being made
+      console.log('Making POST request to:', api.defaults.baseURL + '/auth/login');
+      console.log('Request body:', JSON.stringify(loginData));
+      
+      const response = await api.post('/auth/login', loginData);
+      console.log('Login response:', response.data);
+      
+      const { success, data, error } = response.data;
+      
+      if (!success) {
+        throw new Error(error?.message || 'Login failed');
+      }
+      
+      // Extract token and user info from Supabase response
+      const { access_token, user } = data;
+      return {
+        token: access_token,
+        user: {
+          id: user.id,
+          email: user.email,
+          role: user.user_metadata?.role || 'user',
+          ...user.user_metadata
+        }
+      };
+    } catch (error) {
+      console.error('Login API error:', error);
+      console.error('Error response:', error.response?.data);
+      console.error('Request config:', error.config);
+      throw error;
+    }
   },
   
   logout: async () => {

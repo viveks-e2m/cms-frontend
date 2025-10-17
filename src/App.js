@@ -8,12 +8,16 @@ import ForgotPasswordPage from './pages/ForgotPassword/ForgotPasswordPage';
 import DashboardPage from './pages/Dashboard/DashboardPage';
 import ClientsPage from './pages/Clients/ClientsPage';
 import MeetingsPage from './pages/Meetings/MeetingsPage';
-
 import SecretsPage from './pages/Secrets/SecretsPage';
 import { ActionItemsPage } from './pages/ActionItems';
 import N8nWorkflowsPage from './pages/N8nWorkflows/N8nWorkflowsPage';
 import WorkflowDetailsPage from './pages/N8nWorkflows/WorkflowDetailsPage';
+import AdminPanel from './pages/Admin/AdminPanel';
+import UserProfile from './components/User/UserProfile';
+import RBACTest from './components/Debug/RBACTest';
+import LoginTest from './components/Debug/LoginTest';
 import ProtectedRoute from './components/Auth/ProtectedRoute/ProtectedRoute';
+import { AdminRoute, ManagerRoute, ClientManagerRoute } from './components/Auth/RoleBasedRoute';
 import './styles/App.css';
 
 function App() {
@@ -37,9 +41,9 @@ function App() {
               <Route 
                 path="/clients" 
                 element={
-                  <ProtectedRoute>
+                  <ClientManagerRoute>
                     <ClientsPage />
-                  </ProtectedRoute>
+                  </ClientManagerRoute>
                 } 
               />
               <Route 
@@ -50,13 +54,12 @@ function App() {
                   </ProtectedRoute>
                 } 
               />
-
               <Route 
                 path="/secrets" 
                 element={
-                  <ProtectedRoute>
+                  <ManagerRoute>
                     <SecretsPage />
-                  </ProtectedRoute>
+                  </ManagerRoute>
                 } 
               />
               <Route 
@@ -82,6 +85,34 @@ function App() {
                     <WorkflowDetailsPage />
                   </ProtectedRoute>
                 } 
+              />
+              <Route 
+                path="/admin" 
+                element={
+                  <AdminRoute>
+                    <AdminPanel />
+                  </AdminRoute>
+                } 
+              />
+              <Route 
+                path="/profile" 
+                element={
+                  <ProtectedRoute>
+                    <UserProfile />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/rbac-test" 
+                element={
+                  <ProtectedRoute>
+                    <RBACTest />
+                  </ProtectedRoute>
+                } 
+              />
+              <Route 
+                path="/login-test" 
+                element={<LoginTest />} 
               />
               <Route path="/" element={<Navigate to="/dashboard" replace />} />
             </Routes>

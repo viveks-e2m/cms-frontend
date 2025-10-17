@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import { useState, useEffect, createContext, useContext } from 'react';
 import { authAPI } from '../utils/api';
 
 const AuthContext = createContext();
@@ -6,40 +6,60 @@ const AuthContext = createContext();
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error('useAuth must be used within AuthProvider');
   }
   return context;
 };
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
+  const [role, setRole] = useState(null);
+  const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
 
+  // Load user data and permissions on mount
   useEffect(() => {
-    checkAuthStatus();
+    loadUserData();
   }, []);
 
-  const checkAuthStatus = async () => {
+  const loadUserData = async () => {
     try {
       const token = localStorage.getItem('authToken');
-      const savedUser = localStorage.getItem('user');
-      
-      if (token && savedUser) {
-        setUser(JSON.parse(savedUser));
-        setIsAuthenticated(true);
-        
-        // Verify token is still valid
-        try {
-          await authAPI.getCurrentUser();
-        } catch (error) {
-          // Token is invalid, clear auth state
-          logout();
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      // Get current user info
+      const userResponse = await authAPI.getCurrentUser();
+      setUser(userResponse);
+      setIsAuthenticated(true);
+
+      // Get user permissions and role from RBAC service
+      const rbacResponse = await fetch('/api/rbac/my-permissions', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (rbacResponse.ok) {
+        const rbacData = await rbacResponse.json();
+        if (rbacData.success) {
+          const userData = rbacData.data;
+          setRole(userData.role);
+          setPermissions(userData.permissions || []);
         }
       }
     } catch (error) {
-      console.error('Auth check failed:', error);
-      logout();
+      console.error('Error loading user data:', error);
+      // Clear invalid token
+      localStorage.removeItem('authToken');
+      setUser(null);
+      setRole(null);
+      setPermissions([]);
+      setIsAuthenticated(false);
     } finally {
       setLoading(false);
     }
@@ -47,73 +67,28 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      setLoading(true);
-      const response = await authAPI.login(credentials);
+      // Ensure credentials is an object with email and password
+      if (!credentials || typeof credentials !== 'object' || !credentials.email || !credentials.password) {
+        throw new Error('Invalid credentials format. Expected object with email and password.');
+      }
       
-      const { token, user: userData } = response;
+      const result = await authAPI.login(credentials);
       
-      localStorage.setItem('authToken', token);
-      localStorage.setItem('user', JSON.stringify(userData));
+      // Store token and user data
+      localStorage.setItem('authToken', result.token);
+      localStorage.setItem('user', JSON.stringify(result.user));
       
-      setUser(userData);
+      setUser(result.user);
       setIsAuthenticated(true);
       
-      return { success: true, user: userData };
+      // Load RBAC data after login
+      await loadUserData();
+      return { success: true };
     } catch (error) {
-      console.error('Login failed:', error);
-      
-      let errorMessage = 'Login failed. Please try again.';
-      
-      if (error.response?.data?.error?.message) {
-        errorMessage = error.response.data.error.message;
-      } else if (error.message) {
-        errorMessage = error.message;
-      }
-      
       return { 
         success: false, 
-        error: errorMessage
+        error: error.message || 'Login failed' 
       };
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signup = async (userData) => {
-    try {
-      setLoading(true);
-      const response = await authAPI.signup(userData);
-      
-      return { success: true, data: response };
-    } catch (error) {
-      console.error('Signup failed:', error);
-      
-      let errorMessage = 'Signup failed. Please try again.';
-      
-      // Handle specific error cases
-      if (error.response?.data?.error?.message) {
-        errorMessage = error.response.data.error.message;
-      } else if (error.message) {
-        // Handle common Supabase Auth errors
-        if (error.message.includes('User already registered')) {
-          errorMessage = 'An account with this email already exists. Please try logging in instead.';
-        } else if (error.message.includes('Invalid email')) {
-          errorMessage = 'Please enter a valid email address.';
-        } else if (error.message.includes('Password should be at least')) {
-          errorMessage = 'Password must be at least 6 characters long.';
-        } else if (error.message.includes('signup is disabled')) {
-          errorMessage = 'Account registration is currently disabled. Please contact support.';
-        } else {
-          errorMessage = error.message;
-        }
-      }
-      
-      return { 
-        success: false, 
-        error: errorMessage
-      };
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -121,22 +96,72 @@ export const AuthProvider = ({ children }) => {
     try {
       await authAPI.logout();
     } catch (error) {
-      console.error('Logout API call failed:', error);
+      console.error('Logout error:', error);
     } finally {
+      // Clear local state regardless of API call success
       localStorage.removeItem('authToken');
       localStorage.removeItem('user');
       setUser(null);
+      setRole(null);
+      setPermissions([]);
       setIsAuthenticated(false);
     }
   };
 
+  const hasPermission = (permission) => {
+    return permissions.includes(permission);
+  };
+
+  const hasAnyPermission = (permissionList) => {
+    return permissionList.some(permission => permissions.includes(permission));
+  };
+
+  const hasAllPermissions = (permissionList) => {
+    return permissionList.every(permission => permissions.includes(permission));
+  };
+
+  const hasRole = (requiredRole) => {
+    return role?.name === requiredRole;
+  };
+
+  const hasAnyRole = (roleList) => {
+    return roleList.includes(role?.name);
+  };
+
+  const isAdmin = () => {
+    return hasRole('admin');
+  };
+
+  const isAiIntern = () => {
+    return hasRole('ai_intern');
+  };
+
+  const isAccountManager = () => {
+    return hasRole('account_manager');
+  };
+
+  const isAdoptionSpecialist = () => {
+    return hasRole('adoption_specialist');
+  };
+
   const value = {
     user,
+    role,
+    permissions,
     loading,
     isAuthenticated,
     login,
-    signup,
     logout,
+    hasPermission,
+    hasAnyPermission,
+    hasAllPermissions,
+    hasRole,
+    hasAnyRole,
+    isAdmin,
+    isAiIntern,
+    isAccountManager,
+    isAdoptionSpecialist,
+    loadUserData
   };
 
   return (
