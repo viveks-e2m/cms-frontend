@@ -37,20 +37,32 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(true);
 
       // Get user permissions and role from RBAC service
-      const rbacResponse = await fetch('/api/rbac/my-permissions', {
+      console.log('Loading RBAC data...');
+      const rbacResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://172.16.0.213:8000'}/rbac/my-permissions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
 
+      console.log('RBAC response status:', rbacResponse.status);
+
       if (rbacResponse.ok) {
         const rbacData = await rbacResponse.json();
+        console.log('RBAC data received:', rbacData);
         if (rbacData.success) {
           const userData = rbacData.data;
+          console.log('Setting role:', userData.role);
+          console.log('Setting permissions:', userData.permissions);
           setRole(userData.role);
           setPermissions(userData.permissions || []);
+        } else {
+          console.error('RBAC API returned success=false:', rbacData);
         }
+      } else {
+        console.error('RBAC API call failed:', rbacResponse.status, rbacResponse.statusText);
+        const errorText = await rbacResponse.text();
+        console.error('Error response:', errorText);
       }
     } catch (error) {
       console.error('Error loading user data:', error);

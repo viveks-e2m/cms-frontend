@@ -21,7 +21,7 @@ import "./Sidebar.css";
 const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role, logout, hasPermission, hasRole } = useAuth();
+  const { user, role, permissions, logout, hasPermission, hasRole } = useAuth();
 
   const menuItems = [
     {
@@ -41,14 +41,14 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       permissions: ["manage_clients"],
       roles: ["admin", "account_manager"],
     },
-    {
-      id: "meetings",
-      icon: <MeetingIcon />,
-      label: "Meetings",
-      path: "/meetings",
-      description: "Meeting notes and summaries",
-      show: true, // Most users can access meetings
-    },
+    // {
+    //   id: "meetings",
+    //   icon: <MeetingIcon />,
+    //   label: "Meetings",
+    //   path: "/meetings",
+    //   description: "Meeting notes and summaries",
+    //   show: true, // Most users can access meetings
+    // },
     {
       id: "action-items",
       icon: <ActionItemsIcon />,
@@ -66,14 +66,14 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       permissions: ["view_workflows"],
       roles: ["admin", "ai_intern"],
     },
-    {
-      id: "secrets",
-      icon: <SecurityIcon />,
-      label: "Secrets",
-      path: "/secrets",
-      description: "Manage client secrets and API keys",
-      roles: ["admin", "account_manager"],
-    },
+    // {
+    //   id: "secrets",
+    //   icon: <SecurityIcon />,
+    //   label: "Secrets",
+    //   path: "/secrets",
+    //   description: "Manage client secrets and API keys",
+    //   roles: ["admin", "account_manager"],
+    // },
     {
       id: "admin",
       icon: <AdminIcon />,
@@ -84,18 +84,48 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
     },
   ];
 
+  // Debug logging for role and permissions
+  console.log("=== Sidebar Debug ===");
+  console.log("Current user:", user);
+  console.log("Current role:", role);
+  console.log("Current permissions:", permissions);
+  console.log("Role name:", role?.name);
+
   // Filter menu items based on user permissions and roles
-  const visibleMenuItems = menuItems.filter(item => {
-    if (item.show) return true;
-    
+  const visibleMenuItems = menuItems.filter((item) => {
+    console.log(`Checking item: ${item.label}`);
+    console.log(`Item show: ${item.show}`);
+    console.log(`Item roles: ${item.roles}`);
+    console.log(`Item permissions: ${item.permissions}`);
+
+    // Temporary: Show all items if role is not loaded (for debugging)
+    if (!role) {
+      console.log(`⚠️ No role loaded, showing all items for debugging`);
+      return true;
+    }
+
+    if (item.show) {
+      console.log(`✅ Showing ${item.label} - marked as always show`);
+      return true;
+    }
+
     if (item.roles && item.roles.length > 0) {
-      return item.roles.includes(role?.name);
+      const hasRole = item.roles.includes(role?.name);
+      console.log(
+        `Role check for ${item.label}: ${hasRole} (looking for ${item.roles} in ${role?.name})`
+      );
+      return hasRole;
     }
-    
+
     if (item.permissions && item.permissions.length > 0) {
-      return item.permissions.some(permission => hasPermission(permission));
+      const hasPerms = item.permissions.some((permission) =>
+        hasPermission(permission)
+      );
+      console.log(`Permission check for ${item.label}: ${hasPerms}`);
+      return hasPerms;
     }
-    
+
+    console.log(`❌ Hiding ${item.label} - no matching criteria`);
     return false;
   });
 
@@ -177,7 +207,10 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
           {!isCollapsed && (
             <div className="user-info">
               <div className="user-name">
-                {user?.first_name || user?.full_name || user?.email?.split("@")[0] || "User"}
+                {user?.first_name ||
+                  user?.full_name ||
+                  user?.email?.split("@")[0] ||
+                  "User"}
               </div>
               <div className="user-email">{user?.email}</div>
               {role && (
