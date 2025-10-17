@@ -32,13 +32,23 @@
 }
 
 /* Column Widths */
-.col-task { width: 32%; }
-.col-client { width: 14%; }
-.col-assignee { width: 18%; }
+.col-task { width: 28%; }
+.col-client { width: 12%; }
+.col-owner { width: 14%; }
+.col-assignee { width: 14%; }
 .col-status { width: 12%; }
-.col-priority { width: 10%; }
+.col-priority { width: 8%; }
 .col-due { width: 8%; }
-.col-actions { width: 6%; }
+.col-actions { width: 4%; }
+
+/* Column Widths when client column is hidden */
+.action-items-table.hide-client-column .col-task { width: 32%; }
+.action-items-table.hide-client-column .col-owner { width: 16%; }
+.action-items-table.hide-client-column .col-assignee { width: 16%; }
+.action-items-table.hide-client-column .col-status { width: 14%; }
+.action-items-table.hide-client-column .col-priority { width: 10%; }
+.action-items-table.hide-client-column .col-due { width: 8%; }
+.action-items-table.hide-client-column .col-actions { width: 4%; }
 
 /* Table Rows */
 .action-item-row {
@@ -95,6 +105,12 @@
 
 /* Client Cell - Scoped to table only */
 .action-items-table .client-cell {
+  font-weight: 500;
+  color: #374151;
+}
+
+/* Owner Cell - Scoped to table only */
+.action-items-table .owner-cell {
   font-weight: 500;
   color: #374151;
 }
@@ -424,11 +440,19 @@
     padding: 0.75rem 1rem;
   }
   
-  .col-task { width: 40%; }
-  .col-client { width: 20%; }
+  .col-task { width: 35%; }
+  .col-client { width: 15%; }
+  .col-owner { width: 15%; }
   .col-assignee { width: 15%; }
-  .col-status { width: 15%; }
-  .col-priority { width: 10%; }
+  .col-status { width: 12%; }
+  .col-priority { width: 8%; }
+  
+  /* Responsive widths when client column is hidden */
+  .action-items-table.hide-client-column .col-task { width: 40%; }
+  .action-items-table.hide-client-column .col-owner { width: 20%; }
+  .action-items-table.hide-client-column .col-assignee { width: 20%; }
+  .action-items-table.hide-client-column .col-status { width: 15%; }
+  .action-items-table.hide-client-column .col-priority { width: 15%; }
 }
 
 @media (max-width: 768px) {

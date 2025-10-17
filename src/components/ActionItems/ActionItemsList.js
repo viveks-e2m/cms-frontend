@@ -23,6 +23,7 @@ const ActionItemsList = ({
   meetings,
   clients,
   users = [],
+  hideClientColumn = false,
 }) => {
   console.log("ActionItemsList received users:", users);
   const [editingItem, setEditingItem] = useState(null);
@@ -166,11 +167,12 @@ const ActionItemsList = ({
 
   return (
     <div className="action-items-table-container">
-      <table className="action-items-table">
+      <table className={`action-items-table ${hideClientColumn ? 'hide-client-column' : ''}`}>
         <thead>
           <tr>
             <th className="col-task">Task Name</th>
-            <th className="col-client">Client</th>
+            {!hideClientColumn && <th className="col-client">Client</th>}
+            <th className="col-owner">Task Owner</th>
             <th className="col-assignee">Assignee</th>
             <th className="col-status">Status</th>
             <th className="col-priority">Priority</th>
@@ -198,8 +200,13 @@ const ActionItemsList = ({
                       placeholder="Task description..."
                     />
                   </td>
-                  <td className="col-client">
-                    {getClientName(item.client_id)}
+                  {!hideClientColumn && (
+                    <td className="col-client">
+                      {getClientName(item.client_id)}
+                    </td>
+                  )}
+                  <td className="col-owner">
+                    {item.task_owner ? getUserName(item.task_owner) : "—"}
                   </td>
                   <td className="col-assignee">
                     <select
@@ -277,9 +284,17 @@ const ActionItemsList = ({
                     </div>
                   </td>
 
-                  <td className="col-client">
-                    <div className="client-cell">
-                      {getClientName(item.client_id)}
+                  {!hideClientColumn && (
+                    <td className="col-client">
+                      <div className="client-cell">
+                        {getClientName(item.client_id)}
+                      </div>
+                    </td>
+                  )}
+
+                  <td className="col-owner">
+                    <div className="owner-cell">
+                      {item.task_owner ? getUserName(item.task_owner) : "—"}
                     </div>
                   </td>
 
