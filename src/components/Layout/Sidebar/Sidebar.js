@@ -41,14 +41,6 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       permissions: ["manage_clients"],
       roles: ["admin", "account_manager"],
     },
-    // {
-    //   id: "meetings",
-    //   icon: <MeetingIcon />,
-    //   label: "Meetings",
-    //   path: "/meetings",
-    //   description: "Meeting notes and summaries",
-    //   show: true, // Most users can access meetings
-    // },
     {
       id: "action-items",
       icon: <ActionItemsIcon />,
@@ -66,14 +58,6 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       permissions: ["view_workflows"],
       roles: ["admin", "ai_intern"],
     },
-    // {
-    //   id: "secrets",
-    //   icon: <SecurityIcon />,
-    //   label: "Secrets",
-    //   path: "/secrets",
-    //   description: "Manage client secrets and API keys",
-    //   roles: ["admin", "account_manager"],
-    // },
     {
       id: "admin",
       icon: <AdminIcon />,

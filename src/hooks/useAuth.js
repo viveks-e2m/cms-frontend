@@ -120,6 +120,21 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
+  const signup = async (userData) => {
+    try {
+      console.log('Signup function called with:', userData);
+      const result = await authAPI.signup(userData);
+      console.log('Signup result:', result);
+      return { success: true, data: result };
+    } catch (error) {
+      console.error('Signup error:', error);
+      return { 
+        success: false, 
+        error: error.message || 'Signup failed' 
+      };
+    }
+  };
+
   const hasPermission = (permission) => {
     return permissions.includes(permission);
   };
@@ -164,6 +179,7 @@ export const AuthProvider = ({ children }) => {
     isAuthenticated,
     login,
     logout,
+    signup,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
