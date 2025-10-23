@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '../../../hooks/useAuth';
 import { PermissionGuard } from '../../PermissionGuard';
+import { PERMISSIONS } from '../../../constants/permissions';
 import {
   VideoCall as VideoCallIcon,
   Add as AddIcon,
@@ -78,7 +79,7 @@ const MeetingsList = ({
     <div className="meetings-list">
       <div className="meetings-list-header">
         <h3>Client Meetings</h3>
-        <PermissionGuard permissions={['create_meeting']}>
+        <PermissionGuard permissions={[PERMISSIONS.CREATE_MEETING]}>
           <button className="btn btn-primary" onClick={onAddMeeting}>
             <AddIcon />
             Add Meeting
@@ -133,7 +134,7 @@ const MeetingsList = ({
 
                 <div className="meeting-card-right">
                   <div className="meeting-actions">
-                    <PermissionGuard permissions={['update_meeting']}>
+                    <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
                       <button 
                         className="action-btn edit"
                         onClick={(e) => handleActionClick('edit', meeting, e)}
@@ -142,7 +143,7 @@ const MeetingsList = ({
                         <EditIcon />
                       </button>
                     </PermissionGuard>
-                    <PermissionGuard permissions={['delete_meeting']}>
+                    <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
                       <button 
                         className="action-btn delete"
                         onClick={(e) => handleActionClick('delete', meeting, e)}

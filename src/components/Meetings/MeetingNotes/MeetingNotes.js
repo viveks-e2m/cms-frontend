@@ -13,6 +13,7 @@ import { meetingAPI } from '../../../utils/apiServices';
 import { useNotificationContext } from '../../../contexts/NotificationContext';
 import LoadingSpinner from '../../UI/LoadingSpinner/LoadingSpinner';
 import { PermissionGuard } from '../../PermissionGuard';
+import { PERMISSIONS } from '../../../constants/permissions';
 import './MeetingNotes.css';
 
 const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
@@ -115,7 +116,7 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
     <div className="meeting-notes">
       <div className="meeting-notes-header">
         <h3>Meeting Notes</h3>
-        <PermissionGuard permissions={['update_meeting']}>
+        <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
           <button 
             className="btn btn-primary"
             onClick={() => setIsAddingNote(true)}

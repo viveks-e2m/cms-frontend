@@ -17,6 +17,7 @@ import {
 import { openPointsAPI, clientAPI, meetingAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../../components/PermissionGuard";
+import { PERMISSIONS } from "../../constants/permissions";
 import "./ActionItemsPage.css";
 
 const ActionItemsPage = () => {
@@ -140,7 +141,7 @@ const ActionItemsPage = () => {
   return (
     <DashboardLayout>
       <PermissionGuard 
-        permissions={['read_open_point']}
+        permissions={[PERMISSIONS.READ_TASK]}
         fallback={
           <div className="action-items-page">
             <div className="access-denied-message">

@@ -80,7 +80,7 @@ const ClientsPage = () => {
       const usersData = await clientAPI.getAllUsers();
       setUsers(usersData || []);
     } catch (error) {
-      console.error('Error loading users:', error);
+      console.error("Error loading users:", error);
     }
   };
 
@@ -249,38 +249,38 @@ const ClientsPage = () => {
 
   const getStatusLabel = (status) => {
     switch (status) {
-      case 'pre-boarding':
-        return 'Pre-boarding';
-      case 'onboarding':
-        return 'Onboarding';
-      case 'assessment':
-        return 'Assessment';
-      case 'active':
-        return 'Active';
+      case "pre-boarding":
+        return "Pre-boarding";
+      case "onboarding":
+        return "Onboarding";
+      case "assessment":
+        return "Assessment";
+      case "active":
+        return "Active";
       default:
-        return 'Pre-boarding';
+        return "Pre-boarding";
     }
   };
 
   const getStatusColor = (status) => {
     switch (status) {
-      case 'pre-boarding':
-        return 'warning';
-      case 'onboarding':
-        return 'info';
-      case 'assessment':
-        return 'secondary';
-      case 'active':
-        return 'success';
+      case "pre-boarding":
+        return "warning";
+      case "onboarding":
+        return "info";
+      case "assessment":
+        return "secondary";
+      case "active":
+        return "success";
       default:
-        return 'warning';
+        return "warning";
     }
   };
 
   const getUserName = (userId) => {
     if (!userId) return null;
-    const user = users.find(u => u.id === userId);
-    return user ? (user.name || user.email) : 'Unknown User';
+    const user = users.find((u) => u.id === userId);
+    return user ? user.name || user.email : "Unknown User";
   };
 
   const filteredAndSortedClients = clients
@@ -346,9 +346,9 @@ const ClientsPage = () => {
               <ArrowBackIcon />
             </button>
             <div className="client-details-title">
-              <ClientAvatar 
-                client={selectedClient} 
-                size="large" 
+              <ClientAvatar
+                client={selectedClient}
+                size="large"
                 className="client-avatar-large"
               />
               <div className="client-title-info">
@@ -407,8 +407,8 @@ const ClientsPage = () => {
             ) : (
               <>
                 {activeTab === "overview" && (
-                  <PermissionGuard 
-                    permissions={['read_client']} 
+                  <PermissionGuard
+                    permissions={["read_client"]}
                     fallback={
                       <div className="access-denied-message">
                         <p>You don't have permission to view client details.</p>
@@ -416,154 +416,160 @@ const ClientsPage = () => {
                     }
                   >
                     <div className="overview-tab">
-                    <div className="overview-cards">
-                      <div className="overview-card">
-                        <h3>Client Information</h3>
-                        <div className="info-grid">
-                          <div className="info-item">
-                            <PersonIcon className="info-icon" />
-                            <div>
-                              <label>Name</label>
-                              <span>
-                                {selectedClient.name || "Not provided"}
-                              </span>
-                            </div>
-                          </div>
-                          
-                          <div className="info-item">
-                            <WebsiteIcon className="info-icon" />
-                            <div>
-                              <label>Website</label>
-                              <span>
-                                {selectedClient.website ? (
-                                  <a 
-                                    href={selectedClient.website} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer"
-                                    className="website-link"
-                                  >
-                                    {selectedClient.website}
-                                  </a>
-                                ) : "Not provided"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="info-item">
-                            <AccountManagerIcon className="info-icon" />
-                            <div>
-                              <label>Account Manager</label>
-                              <span>
-                                {getUserName(selectedClient.account_manager) || "Not assigned"}
-                              </span>
-                            </div>
-                          </div>
-
-                          <div className="info-item">
-                            <AdoptionSpecialistIcon className="info-icon" />
-                            <div>
-                              <label>Adoption Specialist</label>
-                              <span>
-                                {getUserName(selectedClient.adoption_specialist) || "Not assigned"}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      <div className="overview-card">
-                        <h3>Statistics</h3>
-                        <div className="stats-grid">
-                          <div className="stat-item">
-                            <VideoCallIcon className="stat-icon meetings" />
-                            <div>
-                              <span className="stat-number">
-                                {clientDetails?.meetings?.length || 0}
-                              </span>
-                              <label>Meetings</label>
-                            </div>
-                          </div>
-
-                          <div className="stat-item">
-                            <WorkflowIcon className="stat-icon workflows" />
-                            <div>
-                              <span className="stat-number">
-                                {clientDetails?.workflows?.length || 0}
-                              </span>
-                              <label>Workflows</label>
-                            </div>
-                          </div>
-                          <div className="stat-item">
-                            <SecurityIcon className="stat-icon secrets" />
-                            <div>
-                              <span className="stat-number">
-                                {clientDetails?.secrets?.length || 0}
-                              </span>
-                              <label>Secrets</label>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Recent Activity Section */}
-                    <div className="recent-activity-section">
-                      <h3>Recent Activity</h3>
-                      <div className="activity-cards">
-                        {/* Recent Meetings */}
-                        <div className="activity-card">
-                          <div className="activity-header">
-                            <VideoCallIcon className="activity-icon meetings" />
-                            <h4>Recent Meetings</h4>
-                            <button
-                              className="view-all-btn"
-                              onClick={() => setActiveTab("meetings")}
-                            >
-                              View All
-                            </button>
-                          </div>
-                          <div className="activity-content">
-                            {clientDetails?.meetings?.length > 0 ? (
-                              clientDetails.meetings
-                                .slice(0, 3)
-                                .map((meeting) => (
-                                  <div
-                                    key={meeting.id}
-                                    className="activity-item"
-                                  >
-                                    <div className="activity-item-info">
-                                      <h5>
-                                        {meeting.meeting_name ||
-                                          meeting.title ||
-                                          `Meeting #${
-                                            meeting.id?.slice(-8) || "Unknown"
-                                          }`}
-                                      </h5>
-                                      <span className="activity-date">
-                                        {new Date(
-                                          meeting.created_at
-                                        ).toLocaleDateString()}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))
-                            ) : (
-                              <div className="activity-empty">
-                                <VideoCallIcon className="empty-icon" />
-                                <p>No meetings yet</p>
+                      <div className="overview-cards">
+                        <div className="overview-card">
+                          <h3>Client Information</h3>
+                          <div className="info-grid">
+                            <div className="info-item">
+                              <PersonIcon className="info-icon" />
+                              <div>
+                                <label>Name</label>
+                                <span>
+                                  {selectedClient.name || "Not provided"}
+                                </span>
                               </div>
-                            )}
+                            </div>
+
+                            <div className="info-item">
+                              <WebsiteIcon className="info-icon" />
+                              <div>
+                                <label>Website</label>
+                                <span>
+                                  {selectedClient.website ? (
+                                    <a
+                                      href={selectedClient.website}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="website-link"
+                                    >
+                                      {selectedClient.website}
+                                    </a>
+                                  ) : (
+                                    "Not provided"
+                                  )}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="info-item">
+                              <AccountManagerIcon className="info-icon" />
+                              <div>
+                                <label>Account Manager</label>
+                                <span>
+                                  {getUserName(
+                                    selectedClient.account_manager
+                                  ) || "Not assigned"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="info-item">
+                              <AdoptionSpecialistIcon className="info-icon" />
+                              <div>
+                                <label>Adoption Specialist</label>
+                                <span>
+                                  {getUserName(
+                                    selectedClient.adoption_specialist
+                                  ) || "Not assigned"}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="overview-card">
+                          <h3>Statistics</h3>
+                          <div className="stats-grid">
+                            <div className="stat-item">
+                              <VideoCallIcon className="stat-icon meetings" />
+                              <div>
+                                <span className="stat-number">
+                                  {clientDetails?.meetings?.length || 0}
+                                </span>
+                                <label>Meetings</label>
+                              </div>
+                            </div>
+
+                            <div className="stat-item">
+                              <WorkflowIcon className="stat-icon workflows" />
+                              <div>
+                                <span className="stat-number">
+                                  {clientDetails?.workflows?.length || 0}
+                                </span>
+                                <label>Workflows</label>
+                              </div>
+                            </div>
+                            <div className="stat-item">
+                              <SecurityIcon className="stat-icon secrets" />
+                              <div>
+                                <span className="stat-number">
+                                  {clientDetails?.secrets?.length || 0}
+                                </span>
+                                <label>Secrets</label>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Recent Activity Section */}
+                      <div className="recent-activity-section">
+                        <h3>Recent Activity</h3>
+                        <div className="activity-cards">
+                          {/* Recent Meetings */}
+                          <div className="activity-card">
+                            <div className="activity-header">
+                              <VideoCallIcon className="activity-icon meetings" />
+                              <h4>Recent Meetings</h4>
+                              <button
+                                className="view-all-btn"
+                                onClick={() => setActiveTab("meetings")}
+                              >
+                                View All
+                              </button>
+                            </div>
+                            <div className="activity-content">
+                              {clientDetails?.meetings?.length > 0 ? (
+                                clientDetails.meetings
+                                  .slice(0, 3)
+                                  .map((meeting) => (
+                                    <div
+                                      key={meeting.id}
+                                      className="activity-item"
+                                    >
+                                      <div className="activity-item-info">
+                                        <h5>
+                                          {meeting.meeting_name ||
+                                            meeting.title ||
+                                            `Meeting #${
+                                              meeting.id?.slice(-8) || "Unknown"
+                                            }`}
+                                        </h5>
+                                        <span className="activity-date">
+                                          {new Date(
+                                            meeting.created_at
+                                          ).toLocaleDateString()}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  ))
+                              ) : (
+                                <div className="activity-empty">
+                                  <VideoCallIcon className="empty-icon" />
+                                  <p>No meetings yet</p>
+                                </div>
+                              )}
+                            </div>
                           </div>
                         </div>
                       </div>
                     </div>
-                  </div>
                   </PermissionGuard>
                 )}
 
                 {activeTab === "meetings" && (
-                  <PermissionGuard 
-                    permissions={['read_meeting']} 
+                  <PermissionGuard
+                    permissions={["read_meeting"]}
                     fallback={
                       <div className="access-denied-message">
                         <p>You don't have permission to view meetings.</p>
@@ -571,25 +577,25 @@ const ClientsPage = () => {
                     }
                   >
                     <div className="meetings-tab">
-                    {meetingsView === "list" ? (
-                      <MeetingsList
-                        meetings={clientDetails?.meetings || []}
-                        onMeetingSelect={handleMeetingSelect}
-                        onAddMeeting={handleAddMeeting}
-                        onEditMeeting={handleEditMeeting}
-                        onDeleteMeeting={handleDeleteMeeting}
-                        loading={detailsLoading}
-                      />
-                    ) : (
-                      <MeetingDetails
-                        meetingId={selectedMeeting?.id}
-                        onBack={handleBackToMeetings}
-                        onEdit={handleEditMeeting}
-                        onDelete={handleDeleteMeeting}
-                        clientName={selectedClient?.name}
-                      />
-                    )}
-                  </div>
+                      {meetingsView === "list" ? (
+                        <MeetingsList
+                          meetings={clientDetails?.meetings || []}
+                          onMeetingSelect={handleMeetingSelect}
+                          onAddMeeting={handleAddMeeting}
+                          onEditMeeting={handleEditMeeting}
+                          onDeleteMeeting={handleDeleteMeeting}
+                          loading={detailsLoading}
+                        />
+                      ) : (
+                        <MeetingDetails
+                          meetingId={selectedMeeting?.id}
+                          onBack={handleBackToMeetings}
+                          onEdit={handleEditMeeting}
+                          onDelete={handleDeleteMeeting}
+                          clientName={selectedClient?.name}
+                        />
+                      )}
+                    </div>
                   </PermissionGuard>
                 )}
 
@@ -650,7 +656,7 @@ const ClientsPage = () => {
               Manage your client information, assignments, and relationships
             </p>
           </div>
-          <PermissionGuard permissions={['create_client']}>
+          <PermissionGuard permissions={["create_client"]}>
             <button className="btn btn-primary" onClick={handleAddClient}>
               <AddIcon />
               Add New Client
@@ -738,10 +744,7 @@ const ClientsPage = () => {
                     className="client-card"
                     onClick={() => handleClientSelect(client)}
                   >
-                    <ClientAvatar 
-                      client={client} 
-                      size="medium"
-                    />
+                    <ClientAvatar client={client} size="medium" />
                     <div className="client-info">
                       <h3 className="client-name">
                         {client.name || "Unnamed Client"}
@@ -768,7 +771,7 @@ const ClientsPage = () => {
                       className="client-actions"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <PermissionGuard permissions={['update_client']}>
+                      <PermissionGuard permissions={["update_client"]}>
                         <button
                           className="action-btn edit"
                           title="Edit Client"
@@ -777,7 +780,7 @@ const ClientsPage = () => {
                           <EditIcon />
                         </button>
                       </PermissionGuard>
-                      <PermissionGuard permissions={['read_client']}>
+                      <PermissionGuard permissions={["read_client"]}>
                         <button
                           className="action-btn view"
                           title="View Details"
@@ -786,7 +789,7 @@ const ClientsPage = () => {
                           <VisibilityIcon />
                         </button>
                       </PermissionGuard>
-                      <PermissionGuard permissions={['delete_client']}>
+                      <PermissionGuard permissions={["delete_client"]}>
                         <button
                           className="action-btn delete"
                           title="Delete Client"
@@ -809,8 +812,11 @@ const ClientsPage = () => {
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
                 {!searchTerm && !statusFilter && (
-                  <PermissionGuard permissions={['create_client']}>
-                    <button className="btn btn-primary" onClick={handleAddClient}>
+                  <PermissionGuard permissions={["create_client"]}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleAddClient}
+                    >
                       <AddIcon />
                       Add Your First Client
                     </button>

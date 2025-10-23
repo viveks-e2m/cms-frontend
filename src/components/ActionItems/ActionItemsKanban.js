@@ -12,6 +12,7 @@ import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
+import { PERMISSIONS } from "../../constants/permissions";
 import "./ActionItemsKanban.css";
 
 const ActionItemsKanban = ({
@@ -170,8 +171,8 @@ const ActionItemsKanban = ({
     <div
       key={item.id}
       className={`kanban-card ${draggedItem?.id === item.id ? "dragging" : ""}`}
-      draggable={hasPermission('update_open_point')}
-      onDragStart={hasPermission('update_open_point') ? (e) => handleDragStart(e, item) : undefined}
+      draggable={hasPermission(PERMISSIONS.UPDATE_TASK)}
+      onDragStart={hasPermission(PERMISSIONS.UPDATE_TASK) ? (e) => handleDragStart(e, item) : undefined}
     >
       {editingItem === item.id ? (
         <div className="card-edit-form">
@@ -250,7 +251,7 @@ const ActionItemsKanban = ({
           <div className="card-header">
             <div className="card-title">{item.message || item.task}</div>
             <div className="card-actions">
-              <PermissionGuard permissions={['update_open_point']}>
+              <PermissionGuard permissions={[PERMISSIONS.UPDATE_TASK]}>
                 <button
                   className="btn-icon btn-edit"
                   onClick={() => startEdit(item)}
@@ -259,7 +260,7 @@ const ActionItemsKanban = ({
                   <EditIcon />
                 </button>
               </PermissionGuard>
-              <PermissionGuard permissions={['delete_open_point']}>
+              <PermissionGuard permissions={[PERMISSIONS.DELETE_TASK]}>
                 <button
                   className="btn-icon btn-danger"
                   onClick={() => deleteItem(item.id)}

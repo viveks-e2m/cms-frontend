@@ -3,6 +3,7 @@ import { useAuth } from "../../hooks/useAuth";
 import { rbacAPI } from "../../utils/rbacAPI";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { PermissionGuard } from "../../components/PermissionGuard";
+import { PERMISSIONS } from "../../constants/permissions";
 import "./AdminPanel.css";
 
 const AdminPanel = () => {
@@ -153,7 +154,7 @@ const AdminPanel = () => {
   return (
     <DashboardLayout>
       <PermissionGuard 
-        permissions={['manage_system']}
+        permissions={[PERMISSIONS.ADMIN_ACCESS]}
         fallback={
           <div className="admin-panel-denied">
             <div className="access-denied-message">

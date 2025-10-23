@@ -17,6 +17,7 @@ import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
+import { PERMISSIONS } from "../../constants/permissions";
 import "./ActionItemsList.css";
 
 const ActionItemsList = ({
@@ -307,7 +308,7 @@ const ActionItemsList = ({
 
                   <td className="col-status">
                     <PermissionGuard 
-                      permissions={['update_open_point']}
+                      permissions={[PERMISSIONS.UPDATE_TASK]}
                       fallback={
                         <span className={`status-badge status-${item.status || "open"}`}>
                           {item.status === 'in_progress' ? 'In Progress' : 
@@ -371,7 +372,7 @@ const ActionItemsList = ({
 
                   <td className="col-actions">
                     <div className="actions-cell">
-                      <PermissionGuard permissions={['update_open_point']}>
+                      <PermissionGuard permissions={[PERMISSIONS.UPDATE_TASK]}>
                         <button
                           className="btn-icon btn-edit"
                           onClick={() => startEdit(item)}
@@ -380,7 +381,7 @@ const ActionItemsList = ({
                           <EditIcon />
                         </button>
                       </PermissionGuard>
-                      <PermissionGuard permissions={['delete_open_point']}>
+                      <PermissionGuard permissions={[PERMISSIONS.DELETE_TASK]}>
                         <button
                           className="btn-icon btn-danger"
                           onClick={() => deleteItem(item.id)}

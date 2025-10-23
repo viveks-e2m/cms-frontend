@@ -6,6 +6,7 @@ import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLa
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import ClientAvatar from "../../components/UI/ClientAvatar";
 import { PermissionGuard } from "../../components/PermissionGuard";
+import { PERMISSIONS } from "../../constants/permissions";
 import {
   People as PeopleIcon,
   VideoCall as VideoCallIcon,
@@ -118,7 +119,7 @@ const DashboardPage = () => {
 
         {/* Stats Grid */}
         <div className="dashboard-stats">
-          <PermissionGuard permissions={['read_client']}>
+          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
             <div className="stat-card clients">
               <div className="stat-icon">
                 <PeopleIcon />
@@ -132,7 +133,7 @@ const DashboardPage = () => {
               </div>
             </div>
           </PermissionGuard>
-          <PermissionGuard permissions={['read_meeting']}>
+          <PermissionGuard permissions={[PERMISSIONS.READ_MEETING]}>
             <div className="stat-card meetings">
               <div className="stat-icon">
                 <VideoCallIcon />
@@ -146,7 +147,7 @@ const DashboardPage = () => {
               </div>
             </div>
           </PermissionGuard>
-          <PermissionGuard permissions={['read_open_point']}>
+          <PermissionGuard permissions={[PERMISSIONS.READ_TASK]}>
             <div className="stat-card tasks-open">
               <div className="stat-icon">
                 <AssignmentIcon />
@@ -158,7 +159,7 @@ const DashboardPage = () => {
               </div>
             </div>
           </PermissionGuard>
-          <PermissionGuard permissions={['read_open_point']}>
+          <PermissionGuard permissions={[PERMISSIONS.READ_TASK]}>
             <div className="stat-card tasks-completed">
               <div className="stat-icon">
                 <CheckCircleIcon />
@@ -177,7 +178,7 @@ const DashboardPage = () => {
         {/* Recent Clients Section */}
         <div className="dashboard-sections">
           <PermissionGuard 
-            permissions={['read_client']}
+            permissions={[PERMISSIONS.READ_CLIENT]}
             fallback={
               <div className="dashboard-section">
                 <div className="access-denied-message">

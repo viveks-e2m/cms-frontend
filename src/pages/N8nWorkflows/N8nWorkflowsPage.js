@@ -36,6 +36,7 @@ import { n8nAPI } from '../../utils/apiServices';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { NOTIFICATION_MESSAGES } from '../../utils/notifications';
 import { PermissionGuard } from '../../components/PermissionGuard';
+import { PERMISSIONS } from '../../constants/permissions';
 import './N8nWorkflowsPage.css';
 import '../../components/N8nWorkflows/ExecutionStats.css';
 import '../../components/N8nWorkflows/WorkflowSkeleton.css';
@@ -173,7 +174,7 @@ const N8nWorkflowsPage = () => {
   return (
     <DashboardLayout>
       <PermissionGuard 
-        permissions={['read_workflow']}
+        permissions={[PERMISSIONS.READ_WORKFLOW]}
         fallback={
           <div className="n8n-workflows-page">
             <div className="access-denied-message">

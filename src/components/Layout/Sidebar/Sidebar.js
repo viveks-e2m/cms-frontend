@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import {
   Dashboard as DashboardIcon,
   People as PeopleIcon,
@@ -38,7 +39,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Manage Clients",
       path: "/clients",
       description: "Client management and assignments",
-      permissions: ["read_client"],
+      permissions: [PERMISSIONS.READ_CLIENT],
       // roles: ["admin","ai_executor", "account_manager"],
     },
     {
@@ -47,7 +48,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Action Items",
       path: "/action-items",
       description: "All action items across meetings",
-      permissions: ["read_open_point"],
+      permissions: [PERMISSIONS.READ_TASK],
       // roles: ["admin", "account_manager", "ai_intern"],
     },
     {
@@ -56,7 +57,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "n8n Workflows",
       path: "/n8n-workflows",
       description: "Workflow automation and executions",
-      permissions: ["read_workflow"],
+      permissions: [PERMISSIONS.READ_WORKFLOW],
       // roles: ["admin", "ai_intern"],
     },
     {
@@ -65,7 +66,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Admin Panel",
       path: "/admin",
       description: "User and role management",
-      permissions: ["manage_system"],
+      permissions: [PERMISSIONS.ADMIN_ACCESS],
       // roles: ["admin"],
     },
   ];

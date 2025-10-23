@@ -35,6 +35,7 @@ import { NOTIFICATION_MESSAGES } from '../../../utils/notifications';
 import WorkflowSkeleton from '../../N8nWorkflows/WorkflowSkeleton';
 import { WorkflowsEmptyState } from '../../N8nWorkflows/EmptyState';
 import { PermissionGuard } from '../../PermissionGuard';
+import { PERMISSIONS } from '../../../constants/permissions';
 import './WorkflowManager.css';
 
 const WorkflowManager = ({ clientId, clientName }) => {
@@ -194,7 +195,7 @@ const WorkflowManager = ({ clientId, clientName }) => {
           >
             <RefreshIcon className={refreshing ? 'spinning' : ''} />
           </button>
-          <PermissionGuard permissions={['create_workflow']}>
+          <PermissionGuard permissions={[PERMISSIONS.CREATE_WORKFLOW]}>
             <button
               className="btn btn-primary add-workflow-btn"
               onClick={handleAddWorkflow}
@@ -232,7 +233,7 @@ const WorkflowManager = ({ clientId, clientName }) => {
                         </Typography>
                       </Box>
                       <Box className="workflow-actions">
-                        <PermissionGuard permissions={['update_workflow']}>
+                        <PermissionGuard permissions={[PERMISSIONS.UPDATE_WORKFLOW]}>
                           <IconButton
                             size="small"
                             onClick={() => handleEditWorkflow(workflow)}
@@ -241,7 +242,7 @@ const WorkflowManager = ({ clientId, clientName }) => {
                             <EditIcon />
                           </IconButton>
                         </PermissionGuard>
-                        <PermissionGuard permissions={['delete_workflow']}>
+                        <PermissionGuard permissions={[PERMISSIONS.DELETE_WORKFLOW]}>
                           <IconButton
                             size="small"
                             onClick={() => handleDeleteWorkflow(workflow.id)}

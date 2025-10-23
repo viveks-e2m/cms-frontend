@@ -1,13 +1,14 @@
 import React from 'react';
 import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
 import { PermissionGuard } from '../../components/PermissionGuard';
+import { PERMISSIONS } from '../../constants/permissions';
 import '../../styles/pages.css';
 
 const MeetingsPage = () => {
   return (
     <DashboardLayout>
       <PermissionGuard 
-        permissions={['create_meeting', 'read_meeting']}
+        permissions={[PERMISSIONS.CREATE_MEETING, PERMISSIONS.READ_MEETING]}
         fallback={
           <div className="page-container">
             <div className="access-denied-message">

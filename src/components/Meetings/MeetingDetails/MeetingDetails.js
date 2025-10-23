@@ -18,6 +18,7 @@ import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
 import MarkdownSummary from "../MarkdownSummary/MarkdownSummary";
 import ActionItems from "../ActionItems/ActionItems";
 import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -117,7 +118,7 @@ const MeetingDetails = ({
         </div>
 
         <div className="meeting-actions-header">
-          <PermissionGuard permissions={["update_meeting"]}>
+          <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
             <button
               className="btn btn-secondary btn-xs"
               onClick={() => onEdit(meeting)}
@@ -135,7 +136,7 @@ const MeetingDetails = ({
               View Recording
             </button>
           )}
-          <PermissionGuard permissions={["delete_meeting"]}>
+          <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
             <button
               className="btn btn-danger btn-xs"
               onClick={() => onDelete(meeting)}

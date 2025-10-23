@@ -5,6 +5,7 @@ import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import SecretForm from "./SecretForm";
 import SecretViewer from "./SecretViewer";
 import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import {
   Security as SecurityIcon,
   Add as AddIcon,
@@ -114,7 +115,7 @@ const SecretsManager = ({ clientId, clientName }) => {
             <p>Securely manage sensitive information for {clientName}</p>
           </div>
         </div>
-        <PermissionGuard permissions={['create_secret']}>
+        <PermissionGuard permissions={[PERMISSIONS.CREATE_SECRET]}>
           <button
             className="btn btn-primary add-secret-btn"
             onClick={handleAddSecret}
@@ -156,7 +157,7 @@ const SecretsManager = ({ clientId, clientName }) => {
               </div>
 
               <div className="secret-actions">
-                <PermissionGuard permissions={['read_secret']}>
+                <PermissionGuard permissions={[PERMISSIONS.READ_SECRET]}>
                   <button
                     className="action-btn view-btn"
                     onClick={() => handleViewSecret(secret)}
@@ -166,7 +167,7 @@ const SecretsManager = ({ clientId, clientName }) => {
                   </button>
                 </PermissionGuard>
                 {/* Edit functionality removed - no backend API support */}
-                <PermissionGuard permissions={['delete_secret']}>
+                <PermissionGuard permissions={[PERMISSIONS.DELETE_SECRET]}>
                   <button
                     className="action-btn delete-btn"
                     onClick={() => handleDeleteSecret(secret)}
@@ -184,7 +185,7 @@ const SecretsManager = ({ clientId, clientName }) => {
           <SecurityIcon className="empty-icon" />
           <h4>No Secrets Found</h4>
           <PermissionGuard 
-            permissions={['create_secret']}
+            permissions={[PERMISSIONS.CREATE_SECRET]}
             fallback={
               <p>No secrets have been created for this client yet.</p>
             }
