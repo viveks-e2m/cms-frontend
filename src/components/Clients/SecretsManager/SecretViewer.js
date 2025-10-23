@@ -11,7 +11,7 @@ import {
 } from "@mui/icons-material";
 import "./SecretViewer.css";
 
-const SecretViewer = ({ secret, isOpen, onClose }) => {
+const SecretViewer = ({ secret, isOpen, onClose, getUserName }) => {
   const [showSecret, setShowSecret] = useState(false);
   const [copySuccess, setCopySuccess] = useState(false);
 
@@ -137,7 +137,7 @@ const SecretViewer = ({ secret, isOpen, onClose }) => {
                 <div>
                   <span className="secret-metadata-label">Created by</span>
                   <span className="secret-metadata-value">
-                    {secret.created_by || "Unknown"}
+                    {(getUserName ? getUserName(secret.created_by) : (secret.created_by || secret.createdBy || secret.creator || secret.created_by_user)) || "Unknown"}
                   </span>
                 </div>
               </div>

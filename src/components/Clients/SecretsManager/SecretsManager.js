@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { secretsAPI } from "../../../utils/apiServices";
+import { secretsAPI, clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import SecretForm from "./SecretForm";
@@ -23,11 +23,13 @@ const SecretsManager = ({ clientId, clientName }) => {
   const [showSecretForm, setShowSecretForm] = useState(false);
   const [viewingSecret, setViewingSecret] = useState(null);
   const [showSecretViewer, setShowSecretViewer] = useState(false);
+  const [users, setUsers] = useState([]);
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
     if (clientId) {
       loadSecrets();
+      loadUsers();
     }
   }, [clientId]);
 
@@ -44,6 +46,21 @@ const SecretsManager = ({ clientId, clientName }) => {
     }
   };
 
+  const loadUsers = async () => {
+    try {
+      const usersData = await clientAPI.getAllUsers();
+      setUsers(usersData || []);
+    } catch (error) {
+      console.error("Error loading users:", error);
+    }
+  };
+
+  const getUserName = (userId) => {
+    if (!userId) return null;
+    const user = users.find((u) => u.id === userId);
+    return user ? user.full_name || user.name || user.email : null;
+  };
+
   const handleAddSecret = () => {
     setShowSecretForm(true);
   };
@@ -53,10 +70,13 @@ const SecretsManager = ({ clientId, clientName }) => {
   const handleViewSecret = async (secret) => {
     try {
       const secretData = await secretsAPI.getById(secret.id);
-      setViewingSecret({
+      const mergedSecret = {
         ...secret,
+        ...secretData, // Merge all fields from API response
         decryptedValue: secretData.value,
-      });
+      };
+
+      setViewingSecret(mergedSecret);
       setShowSecretViewer(true);
     } catch (error) {
       showError("Failed to decrypt secret");
@@ -139,7 +159,9 @@ const SecretsManager = ({ clientId, clientName }) => {
                 <div className="secret-meta">
                   <div className="secret-meta-item">
                     <PersonIcon className="secret-meta-icon" />
-                    <span>Created by {secret.created_by || "Unknown"}</span>
+                    <span>
+                      Created by {getUserName(secret.created_by) || "Unknown"}
+                    </span>
                   </div>
                   <div className="secret-meta-item">
                     <TimeIcon className="secret-meta-icon" />
@@ -184,11 +206,9 @@ const SecretsManager = ({ clientId, clientName }) => {
         <div className="secrets-empty">
           <SecurityIcon className="empty-icon" />
           <h4>No Secrets Found</h4>
-          <PermissionGuard 
+          <PermissionGuard
             permissions={[PERMISSIONS.CREATE_SECRET]}
-            fallback={
-              <p>No secrets have been created for this client yet.</p>
-            }
+            fallback={<p>No secrets have been created for this client yet.</p>}
           >
             <p>
               Start by adding your first secret to securely store sensitive
@@ -216,6 +236,7 @@ const SecretsManager = ({ clientId, clientName }) => {
         secret={viewingSecret}
         isOpen={showSecretViewer}
         onClose={handleSecretViewerClose}
+        getUserName={getUserName}
       />
     </div>
   );
