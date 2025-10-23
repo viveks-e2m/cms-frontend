@@ -297,7 +297,7 @@
   box-sizing: border-box;
 }
 
-.user-profile {
+.sidebar-user-profile {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -308,7 +308,7 @@
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.user-avatar {
+.sidebar-user-avatar {
   width: 44px;
   height: 44px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -324,7 +324,7 @@
   position: relative;
 }
 
-.user-avatar::before {
+.sidebar-user-avatar::before {
   content: "";
   position: absolute;
   top: -2px;
@@ -337,12 +337,12 @@
   opacity: 0.3;
 }
 
-.user-info {
+.sidebar-user-info {
   flex: 1;
   min-width: 0;
 }
 
-.user-name {
+.sidebar-user-name {
   font-weight: 600;
   font-size: 0.9rem;
   color: #ffffff;
@@ -353,7 +353,7 @@
   text-overflow: ellipsis;
 }
 
-.user-email {
+.sidebar-user-email {
   font-size: 0.75rem;
   color: rgba(255, 255, 255, 0.6);
   line-height: 1.2;
@@ -598,7 +598,7 @@
   box-sizing: border-box;
 }
 
-.sidebar.collapsed .user-profile {
+.sidebar.collapsed .sidebar-user-profile {
   justify-content: center;
   margin-bottom: 1.25rem;
   padding: 0.75rem;
@@ -688,8 +688,8 @@
     transition: none;
   }
 }
-/* User Role Styles */
-.user-role {
+/* Sidebar User Role Styles */
+.sidebar-user-role {
   font-size: 0.75rem;
   color: #a1a1aa;
   background: rgba(255, 255, 255, 0.1);
@@ -700,19 +700,19 @@
   border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
-.user-info {
+.sidebar-user-info {
   display: flex;
   flex-direction: column;
   gap: 2px;
 }
 
-.user-name {
+.sidebar-user-name {
   font-weight: 600;
   color: #ffffff;
   font-size: 0.9rem;
 }
 
-.user-email {
+.sidebar-user-email {
   color: #a1a1aa;
   font-size: 0.8rem;
   opacity: 0.8;

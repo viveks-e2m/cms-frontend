@@ -42,8 +42,8 @@ const UserProfile = () => {
 
   return (
     <DashboardLayout>
-      <div className="user-profile">
-        <div className="profile-header">
+      <div className="user-profile-container user-profile">
+        {/* <div className="profile-header">
           <div className="profile-avatar">
             {user.first_name?.charAt(0) || user.email?.charAt(0) || 'U'}
           </div>
@@ -59,7 +59,7 @@ const UserProfile = () => {
           <button onClick={refreshUserData} className="refresh-btn">
             Refresh Data
           </button>
-        </div>
+        </div> */}
 
         <div className="profile-content">
           <div className="profile-section">
@@ -75,11 +75,11 @@ const UserProfile = () => {
               </div>
               <div className="info-item">
                 <label>First Name:</label>
-                <span>{user.first_name || 'Not set'}</span>
+                <span>{user.first_name || 'Not Available'}</span>
               </div>
               <div className="info-item">
                 <label>Last Name:</label>
-                <span>{user.last_name || 'Not set'}</span>
+                <span>{user.last_name || 'Not Available'}</span>
               </div>
             </div>
           </div>

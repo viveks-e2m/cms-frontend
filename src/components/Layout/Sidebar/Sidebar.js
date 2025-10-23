@@ -182,23 +182,23 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
 
       {/* User Profile Section */}
       <div className="sidebar-footer">
-        <div className="user-profile">
-          <div className="user-avatar">
+        <div className="sidebar-user-profile">
+          <div className="sidebar-user-avatar">
             {user?.name
               ? user.name.charAt(0).toUpperCase()
               : user?.email?.charAt(0).toUpperCase() || "U"}
           </div>
           {!isCollapsed && (
-            <div className="user-info">
-              <div className="user-name">
+            <div className="sidebar-user-info">
+              <div className="sidebar-user-name">
                 {user?.first_name ||
                   user?.full_name ||
                   user?.email?.split("@")[0] ||
                   "User"}
               </div>
-              <div className="user-email">{user?.email}</div>
+              <div className="sidebar-user-email">{user?.email}</div>
               {role && (
-                <div className="user-role">
+                <div className="sidebar-user-role">
                   {role.display_name || role.name}
                 </div>
               )}
