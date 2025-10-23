@@ -85,6 +85,7 @@
   border-radius: 12px !important;
   border: 1px solid #e2e8f0 !important;
   transition: all 0.2s ease !important;
+  margin-bottom: 0 !important;
 }
 
 .info-item:hover {
