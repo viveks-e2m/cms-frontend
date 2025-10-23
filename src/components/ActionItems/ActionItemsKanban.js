@@ -10,6 +10,8 @@ import {
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
+import { PermissionGuard } from "../PermissionGuard";
+import { useAuth } from "../../hooks/useAuth";
 import "./ActionItemsKanban.css";
 
 const ActionItemsKanban = ({
@@ -19,6 +21,7 @@ const ActionItemsKanban = ({
   clients,
   users = [],
 }) => {
+  const { hasPermission } = useAuth();
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
     message: "",
@@ -167,8 +170,8 @@ const ActionItemsKanban = ({
     <div
       key={item.id}
       className={`kanban-card ${draggedItem?.id === item.id ? "dragging" : ""}`}
-      draggable
-      onDragStart={(e) => handleDragStart(e, item)}
+      draggable={hasPermission('update_open_point')}
+      onDragStart={hasPermission('update_open_point') ? (e) => handleDragStart(e, item) : undefined}
     >
       {editingItem === item.id ? (
         <div className="card-edit-form">
@@ -247,20 +250,24 @@ const ActionItemsKanban = ({
           <div className="card-header">
             <div className="card-title">{item.message || item.task}</div>
             <div className="card-actions">
-              <button
-                className="btn-icon btn-edit"
-                onClick={() => startEdit(item)}
-                title="Edit"
-              >
-                <EditIcon />
-              </button>
-              <button
-                className="btn-icon btn-danger"
-                onClick={() => deleteItem(item.id)}
-                title="Delete"
-              >
-                <DeleteIcon />
-              </button>
+              <PermissionGuard permissions={['update_open_point']}>
+                <button
+                  className="btn-icon btn-edit"
+                  onClick={() => startEdit(item)}
+                  title="Edit"
+                >
+                  <EditIcon />
+                </button>
+              </PermissionGuard>
+              <PermissionGuard permissions={['delete_open_point']}>
+                <button
+                  className="btn-icon btn-danger"
+                  onClick={() => deleteItem(item.id)}
+                  title="Delete"
+                >
+                  <DeleteIcon />
+                </button>
+              </PermissionGuard>
             </div>
           </div>
 

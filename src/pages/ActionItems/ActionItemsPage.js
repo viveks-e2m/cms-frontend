@@ -16,6 +16,7 @@ import {
 } from "../../components/ActionItems";
 import { openPointsAPI, clientAPI, meetingAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
+import { PermissionGuard } from "../../components/PermissionGuard";
 import "./ActionItemsPage.css";
 
 const ActionItemsPage = () => {
@@ -138,7 +139,17 @@ const ActionItemsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="action-items-page">
+      <PermissionGuard 
+        permissions={['read_open_point']}
+        fallback={
+          <div className="action-items-page">
+            <div className="access-denied-message">
+              <p>You don't have permission to view action items.</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="action-items-page">
         {/* Header */}
         <div className="page-header">
           <div className="page-title-section">
@@ -276,7 +287,8 @@ const ActionItemsPage = () => {
             />
           )}
         </div>
-      </div>
+        </div>
+      </PermissionGuard>
     </DashboardLayout>
   );
 };

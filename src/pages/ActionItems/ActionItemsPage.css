@@ -712,4 +712,30 @@
 
 .filters-card:hover {
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+}/* Access 
+Denied Message */
+.access-denied-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: #f8fafc;
+  border-radius: 12px;
+  border: 2px dashed #e2e8f0;
+  margin: 20px 0;
+}
+
+.access-denied-message p {
+  color: #64748b;
+  font-size: 1.1rem;
+  margin: 0;
+  font-weight: 500;
+}
+
+.access-denied-message::before {
+  content: '🔒';
+  font-size: 2rem;
+  display: block;
+  margin-bottom: 12px;
 }

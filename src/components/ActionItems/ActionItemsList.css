@@ -468,4 +468,28 @@
   .action-items-table td {
     padding: 0.5rem 0.75rem;
   }
+}/* Stat
+us Badge for read-only view */
+.status-badge {
+  display: inline-block;
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.status-badge.status-open {
+  background-color: #e3f2fd;
+  color: #1976d2;
+}
+
+.status-badge.status-in_progress {
+  background-color: #fff3e0;
+  color: #f57c00;
+}
+
+.status-badge.status-completed {
+  background-color: #e8f5e8;
+  color: #388e3c;
 }

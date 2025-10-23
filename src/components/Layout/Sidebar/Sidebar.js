@@ -38,8 +38,8 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Manage Clients",
       path: "/clients",
       description: "Client management and assignments",
-      permissions: ["manage_clients"],
-      roles: ["admin", "account_manager"],
+      permissions: ["read_client"],
+      // roles: ["admin","ai_executor", "account_manager"],
     },
     {
       id: "action-items",
@@ -47,7 +47,8 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Action Items",
       path: "/action-items",
       description: "All action items across meetings",
-      show: true, // Most users can view action items
+      permissions: ["read_open_point"],
+      // roles: ["admin", "account_manager", "ai_intern"],
     },
     {
       id: "n8n-workflows",
@@ -55,8 +56,8 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "n8n Workflows",
       path: "/n8n-workflows",
       description: "Workflow automation and executions",
-      permissions: ["view_workflows"],
-      roles: ["admin", "ai_intern"],
+      permissions: ["read_workflow"],
+      // roles: ["admin", "ai_intern"],
     },
     {
       id: "admin",
@@ -64,7 +65,8 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Admin Panel",
       path: "/admin",
       description: "User and role management",
-      roles: ["admin"],
+      permissions: ["manage_system"],
+      // roles: ["admin"],
     },
   ];
 

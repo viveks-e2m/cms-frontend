@@ -35,6 +35,7 @@ import { WorkflowsEmptyState, ExecutionsEmptyState } from '../../components/N8nW
 import { n8nAPI } from '../../utils/apiServices';
 import { useNotificationContext } from '../../contexts/NotificationContext';
 import { NOTIFICATION_MESSAGES } from '../../utils/notifications';
+import { PermissionGuard } from '../../components/PermissionGuard';
 import './N8nWorkflowsPage.css';
 import '../../components/N8nWorkflows/ExecutionStats.css';
 import '../../components/N8nWorkflows/WorkflowSkeleton.css';
@@ -171,7 +172,17 @@ const N8nWorkflowsPage = () => {
 
   return (
     <DashboardLayout>
-      <div className="n8n-workflows-page">
+      <PermissionGuard 
+        permissions={['read_workflow']}
+        fallback={
+          <div className="n8n-workflows-page">
+            <div className="access-denied-message">
+              <p>You don't have permission to view n8n workflows.</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="n8n-workflows-page">
         {/* Header */}
         <Box className="page-header">
           <Box className="header-content">
@@ -434,7 +445,8 @@ const N8nWorkflowsPage = () => {
             </Card>
           </Grid>
         </Grid>
-      </div>
+        </div>
+      </PermissionGuard>
     </DashboardLayout>
   );
 };

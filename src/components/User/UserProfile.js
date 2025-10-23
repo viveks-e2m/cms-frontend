@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { rbacAPI } from '../../utils/rbacAPI';
-import DashboardLayout from '../Layout/DashboardLayout/DashboardLayout';
-import './UserProfile.css';
+import React, { useState, useEffect } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { rbacAPI } from "../../utils/rbacAPI";
+import DashboardLayout from "../Layout/DashboardLayout/DashboardLayout";
+import "./UserProfile.css";
 
 const UserProfile = () => {
   const { user, role, permissions, loadUserData } = useAuth();
@@ -21,7 +21,7 @@ const UserProfile = () => {
       const perms = await rbacAPI.getUserPermissions(user.id);
       setUserPermissions(perms);
     } catch (error) {
-      console.error('Error loading user permissions:', error);
+      console.error("Error loading user permissions:", error);
     } finally {
       setLoading(false);
     }
@@ -75,11 +75,11 @@ const UserProfile = () => {
               </div>
               <div className="info-item">
                 <label>First Name:</label>
-                <span>{user.first_name || 'Not Available'}</span>
+                <span>{user.first_name || "Not Available"}</span>
               </div>
               <div className="info-item">
                 <label>Last Name:</label>
-                <span>{user.last_name || 'Not Available'}</span>
+                <span>{user.last_name || "Not Available"}</span>
               </div>
             </div>
           </div>
@@ -98,7 +98,7 @@ const UserProfile = () => {
                 </div>
                 <div className="info-item">
                   <label>Description:</label>
-                  <span>{role.description || 'No description available'}</span>
+                  <span>{role.description || "No description available"}</span>
                 </div>
               </div>
             </div>
@@ -114,7 +114,7 @@ const UserProfile = () => {
                   <div className="permissions-list">
                     <h4>Effective Permissions:</h4>
                     <div className="permissions-grid">
-                      {permissions.map(permission => (
+                      {permissions.map((permission) => (
                         <span key={permission} className="permission-badge">
                           {permission}
                         </span>
@@ -123,12 +123,12 @@ const UserProfile = () => {
                   </div>
                 ) : (
                   <p>No permissions assigned</p>
-              )}
+                )}
 
                 {userPermissions && (
                   <div className="detailed-permissions">
                     <h4>Detailed Permission Information:</h4>
-                    
+
                     {userPermissions.role && (
                       <div className="role-permissions">
                         <h5>Role-based Permissions:</h5>
@@ -136,34 +136,53 @@ const UserProfile = () => {
                       </div>
                     )}
 
-                    {userPermissions.effective_permissions && userPermissions.effective_permissions.length > 0 && (
-                      <div className="effective-permissions">
-                        <h5>All Effective Permissions:</h5>
-                        <div className="permissions-grid">
-                          {userPermissions.effective_permissions.map(perm => (
-                            <span key={perm} className="permission-badge effective">
-                              {perm}
-                          </span>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-
-                    {userPermissions.user_specific_permissions && userPermissions.user_specific_permissions.length > 0 && (
-                      <div className="user-specific-permissions">
-                        <h5>User-specific Permissions:</h5>
-                        <div className="permissions-grid">
-                          {userPermissions.user_specific_permissions.map(perm => (
-                            <span key={perm.id} className="permission-badge user-specific">
-                              {perm.permission_name}
-                              {perm.expires_at && (
-                                <small> (expires: {new Date(perm.expires_at).toLocaleDateString()})</small>
-                              )}
-                            </span>
-                          ))}
+                    {userPermissions.effective_permissions &&
+                      userPermissions.effective_permissions.length > 0 && (
+                        <div className="effective-permissions">
+                          <h5>All Effective Permissions:</h5>
+                          <div className="permissions-grid">
+                            {userPermissions.effective_permissions.map(
+                              (perm) => (
+                                <span
+                                  key={perm}
+                                  className="permission-badge effective"
+                                >
+                                  {perm}
+                                </span>
+                              )
+                            )}
+                          </div>
                         </div>
-                      </div>
-                    )}
+                      )}
+
+                    {userPermissions.user_specific_permissions &&
+                      userPermissions.user_specific_permissions.length > 0 && (
+                        <div className="user-specific-permissions">
+                          <h5>User-specific Permissions:</h5>
+                          <div className="permissions-grid">
+                            {userPermissions.user_specific_permissions.map(
+                              (perm) => (
+                                <span
+                                  key={perm.id}
+                                  className="permission-badge user-specific"
+                                >
+                                  {perm.permission_name}
+                                  {perm.expires_at && (
+                                    <small>
+                                      {" "}
+                                      (expires:{" "}
+                                      {new Date(
+                                        perm.expires_at
+                                      ).toLocaleDateString()}
+                                      )
+                                    </small>
+                                  )}
+                                </span>
+                              )
+                            )}
+                          </div>
+                        </div>
+                      )}
                   </div>
                 )}
               </div>

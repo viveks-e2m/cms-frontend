@@ -15,6 +15,8 @@ import {
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
+import { PermissionGuard } from "../PermissionGuard";
+import { useAuth } from "../../hooks/useAuth";
 import "./ActionItemsList.css";
 
 const ActionItemsList = ({
@@ -26,6 +28,7 @@ const ActionItemsList = ({
   hideClientColumn = false,
 }) => {
   console.log("ActionItemsList received users:", users);
+  const { hasPermission } = useAuth();
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
     message: "",
@@ -303,19 +306,29 @@ const ActionItemsList = ({
                   </td>
 
                   <td className="col-status">
-                    <select
-                      className={`status-select status-${
-                        item.status || "open"
-                      }`}
-                      value={item.status || "open"}
-                      onChange={(e) =>
-                        updateItemStatus(item.id, e.target.value)
+                    <PermissionGuard 
+                      permissions={['update_open_point']}
+                      fallback={
+                        <span className={`status-badge status-${item.status || "open"}`}>
+                          {item.status === 'in_progress' ? 'In Progress' : 
+                           item.status === 'completed' ? 'Completed' : 'Open'}
+                        </span>
                       }
                     >
-                      <option value="open">Open</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
-                    </select>
+                      <select
+                        className={`status-select status-${
+                          item.status || "open"
+                        }`}
+                        value={item.status || "open"}
+                        onChange={(e) =>
+                          updateItemStatus(item.id, e.target.value)
+                        }
+                      >
+                        <option value="open">Open</option>
+                        <option value="in_progress">In Progress</option>
+                        <option value="completed">Completed</option>
+                      </select>
+                    </PermissionGuard>
                   </td>
 
                   <td className="col-priority">
@@ -358,20 +371,24 @@ const ActionItemsList = ({
 
                   <td className="col-actions">
                     <div className="actions-cell">
-                      <button
-                        className="btn-icon btn-edit"
-                        onClick={() => startEdit(item)}
-                        title="Edit"
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        className="btn-icon btn-danger"
-                        onClick={() => deleteItem(item.id)}
-                        title="Delete"
-                      >
-                        <DeleteIcon />
-                      </button>
+                      <PermissionGuard permissions={['update_open_point']}>
+                        <button
+                          className="btn-icon btn-edit"
+                          onClick={() => startEdit(item)}
+                          title="Edit"
+                        >
+                          <EditIcon />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permissions={['delete_open_point']}>
+                        <button
+                          className="btn-icon btn-danger"
+                          onClick={() => deleteItem(item.id)}
+                          title="Delete"
+                        >
+                          <DeleteIcon />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </td>
                 </>

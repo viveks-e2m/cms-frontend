@@ -5,6 +5,7 @@ import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import ClientAvatar from "../../components/UI/ClientAvatar";
+import { PermissionGuard } from "../../components/PermissionGuard";
 import {
   People as PeopleIcon,
   VideoCall as VideoCallIcon,
@@ -17,7 +18,7 @@ import {
 import "./DashboardPage.css";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
+  const { user, hasPermission } = useAuth();
   const { showError } = useNotificationContext();
 
   const [loading, setLoading] = useState(true);
@@ -117,106 +118,125 @@ const DashboardPage = () => {
 
         {/* Stats Grid */}
         <div className="dashboard-stats">
-          <div className="stat-card clients">
-            <div className="stat-icon">
-              <PeopleIcon />
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">
-                {dashboardData.stats.totalClients}
+          <PermissionGuard permissions={['read_client']}>
+            <div className="stat-card clients">
+              <div className="stat-icon">
+                <PeopleIcon />
               </div>
-              <p className="stat-label">Total Clients</p>
-              <div className="stat-trend positive">+12% this month</div>
-            </div>
-          </div>
-          <div className="stat-card meetings">
-            <div className="stat-icon">
-              <VideoCallIcon />
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">
-                {dashboardData.stats.totalMeetings}
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.totalClients}
+                </div>
+                <p className="stat-label">Total Clients</p>
+                <div className="stat-trend positive">+12% this month</div>
               </div>
-              <p className="stat-label">Total Meetings</p>
-              <div className="stat-trend positive">+8% this week</div>
             </div>
-          </div>
-          <div className="stat-card tasks-open">
-            <div className="stat-icon">
-              <AssignmentIcon />
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">{dashboardData.stats.openTasks}</div>
-              <p className="stat-label">Open Tasks</p>
-              <div className="stat-trend neutral">No change</div>
-            </div>
-          </div>
-          <div className="stat-card tasks-completed">
-            <div className="stat-icon">
-              <CheckCircleIcon />
-            </div>
-            <div className="stat-content">
-              <div className="stat-number">
-                {dashboardData.stats.completedTasks}
+          </PermissionGuard>
+          <PermissionGuard permissions={['read_meeting']}>
+            <div className="stat-card meetings">
+              <div className="stat-icon">
+                <VideoCallIcon />
               </div>
-              <p className="stat-label">Completed Tasks</p>
-              <div className="stat-trend positive">+15% this week</div>
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.totalMeetings}
+                </div>
+                <p className="stat-label">Total Meetings</p>
+                <div className="stat-trend positive">+8% this week</div>
+              </div>
             </div>
-          </div>
+          </PermissionGuard>
+          <PermissionGuard permissions={['read_open_point']}>
+            <div className="stat-card tasks-open">
+              <div className="stat-icon">
+                <AssignmentIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.openTasks}</div>
+                <p className="stat-label">Open Tasks</p>
+                <div className="stat-trend neutral">No change</div>
+              </div>
+            </div>
+          </PermissionGuard>
+          <PermissionGuard permissions={['read_open_point']}>
+            <div className="stat-card tasks-completed">
+              <div className="stat-icon">
+                <CheckCircleIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.completedTasks}
+                </div>
+                <p className="stat-label">Completed Tasks</p>
+                <div className="stat-trend positive">+15% this week</div>
+              </div>
+            </div>
+          </PermissionGuard>
         </div>
 
         {/* Recent Clients Section */}
         <div className="dashboard-sections">
-          <div className="dashboard-section recent-clients-section">
-            <div className="section-header">
-              <h3 className="section-title">Recent Clients</h3>
-            </div>
-            <div className="section-content">
-              {dashboardData.clients.length > 0 ? (
-                <div className="clients-grid">
-                  {dashboardData.clients.slice(0, 6).map((client) => (
-                    <div key={client.id} className="client-card">
-                      <div className="client-card-header">
-                        <ClientAvatar 
-                          client={client} 
-                          size="medium"
-                        />
-                      </div>
-                      <div className="client-card-body">
-                        <h4 className="client-name">{client.name}</h4>
-                        <div className="client-details">
-                          {client.company && (
-                            <div className="client-detail-item">
-                              <span className="detail-label">Company:</span>
-                              <span className="detail-value">
-                                {client.company}
-                              </span>
-                            </div>
-                          )}
+          <PermissionGuard 
+            permissions={['read_client']}
+            fallback={
+              <div className="dashboard-section">
+                <div className="access-denied-message">
+                  <p>You don't have permission to view client information.</p>
+                </div>
+              </div>
+            }
+          >
+            <div className="dashboard-section recent-clients-section">
+              <div className="section-header">
+                <h3 className="section-title">Recent Clients</h3>
+              </div>
+              <div className="section-content">
+                {dashboardData.clients.length > 0 ? (
+                  <div className="clients-grid">
+                    {dashboardData.clients.slice(0, 6).map((client) => (
+                      <div key={client.id} className="client-card">
+                        <div className="client-card-header">
+                          <ClientAvatar 
+                            client={client} 
+                            size="medium"
+                          />
                         </div>
-                        <div>
-                        <span className="client-date">
-                          Added{" "}
-                          {new Date(
-                            client.created_at || Date.now()
-                          ).toLocaleDateString()}
-                        </span>
+                        <div className="client-card-body">
+                          <h4 className="client-name">{client.name}</h4>
+                          <div className="client-details">
+                            {client.company && (
+                              <div className="client-detail-item">
+                                <span className="detail-label">Company:</span>
+                                <span className="detail-value">
+                                  {client.company}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                          <span className="client-date">
+                            Added{" "}
+                            {new Date(
+                              client.created_at || Date.now()
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                        </div>
                       </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state-card">
-                  <PeopleIcon className="empty-state-icon" />
-                  <h4 className="empty-state-title">No clients yet</h4>
-                  <p className="empty-state-description">
-                    Start by adding your first client to see them here
-                  </p>
-                </div>
-              )}
+                    ))}
+                  </div>
+                ) : (
+                  <div className="empty-state-card">
+                    <PeopleIcon className="empty-state-icon" />
+                    <h4 className="empty-state-title">No clients yet</h4>
+                    <p className="empty-state-description">
+                      Start by adding your first client to see them here
+                    </p>
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
+          </PermissionGuard>
         </div>
       </div>
     </DashboardLayout>

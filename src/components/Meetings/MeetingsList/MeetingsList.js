@@ -1,4 +1,6 @@
 import React, { useState } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
+import { PermissionGuard } from '../../PermissionGuard';
 import {
   VideoCall as VideoCallIcon,
   Add as AddIcon,

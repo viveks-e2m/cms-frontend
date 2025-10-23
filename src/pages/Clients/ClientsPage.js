@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
+import { useAuth } from "../../hooks/useAuth";
+import { PermissionGuard } from "../../components/PermissionGuard";
 import {
   clientAPI,
   meetingAPI,
@@ -43,6 +45,7 @@ import {
 import "./ClientsPage.css";
 
 const ClientsPage = () => {
+  const { hasPermission } = useAuth();
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -404,7 +407,15 @@ const ClientsPage = () => {
             ) : (
               <>
                 {activeTab === "overview" && (
-                  <div className="overview-tab">
+                  <PermissionGuard 
+                    permissions={['read_client']} 
+                    fallback={
+                      <div className="access-denied-message">
+                        <p>You don't have permission to view client details.</p>
+                      </div>
+                    }
+                  >
+                    <div className="overview-tab">
                     <div className="overview-cards">
                       <div className="overview-card">
                         <h3>Client Information</h3>
@@ -547,10 +558,19 @@ const ClientsPage = () => {
                       </div>
                     </div>
                   </div>
+                  </PermissionGuard>
                 )}
 
                 {activeTab === "meetings" && (
-                  <div className="meetings-tab">
+                  <PermissionGuard 
+                    permissions={['read_meeting']} 
+                    fallback={
+                      <div className="access-denied-message">
+                        <p>You don't have permission to view meetings.</p>
+                      </div>
+                    }
+                  >
+                    <div className="meetings-tab">
                     {meetingsView === "list" ? (
                       <MeetingsList
                         meetings={clientDetails?.meetings || []}
@@ -570,6 +590,7 @@ const ClientsPage = () => {
                       />
                     )}
                   </div>
+                  </PermissionGuard>
                 )}
 
                 {activeTab === "onboarding" && (
@@ -629,10 +650,12 @@ const ClientsPage = () => {
               Manage your client information, assignments, and relationships
             </p>
           </div>
-          <button className="btn btn-primary" onClick={handleAddClient}>
-            <AddIcon />
-            Add New Client
-          </button>
+          <PermissionGuard permissions={['create_client']}>
+            <button className="btn btn-primary" onClick={handleAddClient}>
+              <AddIcon />
+              Add New Client
+            </button>
+          </PermissionGuard>
         </div>
 
         <div className="page-content">
@@ -745,27 +768,33 @@ const ClientsPage = () => {
                       className="client-actions"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button
-                        className="action-btn edit"
-                        title="Edit Client"
-                        onClick={() => handleEditClient(client)}
-                      >
-                        <EditIcon />
-                      </button>
-                      <button
-                        className="action-btn view"
-                        title="View Details"
-                        onClick={() => handleClientSelect(client)}
-                      >
-                        <VisibilityIcon />
-                      </button>
-                      <button
-                        className="action-btn delete"
-                        title="Delete Client"
-                        onClick={() => handleDeleteClient(client)}
-                      >
-                        <DeleteIcon />
-                      </button>
+                      <PermissionGuard permissions={['update_client']}>
+                        <button
+                          className="action-btn edit"
+                          title="Edit Client"
+                          onClick={() => handleEditClient(client)}
+                        >
+                          <EditIcon />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permissions={['read_client']}>
+                        <button
+                          className="action-btn view"
+                          title="View Details"
+                          onClick={() => handleClientSelect(client)}
+                        >
+                          <VisibilityIcon />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permissions={['delete_client']}>
+                        <button
+                          className="action-btn delete"
+                          title="Delete Client"
+                          onClick={() => handleDeleteClient(client)}
+                        >
+                          <DeleteIcon />
+                        </button>
+                      </PermissionGuard>
                     </div>
                   </div>
                 );
@@ -780,10 +809,12 @@ const ClientsPage = () => {
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
                 {!searchTerm && !statusFilter && (
-                  <button className="btn btn-primary" onClick={handleAddClient}>
-                    <AddIcon />
-                    Add Your First Client
-                  </button>
+                  <PermissionGuard permissions={['create_client']}>
+                    <button className="btn btn-primary" onClick={handleAddClient}>
+                      <AddIcon />
+                      Add Your First Client
+                    </button>
+                  </PermissionGuard>
                 )}
                 {(searchTerm || statusFilter) && (
                   <button

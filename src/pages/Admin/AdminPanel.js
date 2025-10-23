@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { rbacAPI } from "../../utils/rbacAPI";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
+import { PermissionGuard } from "../../components/PermissionGuard";
 import "./AdminPanel.css";
 
 const AdminPanel = () => {
@@ -151,7 +152,17 @@ const AdminPanel = () => {
 
   return (
     <DashboardLayout>
-      <div className="admin-panel">
+      <PermissionGuard 
+        permissions={['manage_system']}
+        fallback={
+          <div className="admin-panel-denied">
+            <div className="access-denied-message">
+              <p>You need admin privileges to access this panel.</p>
+            </div>
+          </div>
+        }
+      >
+        <div className="admin-panel">
       <div className="admin-header">
         <h1>Admin Panel</h1>
         <p>Manage roles, permissions, and user access</p>
@@ -485,7 +496,8 @@ const AdminPanel = () => {
           </div>
         )}
       </div>
-    </div>
+        </div>
+      </PermissionGuard>
     </DashboardLayout>
   );
 };
