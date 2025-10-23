@@ -47,7 +47,8 @@ export const PERMISSIONS = {
   READ_USER: 'read_user',
   UPDATE_USER: 'update_user',
   DELETE_USER: 'delete_user',
-
+  READ_ALL_USERS: 'read_all_users',
+  
   // Analytics and Reporting
   VIEW_ANALYTICS: 'view_analytics',
 };

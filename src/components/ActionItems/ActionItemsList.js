@@ -30,6 +30,9 @@ const ActionItemsList = ({
 }) => {
   console.log("ActionItemsList received users:", users);
   const { hasPermission } = useAuth();
+  
+  // Check if user has any action permissions to determine if Actions column should be shown
+  const hasAnyActionPermission = hasPermission(PERMISSIONS.UPDATE_TASK) || hasPermission(PERMISSIONS.DELETE_TASK);
   const [editingItem, setEditingItem] = useState(null);
   const [editForm, setEditForm] = useState({
     message: "",
@@ -171,7 +174,7 @@ const ActionItemsList = ({
 
   return (
     <div className="action-items-table-container">
-      <table className={`action-items-table ${hideClientColumn ? 'hide-client-column' : ''}`}>
+      <table className={`action-items-table ${hideClientColumn ? 'hide-client-column' : ''} ${!hasAnyActionPermission ? 'hide-actions-column' : ''}`}>
         <thead>
           <tr>
             <th className="col-task">Task Name</th>
@@ -181,7 +184,7 @@ const ActionItemsList = ({
             <th className="col-status">Status</th>
             <th className="col-priority">Priority</th>
             <th className="col-due">Due Date</th>
-            <th className="col-actions">Actions</th>
+            {hasAnyActionPermission && <th className="col-actions">Actions</th>}
           </tr>
         </thead>
         <tbody>
@@ -255,24 +258,26 @@ const ActionItemsList = ({
                       }
                     />
                   </td>
-                  <td className="col-actions">
-                    <div className="actions-cell">
-                      <button
-                        className="btn-icon btn-success"
-                        onClick={() => saveEdit(item.id)}
-                        title="Save"
-                      >
-                        <SaveIcon />
-                      </button>
-                      <button
-                        className="btn-icon btn-secondary"
-                        onClick={cancelEdit}
-                        title="Cancel"
-                      >
-                        <CancelIcon />
-                      </button>
-                    </div>
-                  </td>
+                  {hasAnyActionPermission && (
+                    <td className="col-actions">
+                      <div className="actions-cell">
+                        <button
+                          className="btn-icon btn-success"
+                          onClick={() => saveEdit(item.id)}
+                          title="Save"
+                        >
+                          <SaveIcon />
+                        </button>
+                        <button
+                          className="btn-icon btn-secondary"
+                          onClick={cancelEdit}
+                          title="Cancel"
+                        >
+                          <CancelIcon />
+                        </button>
+                      </div>
+                    </td>
+                  )}
                 </>
               ) : (
                 // Display Mode
@@ -370,28 +375,30 @@ const ActionItemsList = ({
                     </div>
                   </td>
 
-                  <td className="col-actions">
-                    <div className="actions-cell">
-                      <PermissionGuard permissions={[PERMISSIONS.UPDATE_TASK]}>
-                        <button
-                          className="btn-icon btn-edit"
-                          onClick={() => startEdit(item)}
-                          title="Edit"
-                        >
-                          <EditIcon />
-                        </button>
-                      </PermissionGuard>
-                      <PermissionGuard permissions={[PERMISSIONS.DELETE_TASK]}>
-                        <button
-                          className="btn-icon btn-danger"
-                          onClick={() => deleteItem(item.id)}
-                          title="Delete"
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </PermissionGuard>
-                    </div>
-                  </td>
+                  {hasAnyActionPermission && (
+                    <td className="col-actions">
+                      <div className="actions-cell">
+                        <PermissionGuard permissions={[PERMISSIONS.UPDATE_TASK]}>
+                          <button
+                            className="btn-icon btn-edit"
+                            onClick={() => startEdit(item)}
+                            title="Edit"
+                          >
+                            <EditIcon />
+                          </button>
+                        </PermissionGuard>
+                        <PermissionGuard permissions={[PERMISSIONS.DELETE_TASK]}>
+                          <button
+                            className="btn-icon btn-danger"
+                            onClick={() => deleteItem(item.id)}
+                            title="Delete"
+                          >
+                            <DeleteIcon />
+                          </button>
+                        </PermissionGuard>
+                      </div>
+                    </td>
+                  )}
                 </>
               )}
             </tr>

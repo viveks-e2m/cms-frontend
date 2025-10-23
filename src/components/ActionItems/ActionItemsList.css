@@ -50,6 +50,23 @@
 .action-items-table.hide-client-column .col-due { width: 8%; }
 .action-items-table.hide-client-column .col-actions { width: 4%; }
 
+/* Column Widths when actions column is hidden */
+.action-items-table.hide-actions-column .col-task { width: 32%; }
+.action-items-table.hide-actions-column .col-client { width: 14%; }
+.action-items-table.hide-actions-column .col-owner { width: 16%; }
+.action-items-table.hide-actions-column .col-assignee { width: 16%; }
+.action-items-table.hide-actions-column .col-status { width: 14%; }
+.action-items-table.hide-actions-column .col-priority { width: 4%; }
+.action-items-table.hide-actions-column .col-due { width: 4%; }
+
+/* Column Widths when both client and actions columns are hidden */
+.action-items-table.hide-client-column.hide-actions-column .col-task { width: 36%; }
+.action-items-table.hide-client-column.hide-actions-column .col-owner { width: 18%; }
+.action-items-table.hide-client-column.hide-actions-column .col-assignee { width: 18%; }
+.action-items-table.hide-client-column.hide-actions-column .col-status { width: 16%; }
+.action-items-table.hide-client-column.hide-actions-column .col-priority { width: 6%; }
+.action-items-table.hide-client-column.hide-actions-column .col-due { width: 6%; }
+
 /* Table Rows */
 .action-item-row {
   border-bottom: 1px solid #f1f5f9;
@@ -453,6 +470,19 @@
   .action-items-table.hide-client-column .col-assignee { width: 20%; }
   .action-items-table.hide-client-column .col-status { width: 15%; }
   .action-items-table.hide-client-column .col-priority { width: 15%; }
+  
+  /* Responsive widths when actions column is hidden */
+  .action-items-table.hide-actions-column .col-task { width: 40%; }
+  .action-items-table.hide-actions-column .col-client { width: 18%; }
+  .action-items-table.hide-actions-column .col-owner { width: 18%; }
+  .action-items-table.hide-actions-column .col-assignee { width: 18%; }
+  .action-items-table.hide-actions-column .col-status { width: 6%; }
+  
+  /* Responsive widths when both client and actions columns are hidden */
+  .action-items-table.hide-client-column.hide-actions-column .col-task { width: 45%; }
+  .action-items-table.hide-client-column.hide-actions-column .col-owner { width: 22%; }
+  .action-items-table.hide-client-column.hide-actions-column .col-assignee { width: 22%; }
+  .action-items-table.hide-client-column.hide-actions-column .col-status { width: 11%; }
 }
 
 @media (max-width: 768px) {
