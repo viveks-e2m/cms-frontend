@@ -137,12 +137,12 @@ const SecretsManager = ({ clientId, clientName }) => {
               <div className="secret-info">
                 <h4 className="secret-title">{secret.title}</h4>
                 <div className="secret-meta">
-                  <div className="meta-item">
-                    <PersonIcon className="meta-icon" />
+                  <div className="secret-meta-item">
+                    <PersonIcon className="secret-meta-icon" />
                     <span>Created by {secret.created_by || "Unknown"}</span>
                   </div>
-                  <div className="meta-item">
-                    <TimeIcon className="meta-icon" />
+                  <div className="secret-meta-item">
+                    <TimeIcon className="secret-meta-icon" />
                     <span>
                       {new Date(secret.created_at).toLocaleDateString("en-US", {
                         year: "numeric",
@@ -159,7 +159,7 @@ const SecretsManager = ({ clientId, clientName }) => {
               <div className="secret-actions">
                 <PermissionGuard permissions={[PERMISSIONS.READ_SECRET]}>
                   <button
-                    className="action-btn view-btn"
+                    className="secrets-action-btn view-btn"
                     onClick={() => handleViewSecret(secret)}
                     title="View Secret"
                   >
@@ -169,7 +169,7 @@ const SecretsManager = ({ clientId, clientName }) => {
                 {/* Edit functionality removed - no backend API support */}
                 <PermissionGuard permissions={[PERMISSIONS.DELETE_SECRET]}>
                   <button
-                    className="action-btn delete-btn"
+                    className="secrets-action-btn delete-btn"
                     onClick={() => handleDeleteSecret(secret)}
                     title="Delete Secret"
                   >

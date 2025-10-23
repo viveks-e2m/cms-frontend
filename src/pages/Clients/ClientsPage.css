@@ -325,7 +325,7 @@
   transform: translateX(0);
 }
 
-.action-btn {
+.client-action-btn {
   width: 36px;
   height: 36px;
   border: 1px solid var(--neutral-medium);
@@ -340,31 +340,31 @@
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
-.action-btn svg {
+.client-action-btn svg {
   width: 16px !important;
   height: 16px !important;
 }
 
-.action-btn:hover {
+.client-action-btn:hover {
   background: var(--neutral-light);
   border-color: var(--neutral-dark);
   transform: translateY(-1px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.action-btn.edit:hover {
+.client-action-btn.edit:hover {
   background: rgba(59, 130, 246, 0.1);
   border-color: #3B82F6;
   color: #3B82F6;
 }
 
-.action-btn.view:hover {
+.client-action-btn.view:hover {
   background: rgba(16, 185, 129, 0.1);
   border-color: #10B981;
   color: #10B981;
 }
 
-.action-btn.delete:hover {
+.client-action-btn.delete:hover {
   background: rgba(239, 68, 68, 0.1);
   border-color: #EF4444;
   color: #EF4444;
@@ -936,7 +936,7 @@
   gap: 1rem;
 }
 
-.info-item {
+.client-info-item {
   display: flex;
   align-items: center;
   gap: 1rem;
@@ -948,11 +948,11 @@
   color: var(--accent-gold);
 }
 
-.info-item div {
+.client-info-item div {
   flex: 1;
 }
 
-.info-item label {
+.client-info-item label {
   display: block;
   color: var(--text-muted);
   font-size: 0.75rem;
@@ -962,7 +962,7 @@
   margin-bottom: 0.25rem;
 }
 
-.info-item span {
+.client-info-item span {
   color: var(--text-primary);
   font-size: 0.875rem;
   font-weight: 500;

@@ -76,53 +76,17 @@ const SecretViewer = ({ secret, isOpen, onClose }) => {
             <div className="detail-group">
               <label className="detail-label">Secret Value</label>
 
-              <div
-                className="secret-value-container"
-                style={{ position: "relative" }}
-              >
+              <div className="secret-value-container">
                 <div
                   className={`secret-value ${
                     showSecret ? "revealed" : "hidden"
                   }`}
-                  style={{
-                    fontFamily: showSecret
-                      ? "Monaco, Menlo, Ubuntu Mono, monospace"
-                      : "inherit",
-                    fontSize: showSecret ? "14px" : "20px",
-                    padding: "16px 80px 16px 16px",
-                    background: showSecret
-                      ? "rgba(16, 185, 129, 0.05)"
-                      : "#f5f5f5",
-                    border: showSecret
-                      ? "2px solid rgba(16, 185, 129, 0.3)"
-                      : "2px solid #ccc",
-                    borderRadius: "6px",
-                    minHeight: "48px",
-                    display: "flex",
-                    alignItems: "center",
-                    wordBreak: "break-all",
-                    lineHeight: "1.5",
-                    letterSpacing: showSecret ? "normal" : "2px",
-                  }}
                 >
-                  {showSecret
-                    ? secret.decryptedValue || "No value available"
-                    : "••••••••••••••••"}
+                  {secret.decryptedValue}
                 </div>
-                <div
-                  className="secret-actions"
-                  style={{
-                    position: "absolute",
-                    right: "12px",
-                    top: "50%",
-                    transform: "translateY(-50%)",
-                    display: "flex",
-                    gap: "8px",
-                    zIndex: 10,
-                  }}
-                >
+                <div className="secret-actions">
                   <button
-                    className="action-btn toggle-btn"
+                    className="secret-viewer-action-btn toggle-btn"
                     onClick={toggleSecretVisibility}
                     title={showSecret ? "Hide Secret" : "Show Secret"}
                     style={{
@@ -150,26 +114,13 @@ const SecretViewer = ({ secret, isOpen, onClose }) => {
                   </button>
                   {showSecret && secret.decryptedValue && (
                     <button
-                      className={`action-btn copy-btn ${
+                      className={`secret-viewer-action-btn copy-btn ${
                         copySuccess ? "success" : ""
                       }`}
                       onClick={copyToClipboard}
                       title="Copy to Clipboard"
-                      style={{
-                        display: "flex",
-                        alignItems: "center",
-                        justifyContent: "center",
-                        width: "36px",
-                        height: "36px",
-                        border: "1px solid #ccc",
-                        background: copySuccess ? "#10B981" : "#3B82F6",
-                        color: "white",
-                        borderRadius: "6px",
-                        cursor: "pointer",
-                        boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
-                      }}
                     >
-                      <CopyIcon style={{ width: "18px", height: "18px" }} />
+                      <CopyIcon />
                     </button>
                   )}
                 </div>
@@ -181,21 +132,21 @@ const SecretViewer = ({ secret, isOpen, onClose }) => {
             </div>
 
             <div className="secret-metadata">
-              <div className="metadata-item">
-                <PersonIcon className="metadata-icon" />
+              <div className="secret-metadata-item">
+                <PersonIcon className="secret-metadata-icon" />
                 <div>
-                  <span className="metadata-label">Created by</span>
-                  <span className="metadata-value">
+                  <span className="secret-metadata-label">Created by</span>
+                  <span className="secret-metadata-value">
                     {secret.created_by || "Unknown"}
                   </span>
                 </div>
               </div>
 
-              <div className="metadata-item">
-                <TimeIcon className="metadata-icon" />
+              <div className="secret-metadata-item">
+                <TimeIcon className="secret-metadata-icon" />
                 <div>
-                  <span className="metadata-label">Created on</span>
-                  <span className="metadata-value">
+                  <span className="secret-metadata-label">Created on</span>
+                  <span className="secret-metadata-value">
                     {new Date(secret.created_at).toLocaleDateString("en-US", {
                       year: "numeric",
                       month: "long",

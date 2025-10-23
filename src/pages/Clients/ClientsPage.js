@@ -420,7 +420,7 @@ const ClientsPage = () => {
                         <div className="overview-card">
                           <h3>Client Information</h3>
                           <div className="info-grid">
-                            <div className="info-item">
+                            <div className="client-info-item">
                               <PersonIcon className="info-icon" />
                               <div>
                                 <label>Name</label>
@@ -430,7 +430,7 @@ const ClientsPage = () => {
                               </div>
                             </div>
 
-                            <div className="info-item">
+                            <div className="client-info-item">
                               <WebsiteIcon className="info-icon" />
                               <div>
                                 <label>Website</label>
@@ -451,7 +451,7 @@ const ClientsPage = () => {
                               </div>
                             </div>
 
-                            <div className="info-item">
+                            <div className="client-info-item">
                               <AccountManagerIcon className="info-icon" />
                               <div>
                                 <label>Account Manager</label>
@@ -463,7 +463,7 @@ const ClientsPage = () => {
                               </div>
                             </div>
 
-                            <div className="info-item">
+                            <div className="client-info-item">
                               <AdoptionSpecialistIcon className="info-icon" />
                               <div>
                                 <label>Adoption Specialist</label>
@@ -773,7 +773,7 @@ const ClientsPage = () => {
                     >
                       <PermissionGuard permissions={["update_client"]}>
                         <button
-                          className="action-btn edit"
+                          className="client-action-btn edit"
                           title="Edit Client"
                           onClick={() => handleEditClient(client)}
                         >
@@ -782,7 +782,7 @@ const ClientsPage = () => {
                       </PermissionGuard>
                       <PermissionGuard permissions={["read_client"]}>
                         <button
-                          className="action-btn view"
+                          className="client-action-btn view"
                           title="View Details"
                           onClick={() => handleClientSelect(client)}
                         >
@@ -791,7 +791,7 @@ const ClientsPage = () => {
                       </PermissionGuard>
                       <PermissionGuard permissions={["delete_client"]}>
                         <button
-                          className="action-btn delete"
+                          className="client-action-btn delete"
                           title="Delete Client"
                           onClick={() => handleDeleteClient(client)}
                         >
