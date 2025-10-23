@@ -34,6 +34,7 @@ import { useNotificationContext } from '../../../contexts/NotificationContext';
 import { NOTIFICATION_MESSAGES } from '../../../utils/notifications';
 import WorkflowSkeleton from '../../N8nWorkflows/WorkflowSkeleton';
 import { WorkflowsEmptyState } from '../../N8nWorkflows/EmptyState';
+import { PermissionGuard } from '../../PermissionGuard';
 import './WorkflowManager.css';
 
 const WorkflowManager = ({ clientId, clientName }) => {
@@ -193,13 +194,15 @@ const WorkflowManager = ({ clientId, clientName }) => {
           >
             <RefreshIcon className={refreshing ? 'spinning' : ''} />
           </button>
-          <button
-            className="btn btn-primary add-workflow-btn"
-            onClick={handleAddWorkflow}
-          >
-            <AddIcon />
-            Add Workflow
-          </button>
+          <PermissionGuard permissions={['create_workflow']}>
+            <button
+              className="btn btn-primary add-workflow-btn"
+              onClick={handleAddWorkflow}
+            >
+              <AddIcon />
+              Add Workflow
+            </button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -229,20 +232,24 @@ const WorkflowManager = ({ clientId, clientName }) => {
                         </Typography>
                       </Box>
                       <Box className="workflow-actions">
-                        <IconButton
-                          size="small"
-                          onClick={() => handleEditWorkflow(workflow)}
-                          className="edit-btn"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleDeleteWorkflow(workflow.id)}
-                          className="delete-btn"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <PermissionGuard permissions={['update_workflow']}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleEditWorkflow(workflow)}
+                            className="edit-btn"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </PermissionGuard>
+                        <PermissionGuard permissions={['delete_workflow']}>
+                          <IconButton
+                            size="small"
+                            onClick={() => handleDeleteWorkflow(workflow.id)}
+                            className="delete-btn"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </PermissionGuard>
                       </Box>
                     </Box>
 

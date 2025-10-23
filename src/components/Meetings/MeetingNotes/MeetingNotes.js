@@ -12,6 +12,7 @@ import {
 import { meetingAPI } from '../../../utils/apiServices';
 import { useNotificationContext } from '../../../contexts/NotificationContext';
 import LoadingSpinner from '../../UI/LoadingSpinner/LoadingSpinner';
+import { PermissionGuard } from '../../PermissionGuard';
 import './MeetingNotes.css';
 
 const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
@@ -114,14 +115,16 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
     <div className="meeting-notes">
       <div className="meeting-notes-header">
         <h3>Meeting Notes</h3>
-        <button 
-          className="btn btn-primary"
-          onClick={() => setIsAddingNote(true)}
-          disabled={isAddingNote}
-        >
-          <AddIcon />
-          Add Note
-        </button>
+        <PermissionGuard permissions={['update_meeting']}>
+          <button 
+            className="btn btn-primary"
+            onClick={() => setIsAddingNote(true)}
+            disabled={isAddingNote}
+          >
+            <AddIcon />
+            Add Note
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="meeting-notes-content">

@@ -78,10 +78,12 @@ const MeetingsList = ({
     <div className="meetings-list">
       <div className="meetings-list-header">
         <h3>Client Meetings</h3>
-        <button className="btn btn-primary" onClick={onAddMeeting}>
-          <AddIcon />
-          Add Meeting
-        </button>
+        <PermissionGuard permissions={['create_meeting']}>
+          <button className="btn btn-primary" onClick={onAddMeeting}>
+            <AddIcon />
+            Add Meeting
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="meetings-list-content">
@@ -131,20 +133,24 @@ const MeetingsList = ({
 
                 <div className="meeting-card-right">
                   <div className="meeting-actions">
-                    <button 
-                      className="action-btn edit"
-                      onClick={(e) => handleActionClick('edit', meeting, e)}
-                      title="Edit Meeting"
-                    >
-                      <EditIcon />
-                    </button>
-                    <button 
-                      className="action-btn delete"
-                      onClick={(e) => handleActionClick('delete', meeting, e)}
-                      title="Delete Meeting"
-                    >
-                      <DeleteIcon />
-                    </button>
+                    <PermissionGuard permissions={['update_meeting']}>
+                      <button 
+                        className="action-btn edit"
+                        onClick={(e) => handleActionClick('edit', meeting, e)}
+                        title="Edit Meeting"
+                      >
+                        <EditIcon />
+                      </button>
+                    </PermissionGuard>
+                    <PermissionGuard permissions={['delete_meeting']}>
+                      <button 
+                        className="action-btn delete"
+                        onClick={(e) => handleActionClick('delete', meeting, e)}
+                        title="Delete Meeting"
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </PermissionGuard>
                   </div>
                 </div>
               </div>

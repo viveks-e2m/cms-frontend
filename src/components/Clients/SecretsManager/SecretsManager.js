@@ -4,6 +4,7 @@ import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import SecretForm from "./SecretForm";
 import SecretViewer from "./SecretViewer";
+import { PermissionGuard } from "../../PermissionGuard";
 import {
   Security as SecurityIcon,
   Add as AddIcon,
@@ -113,13 +114,15 @@ const SecretsManager = ({ clientId, clientName }) => {
             <p>Securely manage sensitive information for {clientName}</p>
           </div>
         </div>
-        <button
-          className="btn btn-primary add-secret-btn"
-          onClick={handleAddSecret}
-        >
-          <AddIcon />
-          Add Secret
-        </button>
+        <PermissionGuard permissions={['create_secret']}>
+          <button
+            className="btn btn-primary add-secret-btn"
+            onClick={handleAddSecret}
+          >
+            <AddIcon />
+            Add Secret
+          </button>
+        </PermissionGuard>
       </div>
 
       {secrets.length > 0 ? (
@@ -153,21 +156,25 @@ const SecretsManager = ({ clientId, clientName }) => {
               </div>
 
               <div className="secret-actions">
-                <button
-                  className="action-btn view-btn"
-                  onClick={() => handleViewSecret(secret)}
-                  title="View Secret"
-                >
-                  <ViewIcon />
-                </button>
+                <PermissionGuard permissions={['read_secret']}>
+                  <button
+                    className="action-btn view-btn"
+                    onClick={() => handleViewSecret(secret)}
+                    title="View Secret"
+                  >
+                    <ViewIcon />
+                  </button>
+                </PermissionGuard>
                 {/* Edit functionality removed - no backend API support */}
-                <button
-                  className="action-btn delete-btn"
-                  onClick={() => handleDeleteSecret(secret)}
-                  title="Delete Secret"
-                >
-                  <DeleteIcon />
-                </button>
+                <PermissionGuard permissions={['delete_secret']}>
+                  <button
+                    className="action-btn delete-btn"
+                    onClick={() => handleDeleteSecret(secret)}
+                    title="Delete Secret"
+                  >
+                    <DeleteIcon />
+                  </button>
+                </PermissionGuard>
               </div>
             </div>
           ))}
@@ -176,14 +183,21 @@ const SecretsManager = ({ clientId, clientName }) => {
         <div className="secrets-empty">
           <SecurityIcon className="empty-icon" />
           <h4>No Secrets Found</h4>
-          <p>
-            Start by adding your first secret to securely store sensitive
-            information for this client.
-          </p>
-          <button className="btn btn-primary" onClick={handleAddSecret}>
-            <AddIcon />
-            Add Your First Secret
-          </button>
+          <PermissionGuard 
+            permissions={['create_secret']}
+            fallback={
+              <p>No secrets have been created for this client yet.</p>
+            }
+          >
+            <p>
+              Start by adding your first secret to securely store sensitive
+              information for this client.
+            </p>
+            <button className="btn btn-primary" onClick={handleAddSecret}>
+              <AddIcon />
+              Add Your First Secret
+            </button>
+          </PermissionGuard>
         </div>
       )}
 

@@ -17,6 +17,7 @@ import MeetingNotes from "../MeetingNotes/MeetingNotes";
 import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
 import MarkdownSummary from "../MarkdownSummary/MarkdownSummary";
 import ActionItems from "../ActionItems/ActionItems";
+import { PermissionGuard } from "../../PermissionGuard";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -107,35 +108,42 @@ const MeetingDetails = ({
             <VideoCallIcon />
           </div>
           <div className="meeting-title-section">
-            <h1>{meeting.meeting_name || `Meeting #${meeting.id?.slice(-8) || "Unknown"}`}</h1>
+            <h1>
+              {meeting.meeting_name ||
+                `Meeting #${meeting.id?.slice(-8) || "Unknown"}`}
+            </h1>
             <p className="meeting-client">with {clientName}</p>
           </div>
         </div>
 
         <div className="meeting-actions-header">
-          <button
-            className="btn btn-secondary btn-xs"
-            onClick={() => onEdit(meeting)}
-          >
-            <EditIcon />
-            Edit
-          </button>
+          <PermissionGuard permissions={["update_meeting"]}>
+            <button
+              className="btn btn-secondary btn-xs"
+              onClick={() => onEdit(meeting)}
+            >
+              <EditIcon />
+              Edit
+            </button>
+          </PermissionGuard>
           {meeting.recording_url && (
             <button
               className="btn btn-primary btn-xs"
-              onClick={() => window.open(meeting.recording_url, '_blank')}
+              onClick={() => window.open(meeting.recording_url, "_blank")}
             >
               <VideoCallIcon />
               View Recording
             </button>
           )}
-          <button
-            className="btn btn-danger btn-xs"
-            onClick={() => onDelete(meeting)}
-          >
-            <DeleteIcon />
-            Delete
-          </button>
+          <PermissionGuard permissions={["delete_meeting"]}>
+            <button
+              className="btn btn-danger btn-xs"
+              onClick={() => onDelete(meeting)}
+            >
+              <DeleteIcon />
+              Delete
+            </button>
+          </PermissionGuard>
         </div>
       </div>
 
@@ -176,7 +184,7 @@ const MeetingDetails = ({
             <div className="meeting-info-grid">
               {meeting.summary && (
                 <div className="meeting-summary-container full-width">
-                  <MarkdownSummary 
+                  <MarkdownSummary
                     summary={meeting.summary}
                     title="Meeting Summary"
                   />
@@ -188,8 +196,8 @@ const MeetingDetails = ({
 
         {activeTab === "transcript" && (
           <div className="meeting-transcript-tab">
-            <TranscriptDisplay 
-              transcript={meeting.transcript} 
+            <TranscriptDisplay
+              transcript={meeting.transcript}
               rawTranscript={meeting.raw_transcript}
             />
           </div>
