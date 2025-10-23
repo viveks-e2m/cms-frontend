@@ -66,10 +66,6 @@ const UserProfile = () => {
             <h3>User Information</h3>
             <div className="info-grid">
               <div className="info-item">
-                <label>User ID:</label>
-                <span>{user.id}</span>
-              </div>
-              <div className="info-item">
                 <label>Email:</label>
                 <span>{user.email}</span>
               </div>

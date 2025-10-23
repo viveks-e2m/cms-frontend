@@ -139,7 +139,7 @@ export const ClientManagerRoute = ({
 }) => (
   <RoleBasedRoute
     allowedRoles={["admin", "account_manager"]}
-    requiredPermissions={["manage_clients"]}
+    requiredPermissions={["read_client"]}
     fallbackPath={fallbackPath}
     fallbackComponent={
       <div className="flex items-center justify-center min-h-screen">
