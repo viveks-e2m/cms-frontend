@@ -15,6 +15,8 @@ const AdminPanel = () => {
   const [loading, setLoading] = useState(true);
   const [selectedUser, setSelectedUser] = useState(null);
   const [userPermissions, setUserPermissions] = useState(null);
+  const [selectedRole, setSelectedRole] = useState(null);
+  const [rolePermissions, setRolePermissions] = useState([]);
 
   // Form states
   const [newRole, setNewRole] = useState({
@@ -59,6 +61,16 @@ const AdminPanel = () => {
     } catch (error) {
       console.error("Error loading user permissions:", error);
       alert("Error loading user permissions: " + error.message);
+    }
+  };
+
+  const loadRolePermissions = async (roleId) => {
+    try {
+      const rolePerms = await rbacAPI.getRolePermissions(roleId);
+      setRolePermissions(rolePerms);
+    } catch (error) {
+      console.error("Error loading role permissions:", error);
+      alert("Error loading role permissions: " + error.message);
     }
   };
 
@@ -138,6 +150,30 @@ const AdminPanel = () => {
     }
   };
 
+  const handleAssignPermissionToRole = async (roleId, permissionName) => {
+    try {
+      await rbacAPI.assignPermissionToRole(roleId, permissionName);
+      alert("Permission assigned to role successfully");
+      if (selectedRole === roleId) {
+        await loadRolePermissions(roleId);
+      }
+    } catch (error) {
+      alert("Error assigning permission to role: " + error.message);
+    }
+  };
+
+  const handleRemovePermissionFromRole = async (roleId, permissionName) => {
+    try {
+      await rbacAPI.removePermissionFromRole(roleId, permissionName);
+      alert("Permission removed from role successfully");
+      if (selectedRole === roleId) {
+        await loadRolePermissions(roleId);
+      }
+    } catch (error) {
+      alert("Error removing permission from role: " + error.message);
+    }
+  };
+
   if (!isAdmin()) {
     return (
       <div className="admin-panel-denied">
@@ -187,6 +223,12 @@ const AdminPanel = () => {
           onClick={() => setActiveTab("permissions")}
         >
           Permissions
+        </button>
+        <button
+          className={activeTab === "role-permissions" ? "active" : ""}
+          onClick={() => setActiveTab("role-permissions")}
+        >
+          Role Permissions
         </button>
       </div>
 
@@ -494,6 +536,148 @@ const AdminPanel = () => {
                 ))}
               </div>
             </div>
+          </div>
+        )}
+
+        {activeTab === "role-permissions" && (
+          <div className="role-permissions-management">
+            <h2>Role Permissions Management</h2>
+            <p>Assign and manage permissions for each role</p>
+
+            <div className="role-selector">
+              <label>Select Role:</label>
+              <select
+                value={selectedRole || ""}
+                onChange={(e) => {
+                  setSelectedRole(e.target.value);
+                  if (e.target.value) {
+                    loadRolePermissions(e.target.value);
+                  } else {
+                    setRolePermissions([]);
+                  }
+                }}
+              >
+                <option value="">Choose a role...</option>
+                {roles.map((role) => (
+                  <option key={role.id} value={role.id}>
+                    {role.display_name} ({role.name})
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {selectedRole && (
+              <div className="role-permission-management">
+                <div className="current-role-info">
+                  <h3>
+                    Managing: {roles.find(r => r.id === selectedRole)?.display_name}
+                  </h3>
+                  <p>{roles.find(r => r.id === selectedRole)?.description}</p>
+                </div>
+
+                <div className="assign-permission-section">
+                  <h4>Assign New Permission</h4>
+                  <div className="permission-assignment-form">
+                    <select id="role-permission-select">
+                      <option value="">Select Permission to Assign</option>
+                      {permissions
+                        .filter(perm => !rolePermissions.some(rp => rp.name === perm.name))
+                        .map((perm) => (
+                          <option key={perm.id} value={perm.name}>
+                            {perm.display_name} ({perm.resource}.{perm.action})
+                          </option>
+                        ))}
+                    </select>
+                    <button
+                      onClick={() => {
+                        const permSelect = document.getElementById("role-permission-select");
+                        if (permSelect.value) {
+                          handleAssignPermissionToRole(selectedRole, permSelect.value);
+                          permSelect.value = "";
+                        }
+                      }}
+                    >
+                      Assign Permission
+                    </button>
+                  </div>
+                </div>
+
+                <div className="current-permissions-section">
+                  <h4>Current Role Permissions</h4>
+                  {rolePermissions.length > 0 ? (
+                    <div className="permissions-list">
+                      {rolePermissions.map((perm) => (
+                        <div key={perm.id} className="permission-item">
+                          <div className="permission-info">
+                            <strong>{perm.display_name}</strong>
+                            <span className="permission-details">
+                              {perm.resource}.{perm.action}
+                            </span>
+                            <p className="permission-description">{perm.description}</p>
+                          </div>
+                          <button
+                            className="remove-permission-btn"
+                            onClick={() => handleRemovePermissionFromRole(selectedRole, perm.name)}
+                            title="Remove this permission from role"
+                          >
+                            Remove
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="no-permissions">This role has no permissions assigned.</p>
+                  )}
+                </div>
+
+                <div className="bulk-assignment-section">
+                  <h4>Bulk Permission Assignment</h4>
+                  <p>Quickly assign multiple permissions at once:</p>
+                  <div className="bulk-checkboxes">
+                    {permissions
+                      .filter(perm => !rolePermissions.some(rp => rp.name === perm.name))
+                      .map((perm) => (
+                        <label key={perm.id} className="bulk-permission-checkbox">
+                          <input
+                            type="checkbox"
+                            value={perm.name}
+                            onChange={(e) => {
+                              // Handle checkbox selection for bulk assignment
+                              const checkbox = e.target;
+                              checkbox.dataset.selected = checkbox.checked;
+                            }}
+                          />
+                          <span>{perm.display_name}</span>
+                          <small>({perm.resource}.{perm.action})</small>
+                        </label>
+                      ))}
+                  </div>
+                  <button
+                    className="bulk-assign-btn"
+                    onClick={async () => {
+                      const checkboxes = document.querySelectorAll('.bulk-permission-checkbox input[type="checkbox"]:checked');
+                      const selectedPermissions = Array.from(checkboxes).map(cb => cb.value);
+                      
+                      if (selectedPermissions.length > 0) {
+                        try {
+                          await rbacAPI.assignBulkPermissionsToRole(selectedRole, selectedPermissions);
+                          alert(`${selectedPermissions.length} permissions assigned successfully`);
+                          await loadRolePermissions(selectedRole);
+                          // Uncheck all checkboxes
+                          checkboxes.forEach(cb => cb.checked = false);
+                        } catch (error) {
+                          alert("Error assigning permissions: " + error.message);
+                        }
+                      } else {
+                        alert("Please select at least one permission to assign");
+                      }
+                    }}
+                  >
+                    Assign Selected Permissions
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         )}
       </div>

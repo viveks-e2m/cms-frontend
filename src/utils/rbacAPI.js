@@ -117,6 +117,59 @@ export const rbacAPI = {
     }
     
     return data;
+  },
+
+  // Role-Permission Management
+  // Get permissions assigned to a role
+  getRolePermissions: async (roleId) => {
+    const response = await api.get(`/rbac/roles/${roleId}/permissions`);
+    const { success, data, error } = response.data;
+    
+    if (!success) {
+      throw new Error(error?.message || 'Failed to get role permissions');
+    }
+    
+    return data.permissions;
+  },
+
+  // Assign permission to role
+  assignPermissionToRole: async (roleId, permissionName) => {
+    const response = await api.post(`/rbac/roles/${roleId}/permissions`, {
+      permission_name: permissionName
+    });
+    const { success, data, error } = response.data;
+    
+    if (!success) {
+      throw new Error(error?.message || 'Failed to assign permission to role');
+    }
+    
+    return data;
+  },
+
+  // Remove permission from role
+  removePermissionFromRole: async (roleId, permissionName) => {
+    const response = await api.delete(`/rbac/roles/${roleId}/permissions/${permissionName}`);
+    const { success, data, error } = response.data;
+    
+    if (!success) {
+      throw new Error(error?.message || 'Failed to remove permission from role');
+    }
+    
+    return data;
+  },
+
+  // Assign multiple permissions to role
+  assignBulkPermissionsToRole: async (roleId, permissionNames) => {
+    const response = await api.post(`/rbac/roles/${roleId}/permissions/bulk`, {
+      permission_names: permissionNames
+    });
+    const { success, data, error } = response.data;
+    
+    if (!success) {
+      throw new Error(error?.message || 'Failed to assign permissions to role');
+    }
+    
+    return data;
   }
 };
 
