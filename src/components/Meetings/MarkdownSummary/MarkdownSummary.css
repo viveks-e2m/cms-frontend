@@ -1,0 +1,265 @@
+/* Markdown Summary Styles */
+.markdown-summary {
+  background: #FFFFFF;
+  border: 1px solid #E5E7EB;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.summary-header {
+  padding: 20px 24px;
+  border-bottom: 1px solid #F3F4F6;
+  background: #F8FAFC;
+}
+
+.summary-header h3 {
+  margin: 0;
+  color: #001F3F;
+  font-size: 1.125rem;
+  font-weight: 600;
+}
+
+.summary-content {
+  padding: 24px;
+  line-height: 1.6;
+  color: #374151;
+}
+
+.summary-empty {
+  padding: 48px 24px;
+  text-align: center;
+  color: #6B7280;
+}
+
+.summary-empty p {
+  margin: 0;
+  font-size: 15px;
+}
+
+/* Markdown Element Styles */
+.md-h1 {
+  color: #001F3F;
+  font-size: 1.875rem;
+  font-weight: 700;
+  margin: 0 0 24px 0;
+  line-height: 1.2;
+  border-bottom: 2px solid #E5E7EB;
+  padding-bottom: 12px;
+}
+
+.md-h2 {
+  color: #001F3F;
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 32px 0 16px 0;
+  line-height: 1.3;
+  border-bottom: 1px solid #F3F4F6;
+  padding-bottom: 8px;
+}
+
+.md-h3 {
+  color: #374151;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 24px 0 12px 0;
+  line-height: 1.4;
+}
+
+.md-h4 {
+  color: #374151;
+  font-size: 1.125rem;
+  font-weight: 600;
+  margin: 20px 0 10px 0;
+  line-height: 1.4;
+}
+
+.md-h5 {
+  color: #374151;
+  font-size: 1rem;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  line-height: 1.4;
+}
+
+.md-h6 {
+  color: #6B7280;
+  font-size: 0.875rem;
+  font-weight: 600;
+  margin: 16px 0 8px 0;
+  line-height: 1.4;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.md-paragraph {
+  margin: 0 0 16px 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.md-paragraph:last-child {
+  margin-bottom: 0;
+}
+
+.md-list {
+  margin: 16px 0;
+  padding-left: 24px;
+}
+
+.md-list.md-ordered {
+  list-style-type: decimal;
+}
+
+.md-list:not(.md-ordered) {
+  list-style-type: disc;
+}
+
+.md-list-item {
+  margin: 8px 0;
+  color: #374151;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.md-list-item::marker {
+  color: #6B7280;
+}
+
+/* Nested lists */
+.md-list .md-list {
+  margin: 8px 0;
+  padding-left: 20px;
+}
+
+.md-list .md-list:not(.md-ordered) {
+  list-style-type: circle;
+}
+
+.md-list .md-list .md-list:not(.md-ordered) {
+  list-style-type: square;
+}
+
+.md-blockquote {
+  margin: 20px 0;
+  padding: 16px 20px;
+  border-left: 4px solid #D4AF37;
+  background: #F8FAFC;
+  border-radius: 0 8px 8px 0;
+  color: #374151;
+  font-style: italic;
+}
+
+.md-blockquote .md-paragraph {
+  margin-bottom: 0;
+}
+
+.md-code-inline {
+  background: #F3F4F6;
+  color: #DC2626;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+}
+
+.md-code-block {
+  background: #1F2937;
+  color: #F9FAFB;
+  padding: 16px;
+  border-radius: 8px;
+  margin: 16px 0;
+  overflow-x: auto;
+  font-family: 'Monaco', 'Menlo', 'Ubuntu Mono', monospace;
+  font-size: 0.875rem;
+  line-height: 1.5;
+}
+
+.md-code-block code {
+  background: none;
+  color: inherit;
+  padding: 0;
+  font-size: inherit;
+}
+
+.md-strong {
+  font-weight: 600;
+  color: #001F3F;
+}
+
+.md-emphasis {
+  font-style: italic;
+  color: #374151;
+}
+
+.md-link {
+  color: #001F3F;
+  text-decoration: none;
+  border-bottom: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.md-link:hover {
+  color: #003366;
+  border-bottom-color: #D4AF37;
+}
+
+.md-divider {
+  border: none;
+  height: 1px;
+  background: #E5E7EB;
+  margin: 32px 0;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .summary-header,
+  .summary-content {
+    padding: 16px;
+  }
+  
+  .md-h1 {
+    font-size: 1.5rem;
+    margin-bottom: 16px;
+  }
+  
+  .md-h2 {
+    font-size: 1.25rem;
+    margin: 24px 0 12px 0;
+  }
+  
+  .md-h3 {
+    font-size: 1.125rem;
+    margin: 20px 0 10px 0;
+  }
+  
+  .md-list {
+    padding-left: 20px;
+  }
+  
+  .md-code-block {
+    padding: 12px;
+    font-size: 0.8rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .summary-header,
+  .summary-content {
+    padding: 12px;
+  }
+  
+  .md-h1 {
+    font-size: 1.375rem;
+  }
+  
+  .md-h2 {
+    font-size: 1.125rem;
+  }
+  
+  .md-paragraph,
+  .md-list-item {
+    font-size: 14px;
+  }
+}

@@ -1,0 +1,183 @@
+.signup-form {
+  width: 100%;
+  max-width: 100%;
+}
+
+/* Form Row for Name Fields */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+@media (max-width: 768px) {
+  .form-row {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+}
+
+/* Password Input Wrapper */
+.password-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.password-input-wrapper .form-input {
+  padding-right: 3rem;
+}
+
+.password-toggle {
+  position: absolute;
+  right: 0.75rem;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0.25rem;
+  color: var(--text-secondary);
+  font-size: 1.125rem;
+  transition: var(--transition);
+  border-radius: var(--border-radius-small);
+}
+
+.password-toggle:hover {
+  color: var(--primary-navy);
+  background: var(--neutral-light);
+}
+
+.password-toggle:focus {
+  outline: 2px solid var(--accent-gold);
+  outline-offset: 2px;
+}
+
+/* Password Requirements */
+.password-requirements {
+  margin-top: 0.5rem;
+}
+
+.password-requirements small {
+  color: var(--text-muted);
+  font-size: var(--font-size-xs);
+  line-height: 1.4;
+}
+
+/* Removed form-select styles - no longer needed */
+
+/* Signup Button */
+.signup-btn {
+  width: 100%;
+  margin-top: 1rem;
+  margin-bottom: 1.5rem;
+  font-weight: var(--font-weight-semibold);
+  padding: 1rem 1.5rem;
+  font-size: var(--font-size-base);
+}
+
+/* Form Footer */
+.form-footer {
+  text-align: center;
+  padding-top: 1rem;
+  border-top: 1px solid var(--neutral-medium);
+}
+
+.form-footer p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: var(--font-size-sm);
+}
+
+.login-link {
+  color: var(--accent-gold);
+  font-weight: var(--font-weight-medium);
+  text-decoration: none;
+  transition: var(--transition);
+}
+
+.login-link:hover {
+  color: var(--primary-navy);
+  text-decoration: underline;
+}
+
+/* Enhanced Form Validation Styles */
+.form-input.error {
+  border-color: var(--error-color);
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.form-error {
+  color: var(--error-color);
+  font-size: var(--font-size-xs);
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.form-error::before {
+  content: '⚠';
+  font-size: 0.875rem;
+}
+
+/* Loading State */
+.signup-form.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+/* Success State Animation */
+.form-group.success .form-input {
+  border-color: var(--success-color);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+}
+
+/* Focus States */
+.form-input:focus {
+  border-color: var(--primary-navy);
+  box-shadow: 0 0 0 3px rgba(0, 31, 63, 0.1);
+  outline: none;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .signup-btn {
+    padding: 0.875rem 1.25rem;
+    font-size: var(--font-size-sm);
+  }
+  
+  .password-toggle {
+    right: 0.5rem;
+    font-size: 1rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .password-requirements small {
+    font-size: 0.75rem;
+  }
+  
+  .form-footer {
+    padding-top: 0.75rem;
+  }
+}
+
+/* High Contrast Mode Support */
+@media (prefers-contrast: high) {
+  .password-toggle {
+    border: 1px solid var(--text-secondary);
+  }
+  
+  .form-error::before {
+    font-weight: bold;
+  }
+}
+
+/* Reduced Motion Support */
+@media (prefers-reduced-motion: reduce) {
+  .password-toggle,
+  .login-link,
+  .form-input {
+    transition: none;
+  }
+}
