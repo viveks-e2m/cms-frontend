@@ -19,3 +19,62 @@
   font-size: 0.875rem;
   text-align: center;
 }
+
+/* Form Footer Styles */
+.form-footer {
+  margin-top: 2rem;
+  text-align: center;
+  border-top: 1px solid #e5e7eb;
+  padding-top: 1.5rem;
+}
+
+.signup-prompt {
+  margin-bottom: 1rem;
+}
+
+.signup-prompt p {
+  margin: 0;
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+}
+
+.signup-link {
+  color: var(--accent-gold);
+  text-decoration: none;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+
+.signup-link:hover {
+  color: var(--primary-navy);
+  text-decoration: underline;
+}
+
+.forgot-password {
+  margin-top: 0.75rem;
+}
+
+.forgot-link {
+  color: var(--text-secondary);
+  text-decoration: none;
+  font-size: 0.8125rem;
+  transition: all 0.2s ease;
+}
+
+.forgot-link:hover {
+  color: var(--accent-gold);
+  text-decoration: underline;
+}
+
+/* Responsive adjustments */
+@media (max-width: 480px) {
+  .form-footer {
+    margin-top: 1.5rem;
+    padding-top: 1rem;
+  }
+  
+  .signup-prompt p,
+  .forgot-link {
+    font-size: 0.8125rem;
+  }
+}

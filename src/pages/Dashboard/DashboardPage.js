@@ -1,27 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import { useAuth } from '../../hooks/useAuth';
-import { useNotificationContext } from '../../contexts/NotificationContext';
-import { clientAPI, meetingAPI, openPointsAPI } from '../../utils/apiServices';
-import Header from '../../components/Layout/Header/Header';
-import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
-import ApiTest from '../../components/Debug/ApiTest';
-import './DashboardPage.css';
+import React, { useEffect, useState } from "react";
+import { useAuth } from "../../hooks/useAuth";
+import { useNotificationContext } from "../../contexts/NotificationContext";
+import { clientAPI, meetingAPI, openPointsAPI } from "../../utils/apiServices";
+import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
+import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import ClientAvatar from "../../components/UI/ClientAvatar";
+import { PermissionGuard } from "../../components/PermissionGuard";
+import { PERMISSIONS } from "../../constants/permissions";
+import {
+  People as PeopleIcon,
+  VideoCall as VideoCallIcon,
+  Assignment as AssignmentIcon,
+  CheckCircle as CheckCircleIcon,
+  Person as PersonIcon,
+  Email as EmailIcon,
+  WavingHand as WavingHandIcon,
+} from "@mui/icons-material";
+import "./DashboardPage.css";
 
 const DashboardPage = () => {
-  const { user } = useAuth();
-  const { showError, showSuccess, showInfo } = useNotificationContext();
-  
+  const { user, hasPermission } = useAuth();
+  const { showError } = useNotificationContext();
+
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState({
     clients: [],
     recentMeetings: [],
-    openTasks: [],
     stats: {
       totalClients: 0,
       totalMeetings: 0,
       openTasks: 0,
-      completedTasks: 0
-    }
+      completedTasks: 0,
+    },
   });
 
   useEffect(() => {
@@ -31,193 +41,183 @@ const DashboardPage = () => {
   const loadDashboardData = async () => {
     try {
       setLoading(true);
-      
-      // Load clients data
-      const clients = await clientAPI.getAll();
-      
-      // Calculate stats
-      const stats = {
-        totalClients: clients.length,
-        totalMeetings: 0,
-        openTasks: 0,
-        completedTasks: 0
-      };
 
-      // Load recent meetings and tasks for each client
-      let allMeetings = [];
-      let allTasks = [];
-      
-      for (const client of clients.slice(0, 5)) { // Limit to first 5 clients for performance
-        try {
-          const meetings = await meetingAPI.getByClient(client.id);
-          const tasks = await openPointsAPI.getByClient(client.id);
-          
-          allMeetings = [...allMeetings, ...meetings];
-          allTasks = [...allTasks, ...tasks];
-          
-          stats.totalMeetings += meetings.length;
-          stats.openTasks += tasks.filter(task => task.status === 'open' || task.status === 'in_progress').length;
-          stats.completedTasks += tasks.filter(task => task.status === 'completed').length;
-        } catch (error) {
-          console.warn(`Failed to load data for client ${client.id}:`, error);
-        }
-      }
+      // Load all dashboard data in parallel using optimized endpoints
+      const [clientData, meetingStats, openPointsStats] = await Promise.all([
+        clientAPI.getRecent(5), // New optimized endpoint
+        meetingAPI.getStatistics(), // New statistics endpoint
+        openPointsAPI.getStatistics(), // New statistics endpoint
+      ]);
 
+      // Combine the optimized data
       setDashboardData({
-        clients,
-        recentMeetings: allMeetings.slice(0, 5), // Show 5 most recent
-        openTasks: allTasks.filter(task => task.status !== 'completed').slice(0, 5),
-        stats
+        clients: clientData.recent_clients || clientData, // Handle both response formats
+        recentMeetings: [], // We'll get recent meetings from meeting stats if needed
+        stats: {
+          totalClients: clientData.total_clients || clientData.length,
+          totalMeetings: meetingStats.total_meetings || 0,
+          openTasks: (openPointsStats.total_open_points || 0) + (openPointsStats.in_progress_tasks || 0),
+          completedTasks: openPointsStats.completed_tasks || 0,
+        },
       });
-      
     } catch (error) {
-      showError('Failed to load dashboard data. Please try again.');
-      console.error('Dashboard data loading failed:', error);
+      showError("Failed to load dashboard data. Please try again.");
+      console.error("Dashboard data loading failed:", error);
     } finally {
       setLoading(false);
     }
   };
 
-  const actions = [
-    {
-      icon: '👥',
-      title: 'Manage Clients',
-      description: 'Add, edit, or view your client information and assignments',
-      action: () => showInfo('Client management feature coming soon!')
-    },
-    {
-      icon: '📹',
-      title: 'Upload Meeting',
-      description: 'Upload meeting recordings and generate transcripts',
-      action: () => showInfo('Meeting upload feature coming soon!')
-    },
-    {
-      icon: '📋',
-      title: 'View Tasks',
-      description: 'Manage open points and track task completion',
-      action: () => showInfo('Task management feature coming soon!')
-    },
-    {
-      icon: '🔐',
-      title: 'Manage Secrets',
-      description: 'Securely store and manage client credentials',
-      action: () => showInfo('Secrets management feature coming soon!')
-    }
-  ];
+  // Removed actions array - now using sidebar navigation
 
   if (loading) {
     return (
-      <div className="dashboard-page">
-        <Header />
+      <DashboardLayout>
         <div className="dashboard-loading">
           <LoadingSpinner message="Loading dashboard..." />
         </div>
-      </div>
+      </DashboardLayout>
     );
   }
 
   return (
-    <div className="dashboard-page">
-      <Header />
-      
-      <main className="dashboard-content">
-        <div className="container">
-          <div className="dashboard-welcome">
-            <h2 className="welcome-title">
-              Welcome back, {user?.name || user?.email || 'User'}!
-            </h2>
-            <p className="welcome-subtitle">
-              Here's what's happening with your CMS today.
-            </p>
-          </div>
+    <DashboardLayout>
+      <div className="dashboard-page">
+        {/* Welcome Message */}
+        <div className="dashboard-welcome">
+          <h1 className="welcome-title">
+            <WavingHandIcon className="welcome-icon" />
+            Welcome back, {user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || user?.email?.split("@")[0] || "User"}!
+          </h1>
+          <p className="welcome-subtitle">
+            Here's an overview of your CMS activities and recent updates.
+          </p>
+        </div>
 
-          <div className="dashboard-stats">
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.totalClients}</div>
-              <p className="stat-label">Total Clients</p>
+        {/* Stats Grid */}
+        <div className="dashboard-stats">
+          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
+            <div className="stat-card clients">
+              <div className="stat-icon">
+                <PeopleIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.totalClients}
+                </div>
+                <p className="stat-label">Total Clients</p>
+                <div className="stat-trend positive">+12% this month</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.totalMeetings}</div>
-              <p className="stat-label">Total Meetings</p>
+          </PermissionGuard>
+          <PermissionGuard permissions={[PERMISSIONS.READ_MEETING]}>
+            <div className="stat-card meetings">
+              <div className="stat-icon">
+                <VideoCallIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.totalMeetings}
+                </div>
+                <p className="stat-label">Total Meetings</p>
+                <div className="stat-trend positive">+8% this week</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.openTasks}</div>
-              <p className="stat-label">Open Tasks</p>
+          </PermissionGuard>
+          <PermissionGuard permissions={[PERMISSIONS.READ_TASK]}>
+            <div className="stat-card tasks-open">
+              <div className="stat-icon">
+                <AssignmentIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">{dashboardData.stats.openTasks}</div>
+                <p className="stat-label">Open Tasks</p>
+                <div className="stat-trend neutral">No change</div>
+              </div>
             </div>
-            <div className="stat-card">
-              <div className="stat-number">{dashboardData.stats.completedTasks}</div>
-              <p className="stat-label">Completed Tasks</p>
+          </PermissionGuard>
+          <PermissionGuard permissions={[PERMISSIONS.READ_TASK]}>
+            <div className="stat-card tasks-completed">
+              <div className="stat-icon">
+                <CheckCircleIcon />
+              </div>
+              <div className="stat-content">
+                <div className="stat-number">
+                  {dashboardData.stats.completedTasks}
+                </div>
+                <p className="stat-label">Completed Tasks</p>
+                <div className="stat-trend positive">+15% this week</div>
+              </div>
             </div>
-          </div>
+          </PermissionGuard>
+        </div>
 
-          {/* Recent Activity Section */}
-          <div className="dashboard-sections">
-            <div className="dashboard-section">
-              <h3 className="section-title">Recent Clients</h3>
+        {/* Recent Clients Section */}
+        <div className="dashboard-sections">
+          <PermissionGuard 
+            permissions={[PERMISSIONS.READ_CLIENT]}
+            fallback={
+              <div className="dashboard-section">
+                <div className="access-denied-message">
+                  <p>You don't have permission to view client information.</p>
+                </div>
+              </div>
+            }
+          >
+            <div className="dashboard-section recent-clients-section">
+              <div className="section-header">
+                <h3 className="section-title">Recent Clients</h3>
+              </div>
               <div className="section-content">
                 {dashboardData.clients.length > 0 ? (
-                  dashboardData.clients.slice(0, 5).map((client) => (
-                    <div key={client.id} className="client-item">
-                      <div className="client-info">
-                        <h4 className="client-name">{client.name}</h4>
-                        <p className="client-email">{client.email}</p>
+                  <div className="clients-grid">
+                    {dashboardData.clients.slice(0, 6).map((client) => (
+                      <div key={client.id} className="client-card">
+                        <div className="client-card-header">
+                          <ClientAvatar 
+                            client={client} 
+                            size="medium"
+                          />
+                        </div>
+                        <div className="client-card-body">
+                          <h4 className="client-name">{client.name}</h4>
+                          <div className="client-details">
+                            {client.company && (
+                              <div className="client-detail-item">
+                                <span className="detail-label">Company:</span>
+                                <span className="detail-value">
+                                  {client.company}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                          <span className="client-date">
+                            Added{" "}
+                            {new Date(
+                              client.created_at || Date.now()
+                            ).toLocaleDateString()}
+                          </span>
+                        </div>
+                        </div>
                       </div>
-                      <div className="client-status">
-                        <span className="status-badge status-active">Active</span>
-                      </div>
-                    </div>
-                  ))
+                    ))}
+                  </div>
                 ) : (
-                  <p className="empty-state">No clients found. Start by adding your first client!</p>
+                  <div className="empty-state-card">
+                    <PeopleIcon className="empty-state-icon" />
+                    <h4 className="empty-state-title">No clients yet</h4>
+                    <p className="empty-state-description">
+                      Start by adding your first client to see them here
+                    </p>
+                  </div>
                 )}
               </div>
             </div>
-
-            <div className="dashboard-section">
-              <h3 className="section-title">Open Tasks</h3>
-              <div className="section-content">
-                {dashboardData.openTasks.length > 0 ? (
-                  dashboardData.openTasks.map((task) => (
-                    <div key={task.id} className="task-item">
-                      <div className="task-info">
-                        <h4 className="task-title">{task.title}</h4>
-                        <p className="task-description">{task.description}</p>
-                      </div>
-                      <div className="task-status">
-                        <span className={`status-badge status-${task.status}`}>
-                          {task.status.replace('_', ' ')}
-                        </span>
-                      </div>
-                    </div>
-                  ))
-                ) : (
-                  <p className="empty-state">No open tasks. Great job staying on top of everything!</p>
-                )}
-              </div>
-            </div>
-          </div>
-
-          <div className="dashboard-actions">
-            {actions.map((action, index) => (
-              <div key={index} className="action-card">
-                <div className="action-icon">{action.icon}</div>
-                <h3 className="action-title">{action.title}</h3>
-                <p className="action-description">{action.description}</p>
-                <button 
-                  className="btn btn-primary"
-                  onClick={action.action}
-                >
-                  Get Started
-                </button>
-              </div>
-            ))}
-          </div>
-
-          {/* API Test Component - Remove in production */}
-          {process.env.NODE_ENV === 'development' && <ApiTest />}
+          </PermissionGuard>
         </div>
-      </main>
-    </div>
+      </div>
+    </DashboardLayout>
   );
 };
 

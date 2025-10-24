@@ -1,0 +1,124 @@
+.empty-state-card {
+  border-radius: 16px !important;
+  border: 2px dashed rgba(102, 126, 234, 0.3) !important;
+  background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%) !important;
+  box-shadow: none !important;
+  transition: all 0.3s ease !important;
+}
+
+.empty-state-card:hover {
+  border-color: rgba(102, 126, 234, 0.5) !important;
+  background: linear-gradient(135deg, #e2e8f0 0%, #cbd5e0 100%) !important;
+}
+
+.empty-state-content {
+  text-align: center;
+  padding: 3rem 2rem !important;
+}
+
+.empty-state-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.3);
+}
+
+.empty-state-icon .MuiSvgIcon-root {
+  font-size: 2.5rem !important;
+}
+
+.empty-state-title {
+  font-weight: 700 !important;
+  color: #2d3748;
+  margin-bottom: 1rem !important;
+  font-size: 1.25rem !important;
+}
+
+.empty-state-description {
+  color: #718096;
+  margin-bottom: 2rem !important;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+  line-height: 1.6;
+}
+
+.empty-state-actions {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+}
+
+.empty-state-button {
+  border-radius: 12px !important;
+  padding: 0.75rem 2rem !important;
+  font-weight: 600 !important;
+  text-transform: none !important;
+  box-shadow: 0 4px 16px rgba(102, 126, 234, 0.2) !important;
+  transition: all 0.3s ease !important;
+}
+
+.empty-state-button.MuiButton-contained {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+  border: none !important;
+}
+
+.empty-state-button.MuiButton-contained:hover {
+  background: linear-gradient(135deg, #5a67d8 0%, #6b46c1 100%) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.3) !important;
+}
+
+.empty-state-button.MuiButton-outlined {
+  border: 2px solid #667eea !important;
+  color: #667eea !important;
+  background: transparent !important;
+}
+
+.empty-state-button.MuiButton-outlined:hover {
+  background: rgba(102, 126, 234, 0.1) !important;
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(102, 126, 234, 0.2) !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .empty-state-content {
+    padding: 2rem 1rem !important;
+  }
+
+  .empty-state-icon {
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1rem;
+  }
+
+  .empty-state-icon .MuiSvgIcon-root {
+    font-size: 2rem !important;
+  }
+
+  .empty-state-title {
+    font-size: 1.125rem !important;
+  }
+
+  .empty-state-description {
+    font-size: 0.875rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+
+  .empty-state-actions {
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .empty-state-button {
+    width: 100%;
+    max-width: 200px;
+  }
+}

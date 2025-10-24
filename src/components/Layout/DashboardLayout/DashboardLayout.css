@@ -1,0 +1,103 @@
+/* Dashboard Layout Styles */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--neutral-light);
+}
+
+/* Main Content Area */
+.main-content {
+  flex: 1;
+  margin-left: 280px;
+  transition: margin-left 0.3s ease;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+.main-content.sidebar-collapsed {
+  margin-left: 80px;
+}
+
+/* Page Content */
+.page-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-x: hidden;
+}
+
+/* Mobile Overlay */
+.mobile-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.5);
+  z-index: 999;
+  display: none;
+}
+
+/* Responsive Design */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 260px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 70px;
+  }
+  
+  .page-content {
+    padding: 1.5rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+  
+  .page-content {
+    padding: 1rem;
+  }
+  
+  .mobile-overlay {
+    display: block;
+  }
+}
+
+@media (max-width: 480px) {
+  .page-content {
+    padding: 0.75rem;
+  }
+}
+
+/* Content Animations */
+.page-content > * {
+  animation: fadeInUp 0.3s ease-out;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .main-content,
+  .page-content > * {
+    transition: none;
+    animation: none;
+  }
+}

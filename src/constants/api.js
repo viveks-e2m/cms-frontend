@@ -1,6 +1,6 @@
 // API Configuration Constants
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || '/api',
+  BASE_URL: process.env.REACT_APP_API_URL || 'http://172.16.0.213:8000',
   TIMEOUT: 10000,
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000

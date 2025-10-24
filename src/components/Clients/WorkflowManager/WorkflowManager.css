@@ -1,0 +1,335 @@
+.workflow-manager {
+  width: 100%;
+  position: relative;
+  overflow: visible;
+}
+
+.workflow-manager-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+  border-bottom: 2px solid var(--neutral-light);
+}
+
+.header-content {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+}
+
+.header-icon {
+  width: 32px !important;
+  height: 32px !important;
+  color: #667eea;
+  margin-top: 0.25rem;
+}
+
+.header-title {
+  color: var(--primary-navy);
+  font-size: 1.5rem;
+  font-weight: 600;
+  margin: 0 0 0.25rem 0 !important;
+}
+
+.header-subtitle {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  margin: 0 !important;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  flex-shrink: 0;
+}
+
+.refresh-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border: 1px solid var(--neutral-medium);
+  background: var(--primary-white);
+  border-radius: var(--border-radius-small);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--text-secondary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.refresh-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  background: rgba(102, 126, 234, 0.1);
+  border-color: #667eea;
+  color: #667eea;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.add-workflow-btn {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.875rem 1.25rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.spinning {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.workflows-content {
+  margin-top: 1rem;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+}
+
+.workflow-card {
+  border-radius: 12px !important;
+  border: 1px solid rgba(102, 126, 234, 0.1) !important;
+  background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%) !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  height: 100%;
+}
+
+.workflow-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 4px;
+  height: 100%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  transform: scaleY(0);
+  transition: transform 0.3s ease;
+}
+
+.workflow-card:hover {
+  border-color: #667eea !important;
+  box-shadow: 0 8px 32px rgba(102, 126, 234, 0.2) !important;
+  transform: translateY(-4px);
+}
+
+.workflow-card:hover::before {
+  transform: scaleY(1);
+}
+
+.workflow-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 1rem;
+}
+
+.workflow-info {
+  flex: 1;
+}
+
+.workflow-type {
+  font-weight: 700 !important;
+  color: #2d3748;
+  margin: 0 !important;
+  font-size: 1.125rem !important;
+  line-height: 1.4;
+}
+
+.workflow-id {
+  color: #718096;
+  margin: 0.25rem 0 0 0 !important;
+  font-size: 0.75rem !important;
+  font-family: "Monaco", "Menlo", monospace;
+  background: rgba(102, 126, 234, 0.1);
+  padding: 0.125rem 0.375rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+.workflow-actions {
+  display: flex;
+  gap: 0.25rem;
+  margin-left: 1rem;
+}
+
+.edit-btn,
+.delete-btn {
+  background: rgba(102, 126, 234, 0.1) !important;
+  color: #667eea !important;
+  transition: all 0.3s ease !important;
+}
+
+.edit-btn:hover {
+  background: rgba(102, 126, 234, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.delete-btn {
+  color: #e53e3e !important;
+  background: rgba(229, 62, 62, 0.1) !important;
+}
+
+.delete-btn:hover {
+  background: rgba(229, 62, 62, 0.2) !important;
+  transform: scale(1.1);
+}
+
+.workflow-status {
+  margin-bottom: 1rem;
+}
+
+.workflow-divider {
+  margin: 1rem 0 !important;
+  background-color: rgba(102, 126, 234, 0.1) !important;
+}
+
+.workflow-details {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.workflow-detail-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.detail-label {
+  font-weight: 600 !important;
+  color: #718096;
+  text-transform: uppercase;
+  font-size: 0.7rem !important;
+  letter-spacing: 0.5px;
+}
+
+.detail-value {
+  color: #2d3748;
+  font-weight: 500 !important;
+  font-size: 0.875rem !important;
+}
+
+.time-saved {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.time-icon {
+  font-size: 1rem !important;
+  color: #667eea;
+}
+
+/* Dialog Styles */
+.workflow-dialog .MuiDialog-paper {
+  border-radius: 12px !important;
+}
+
+.workflow-form {
+  padding-top: 1rem;
+}
+
+.workflow-form .MuiTextField-root,
+.workflow-form .MuiFormControl-root {
+  margin-bottom: 1rem;
+}
+
+.workflow-form .MuiOutlinedInput-root {
+  border-radius: 8px !important;
+}
+
+/* Empty State Overrides */
+.workflow-manager .empty-state-card {
+  margin: 2rem 0;
+  width: 100%;
+}
+
+.workflow-manager .empty-state-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 3rem 2rem !important;
+}
+
+.workflow-manager .empty-state-description {
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .workflow-manager-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem;
+  }
+
+  .header-content {
+    width: 100%;
+  }
+
+  .header-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .workflow-card-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  .workflow-actions {
+    margin-left: 0;
+    align-self: flex-end;
+  }
+
+  .add-workflow-btn {
+    width: 100%;
+  }
+}
+
+@media (max-width: 480px) {
+  .workflow-manager {
+    padding: 0;
+  }
+
+  .workflow-manager-header {
+    margin-bottom: 1rem;
+  }
+
+  .header-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .workflow-details {
+    gap: 0.5rem;
+  }
+}
