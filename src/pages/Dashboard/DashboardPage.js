@@ -42,46 +42,23 @@ const DashboardPage = () => {
     try {
       setLoading(true);
 
-      // Load clients data
-      const clients = await clientAPI.getAll();
+      // Load all dashboard data in parallel using optimized endpoints
+      const [clientData, meetingStats, openPointsStats] = await Promise.all([
+        clientAPI.getRecent(5), // New optimized endpoint
+        meetingAPI.getStatistics(), // New statistics endpoint
+        openPointsAPI.getStatistics(), // New statistics endpoint
+      ]);
 
-      // Calculate stats
-      const stats = {
-        totalClients: clients.length,
-        totalMeetings: 0,
-        openTasks: 0,
-        completedTasks: 0,
-      };
-
-      // Load recent meetings and tasks for each client (for stats only)
-      let allMeetings = [];
-      let allTasks = [];
-
-      for (const client of clients.slice(0, 5)) {
-        // Limit to first 5 clients for performance
-        try {
-          const meetings = await meetingAPI.getByClient(client.id);
-          const tasks = await openPointsAPI.getByClient(client.id);
-
-          allMeetings = [...allMeetings, ...meetings];
-          allTasks = [...allTasks, ...tasks];
-
-          stats.totalMeetings += meetings.length;
-          stats.openTasks += tasks.filter(
-            (task) => task.status === "open" || task.status === "in_progress"
-          ).length;
-          stats.completedTasks += tasks.filter(
-            (task) => task.status === "completed"
-          ).length;
-        } catch (error) {
-          console.warn(`Failed to load data for client ${client.id}:`, error);
-        }
-      }
-
+      // Combine the optimized data
       setDashboardData({
-        clients,
-        recentMeetings: allMeetings.slice(0, 5), // Show 5 most recent
-        stats,
+        clients: clientData.recent_clients || clientData, // Handle both response formats
+        recentMeetings: [], // We'll get recent meetings from meeting stats if needed
+        stats: {
+          totalClients: clientData.total_clients || clientData.length,
+          totalMeetings: meetingStats.total_meetings || 0,
+          openTasks: (openPointsStats.total_open_points || 0) + (openPointsStats.in_progress_tasks || 0),
+          completedTasks: openPointsStats.completed_tasks || 0,
+        },
       });
     } catch (error) {
       showError("Failed to load dashboard data. Please try again.");
