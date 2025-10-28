@@ -18,7 +18,7 @@ const LoginTest = () => {
 
     try {
       // Test direct axios call
-      const response = await axios.post('http://172.16.0.213:8000/auth/login', credentials, {
+      const response = await axios.post('http://py-cms.sitepreviews.dev/auth/login', credentials, {
         headers: {
           'Content-Type': 'application/json'
         }

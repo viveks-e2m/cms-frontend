@@ -38,7 +38,7 @@ export const AuthProvider = ({ children }) => {
 
       // Get user permissions and role from RBAC service
       console.log('Loading RBAC data...');
-      const rbacResponse = await fetch(`${process.env.REACT_APP_API_URL || 'http://172.16.0.213:8000'}/rbac/my-permissions`, {
+      const rbacResponse = await fetch(`${process.env.REACT_APP_API_URL || 'https://py-cms.sitepreviews.dev'}/rbac/my-permissions`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
