@@ -1,8 +1,7 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
-  Event as MeetingIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Save as SaveIcon,
@@ -13,6 +12,8 @@ import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
+import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
+
 import "./ActionItemsKanban.css";
 
 const ActionItemsKanban = ({
@@ -28,20 +29,29 @@ const ActionItemsKanban = ({
     message: "",
     due_date: "",
     assignee: null,
+    task_owner: null,
     status: "open",
   });
   const [draggedItem, setDraggedItem] = useState(null);
+  
+  // Local state for optimistic updates
+  const [localActionItems, setLocalActionItems] = useState(actionItems);
 
   const { showSuccess, showError } = useNotificationContext();
 
+  // Sync local state with props when actionItems change
+  useEffect(() => {
+    setLocalActionItems(actionItems);
+  }, [actionItems]);
+
   const columns = [
-    { id: "open", title: "Open", count: 0, color: "#3B82F6" },
-    { id: "in_progress", title: "In Progress", count: 0, color: "#F59E0B" },
-    { id: "completed", title: "Completed", count: 0, color: "#10B981" },
+    { id: "open", title: getStatusDisplayName("open"), count: 0, color: "#3B82F6" },
+    { id: "in_progress", title: getStatusDisplayName("in_progress"), count: 0, color: "#F59E0B" },
+    { id: "completed", title: getStatusDisplayName("completed"), count: 0, color: "#10B981" },
   ];
 
-  // Group items by status
-  const groupedItems = actionItems.reduce((acc, item) => {
+  // Group items by status using local state for optimistic updates
+  const groupedItems = localActionItems.reduce((acc, item) => {
     const status = item.status || "open";
     if (!acc[status]) acc[status] = [];
     acc[status].push(item);
@@ -58,8 +68,14 @@ const ActionItemsKanban = ({
     return meeting?.meeting_name || meeting?.name || "Unknown Meeting";
   };
 
-  const getClientName = (clientId) => {
-    const client = clients.find((c) => c.id === clientId);
+  const getClientName = (item) => {
+    // First, try to use the client_name from the backend response
+    if (item.client_name) {
+      return item.client_name;
+    }
+    
+    // Fallback to looking up in the clients list
+    const client = clients.find((c) => c.id === item.client_id);
     return client?.name || "Unknown Client";
   };
 
@@ -69,12 +85,49 @@ const ActionItemsKanban = ({
     return user ? user.full_name || user.name || user.email : "Unknown User";
   };
 
+  // Check if the task owner is a client
+  const isTaskOwnerClient = (taskOwnerId) => {
+    if (!taskOwnerId) return false;
+    return clients.some(client => client.id === taskOwnerId);
+  };
+
+  // Get task owner display name (could be user or client)
+  const getTaskOwnerName = (taskOwnerId) => {
+    if (!taskOwnerId) return null;
+    
+    // Check if it's a user
+    const user = users.find((u) => u.id === taskOwnerId);
+    if (user) {
+      return user.full_name || user.name || user.email;
+    }
+    
+    // Check if it's a client
+    const client = clients.find((c) => c.id === taskOwnerId);
+    if (client) {
+      return client.name;
+    }
+    
+    return "Unknown";
+  };
+
   const updateItemStatus = async (itemId, newStatus) => {
+    // Optimistic update - update UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => 
+      prev.map(item => 
+        item.id === itemId ? { ...item, status: newStatus } : item
+      )
+    );
+
     try {
       await openPointsAPI.updateStatus(itemId, { status: newStatus });
-      showSuccess(`Action item moved to ${newStatus.replace("_", " ")}`);
+      showSuccess(`Action item moved to ${getStatusDisplayName(newStatus)}`);
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to update action item status");
       console.error("Error updating status:", error);
     }
@@ -85,11 +138,19 @@ const ActionItemsKanban = ({
       return;
     }
 
+    // Optimistic update - remove item from UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => prev.filter(item => item.id !== itemId));
+
     try {
       await openPointsAPI.delete(itemId);
       showSuccess("Action item deleted successfully");
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to delete action item");
       console.error("Error deleting item:", error);
     }
@@ -101,6 +162,7 @@ const ActionItemsKanban = ({
       message: item.message || item.task || "",
       due_date: item.due_date ? item.due_date.split("T")[0] : "",
       assignee: item.assignee || null,
+      task_owner: item.task_owner || null,
       status: item.status || "open",
     });
   };
@@ -111,24 +173,38 @@ const ActionItemsKanban = ({
       message: "",
       due_date: "",
       assignee: null,
+      task_owner: null,
       status: "open",
     });
   };
 
   const saveEdit = async (itemId) => {
-    try {
-      const updateData = {
-        message: editForm.message,
-        status: editForm.status,
-        assignee: editForm.assignee || null,
-        due_date: editForm.due_date || null,
-      };
+    const updateData = {
+      message: editForm.message,
+      status: editForm.status,
+      assignee: editForm.assignee || null,
+      task_owner: editForm.task_owner || null,
+      due_date: editForm.due_date || null,
+    };
 
+    // Optimistic update - update UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => 
+      prev.map(item => 
+        item.id === itemId ? { ...item, ...updateData } : item
+      )
+    );
+
+    try {
       await openPointsAPI.updateStatus(itemId, updateData);
       showSuccess("Action item updated successfully");
       setEditingItem(null);
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to update action item");
       console.error("Error updating item:", error);
     }
@@ -195,9 +271,42 @@ const ActionItemsKanban = ({
                 setEditForm({ ...editForm, status: e.target.value })
               }
             >
-              <option value="open">Open</option>
-              <option value="in_progress">In Progress</option>
-              <option value="completed">Completed</option>
+              {getStatusOptions().map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="edit-field">
+            <select
+              className="edit-select"
+              value={editForm.task_owner || ""}
+              onChange={(e) => {
+                const newTaskOwner = e.target.value || null;
+                const isClient = newTaskOwner && clients.some(client => client.id === newTaskOwner);
+                setEditForm({
+                  ...editForm,
+                  task_owner: newTaskOwner,
+                  assignee: isClient ? null : editForm.assignee, // Clear assignee if client selected
+                });
+              }}
+            >
+              <option value="">Select task owner...</option>
+              <optgroup label="Users">
+                {users.map((user) => (
+                  <option key={user.id} value={user.id}>
+                    {user.full_name || user.name || user.email}
+                  </option>
+                ))}
+              </optgroup>
+              <optgroup label="Clients">
+                {clients.map((client) => (
+                  <option key={client.id} value={client.id}>
+                    {client.name}
+                  </option>
+                ))}
+              </optgroup>
             </select>
           </div>
           <div className="edit-field">
@@ -210,6 +319,7 @@ const ActionItemsKanban = ({
                   assignee: e.target.value || null,
                 })
               }
+              disabled={isTaskOwnerClient(editForm.task_owner)}
             >
               <option value="">Select assignee...</option>
               {users.map((user) => (
@@ -275,89 +385,65 @@ const ActionItemsKanban = ({
           <div className="card-details">
             <div className="detail-row">
               <div className="detail-item">
-                <div className="detail-left">
-                  <PersonIcon className="detail-icon" />
-                  <span className="detail-label">Client:</span>
-                </div>
+                <PersonIcon className="detail-icon" />
                 <span className="detail-value">
-                  {getClientName(item.client_id)}
+                  {getClientName(item)}
                 </span>
               </div>
             </div>
 
-            {item.task_owner && (
+            {(item.task_owner || item.assignee) && (
               <div className="detail-row">
                 <div className="detail-item">
-                  <div className="detail-left">
-                    <PersonIcon className="detail-icon" />
-                    <span className="detail-label">Owner:</span>
-                  </div>
-                  <span className="detail-value">
-                    {getUserName(item.task_owner)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {item.assignee && (
-              <div className="detail-row">
-                <div className="detail-item">
-                  <div className="detail-left">
-                    <PersonIcon className="detail-icon" />
-                    <span className="detail-label">Assigned:</span>
-                  </div>
-                  <span className="detail-value">
-                    {getUserName(item.assignee)}
-                  </span>
-                </div>
-              </div>
-            )}
-
-            {item.due_date && (
-              <div className="detail-row">
-                <div className="detail-item">
-                  <div className="detail-left">
-                    <CalendarIcon className="detail-icon" />
-                    <span className="detail-label">Due:</span>
-                  </div>
-                  <span
-                    className={`detail-value ${
-                      new Date(item.due_date) < new Date()
-                        ? "overdue"
-                        : new Date(item.due_date) <=
-                          new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
-                        ? "due-soon"
-                        : ""
-                    }`}
-                  >
-                    {new Date(item.due_date).toLocaleDateString()}
-                  </span>
+                  {item.assignee ? (
+                    <>
+                      <PersonIcon className="detail-icon" />
+                      <span className="detail-value">
+                        {getUserName(item.assignee)}
+                      </span>
+                    </>
+                  ) : item.task_owner ? (
+                    <>
+                      <PersonIcon className="detail-icon" />
+                      <span className="detail-value">
+                        {getTaskOwnerName(item.task_owner)}
+                      </span>
+                    </>
+                  ) : null}
                 </div>
               </div>
             )}
           </div>
 
-          <div className="card-footer">
-            <div className="footer-left">
-              <MeetingIcon className="meeting-icon" />
-              <span className="meeting-name">
-                Meeting: {item.meeting_id || "Unknown"}
-              </span>
+          {item.due_date && (
+            <div className="card-footer">
+              <div className="due-date-wrapper">
+                <CalendarIcon className="due-icon" />
+                <span
+                  className={`due-date ${
+                    new Date(item.due_date) < new Date()
+                      ? "overdue"
+                      : new Date(item.due_date) <=
+                        new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                      ? "due-soon"
+                      : ""
+                  }`}
+                >
+                  {new Date(item.due_date).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+              </div>
             </div>
-            <div className="footer-right">
-              <span className="created-date">
-                {item.created_at
-                  ? new Date(item.created_at).toLocaleDateString()
-                  : "Unknown"}
-              </span>
-            </div>
-          </div>
+          )}
         </div>
       )}
     </div>
   );
 
-  if (actionItems.length === 0) {
+  if (localActionItems.length === 0) {
     return (
       <div className="kanban-empty">
         <div className="empty-icon">📋</div>

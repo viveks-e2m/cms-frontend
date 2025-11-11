@@ -195,31 +195,43 @@ const N8nWorkflowsPage = () => {
               <Typography variant="body2" className="page-subtitle">
                 Manage and monitor your automation workflows
               </Typography>
-              {dataSource && (
-                <Chip
-                  label={dataSource === 'database' ? 'Cached Data' : 'Live Data'}
-                  color={dataSource === 'database' ? 'default' : 'primary'}
-                  size="small"
-                  style={{ marginTop: '0.5rem' }}
-                />
-              )}
             </Box>
-          </Box>
-          <Box className="header-actions">
-            <Tooltip title={refreshing ? "Syncing from n8n..." : "Sync from n8n API"}>
-              <IconButton 
-                onClick={handleRefresh} 
-                disabled={refreshing}
-                className="refresh-btn"
-              >
-                <RefreshIcon className={refreshing ? 'spinning' : ''} />
-              </IconButton>
-            </Tooltip>
           </Box>
         </Box>
 
+        {/* Coming Soon Message */}
+        <Card className="coming-soon-card" style={{ marginTop: '2rem', textAlign: 'center', padding: '4rem 2rem' }}>
+          <CardContent>
+            <WorkflowIcon style={{ fontSize: '4rem', color: '#8B5CF6', marginBottom: '1rem' }} />
+            <Typography variant="h4" style={{ marginBottom: '1rem', fontWeight: 600 }}>
+              Coming Soon
+            </Typography>
+            <Typography variant="body1" color="textSecondary" style={{ maxWidth: '600px', margin: '0 auto' }}>
+              The n8n Workflows feature is currently under development. We're working hard to bring you a comprehensive workflow management system that will help you automate and monitor your business processes.
+            </Typography>
+            <Chip 
+              label="Under Development" 
+              color="primary" 
+              style={{ marginTop: '2rem' }}
+            />
+          </CardContent>
+        </Card>
+
+        {/* Commented out original functionality */}
+        {/* <Box className="header-actions">
+          <Tooltip title={refreshing ? "Syncing from n8n..." : "Sync from n8n API"}>
+            <IconButton 
+              onClick={handleRefresh} 
+              disabled={refreshing}
+              className="refresh-btn"
+            >
+              <RefreshIcon className={refreshing ? 'spinning' : ''} />
+            </IconButton>
+          </Tooltip>
+        </Box> */}
+
         {/* Filters */}
-        <Card className="filters-card">
+        {/* <Card className="filters-card">
           <CardContent>
             <Grid container spacing={2} alignItems="center">
               <Grid item xs={12} md={4}>
@@ -264,20 +276,19 @@ const N8nWorkflowsPage = () => {
               </Grid>
             </Grid>
           </CardContent>
-        </Card>
+        </Card> */}
 
         {/* Data Source Alert */}
-        {dataSource === 'database' && !loading && (
+        {/* {dataSource === 'database' && !loading && (
           <Alert severity="info" style={{ marginBottom: '1rem' }}>
             Showing cached workflow data. Click refresh to sync with n8n API for latest updates.
           </Alert>
-        )}
+        )} */}
 
         {/* Execution Statistics */}
-        {loading ? <StatsSkeleton /> : <ExecutionStats executions={executions} />}
+        {/* {loading ? <StatsSkeleton /> : <ExecutionStats executions={executions} />} */}
 
-        <Grid container spacing={3}>
-          {/* Workflows Section */}
+        {/* <Grid container spacing={3}>
           <Grid item xs={12} lg={8}>
             <Card className="workflows-card">
               <CardContent>
@@ -328,7 +339,6 @@ const N8nWorkflowsPage = () => {
                             </Box>
                           </Box>
                           
-                          {/* Workflow Statistics */}
                           <Box className="workflow-stats" style={{ margin: '1rem 0' }}>
                             <Grid container spacing={1}>
                               <Grid item xs={6}>
@@ -374,7 +384,6 @@ const N8nWorkflowsPage = () => {
                             </Grid>
                           </Box>
 
-                          {/* Node Types Summary */}
                           {workflow.nodes && workflow.nodes.length > 0 && (
                             <Box className="node-types-summary" style={{ margin: '1rem 0' }}>
                               <Typography variant="body2" color="textSecondary" gutterBottom>
@@ -445,7 +454,7 @@ const N8nWorkflowsPage = () => {
               </CardContent>
             </Card>
           </Grid>
-        </Grid>
+        </Grid> */}
         </div>
       </PermissionGuard>
     </DashboardLayout>

@@ -66,6 +66,40 @@
   text-decoration: underline;
 }
 
+/* Progress Bar Overlay */
+.progress-bar-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(255, 255, 255, 0.95);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  z-index: 9999;
+  backdrop-filter: blur(4px);
+}
+
+.progress-bar-overlay .progress-bar-wrapper {
+  max-width: 600px;
+  padding: 40px;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+}
+
+.progress-bar-overlay .progress-bar-message {
+  font-size: 16px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+
+.progress-bar-overlay .progress-bar-track {
+  height: 12px;
+}
+
 /* Responsive adjustments */
 @media (max-width: 480px) {
   .form-footer {
@@ -76,5 +110,10 @@
   .signup-prompt p,
   .forgot-link {
     font-size: 0.8125rem;
+  }
+
+  .progress-bar-overlay .progress-bar-wrapper {
+    padding: 30px 20px;
+    max-width: 90%;
   }
 }

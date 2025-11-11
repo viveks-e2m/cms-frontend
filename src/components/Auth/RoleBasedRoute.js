@@ -13,15 +13,7 @@ const RoleBasedRoute = ({
   const { user, role, permissions, loading, isAuthenticated } = useAuth();
   const location = useLocation();
 
-  // Debug logging
-  console.log("=== RoleBasedRoute Debug ===");
-  console.log("Path:", location.pathname);
-  console.log("User:", user);
-  console.log("Role:", role);
-  console.log("Permissions:", permissions);
-  console.log("Allowed roles:", allowedRoles);
-  console.log("Required permissions:", requiredPermissions);
-  console.log("Is authenticated:", isAuthenticated);
+
 
   // Show loading while checking authentication
   if (loading) {
@@ -47,12 +39,8 @@ const RoleBasedRoute = ({
     // Check role-based access
     if (allowedRoles.length > 0) {
       const hasAllowedRole = allowedRoles.includes(role?.name);
-      console.log(
-        `Role check: ${hasAllowedRole} (looking for ${allowedRoles} in ${role?.name})`
-      );
       if (hasAllowedRole) {
         hasAccess = true;
-        console.log("✅ Access granted via role");
       }
     }
 
@@ -66,20 +54,13 @@ const RoleBasedRoute = ({
             permissions.includes(permission)
           );
 
-      console.log(
-        `Permission check: ${hasRequiredPermissions} (looking for ${requiredPermissions} in ${permissions})`
-      );
       if (hasRequiredPermissions) {
         hasAccess = true;
-        console.log("✅ Access granted via permissions");
       }
     }
 
-    console.log(`Final access decision: ${hasAccess}`);
-
     // If no access, show fallback or redirect
     if (!hasAccess) {
-      console.log("❌ Access denied - showing fallback");
       if (fallbackComponent) {
         return fallbackComponent;
       }

@@ -170,6 +170,18 @@ export const rbacAPI = {
     }
     
     return data;
+  },
+
+  // Admin: Get all users with roles and permissions
+  getAllUsersAdmin: async () => {
+    const response = await api.get('/rbac/admin/users');
+    const { success, data, error } = response.data;
+    
+    if (!success) {
+      throw new Error(error?.message || 'Failed to get users');
+    }
+    
+    return data;
   }
 };
 

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Assignment as AssignmentIcon,
   Person as PersonIcon,
@@ -18,6 +18,8 @@ import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
+import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
+
 import "./ActionItemsList.css";
 
 const ActionItemsList = ({
@@ -38,10 +40,19 @@ const ActionItemsList = ({
     message: "",
     due_date: "",
     assignee: null,
+    task_owner: null,
     status: "open",
   });
 
+  // Local state for optimistic updates
+  const [localActionItems, setLocalActionItems] = useState(actionItems);
+
   const { showSuccess, showError } = useNotificationContext();
+
+  // Sync local state with props when actionItems change
+  useEffect(() => {
+    setLocalActionItems(actionItems);
+  }, [actionItems]);
 
   const getMeetingTitle = (meetingId) => {
     console.log("Looking for meeting ID:", meetingId, "in meetings:", meetings);
@@ -50,9 +61,15 @@ const ActionItemsList = ({
     return meeting?.meeting_name || meeting?.name || "Unknown Meeting";
   };
 
-  const getClientName = (clientId) => {
-    console.log("Looking for client ID:", clientId, "in clients:", clients);
-    const client = clients.find((c) => c.id === clientId);
+  const getClientName = (item) => {
+    // First, try to use the client_name from the backend response
+    if (item.client_name) {
+      return item.client_name;
+    }
+    
+    // Fallback to looking up in the clients list
+    console.log("Looking for client ID:", item.client_id, "in clients:", clients);
+    const client = clients.find((c) => c.id === item.client_id);
     console.log("Found client:", client);
     return client?.name || "Unknown Client";
   };
@@ -65,16 +82,54 @@ const ActionItemsList = ({
     return user ? user.full_name || user.name || user.email : "Unknown User";
   };
 
+  // Check if the task owner is a client
+  const isTaskOwnerClient = (taskOwnerId) => {
+    if (!taskOwnerId) return false;
+    return clients.some(client => client.id === taskOwnerId);
+  };
+
+  // Get task owner display name (could be user or client)
+  const getTaskOwnerName = (taskOwnerId) => {
+    if (!taskOwnerId) return null;
+    
+    // Check if it's a user
+    const user = users.find((u) => u.id === taskOwnerId);
+    if (user) {
+      return user.full_name || user.name || user.email;
+    }
+    
+    // Check if it's a client
+    const client = clients.find((c) => c.id === taskOwnerId);
+    if (client) {
+      return client.name;
+    }
+    
+    return "Unknown";
+  };
+
   const updateItemStatus = async (itemId, newStatus) => {
+    console.log("Updating item status:", itemId, "to:", newStatus);
+    
+    // Optimistic update - update UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => 
+      prev.map(item => 
+        item.id === itemId ? { ...item, status: newStatus } : item
+      )
+    );
+
     try {
-      console.log("Updating item status:", itemId, "to:", newStatus);
       const result = await openPointsAPI.updateStatus(itemId, {
         status: newStatus,
       });
       console.log("Update result:", result);
-      showSuccess(`Action item marked as ${newStatus}`);
+      showSuccess(`Action item marked as ${getStatusDisplayName(newStatus)}`);
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to update action item status");
       console.error("Error updating status:", error);
       console.error("Full error details:", error.response || error);
@@ -86,11 +141,19 @@ const ActionItemsList = ({
       return;
     }
 
+    // Optimistic update - remove item from UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => prev.filter(item => item.id !== itemId));
+
     try {
       await openPointsAPI.delete(itemId);
       showSuccess("Action item deleted successfully");
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to delete action item");
       console.error("Error deleting item:", error);
     }
@@ -102,6 +165,7 @@ const ActionItemsList = ({
       message: item.message || item.task || "",
       due_date: item.due_date ? item.due_date.split("T")[0] : "",
       assignee: item.assignee || null,
+      task_owner: item.task_owner || null,
       status: item.status || "open",
     });
   };
@@ -112,24 +176,38 @@ const ActionItemsList = ({
       message: "",
       due_date: "",
       assignee: null,
+      task_owner: null,
       status: "open",
     });
   };
 
   const saveEdit = async (itemId) => {
-    try {
-      const updateData = {
-        message: editForm.message,
-        status: editForm.status,
-        assignee: editForm.assignee || null,
-        due_date: editForm.due_date || null,
-      };
+    const updateData = {
+      message: editForm.message,
+      status: editForm.status,
+      assignee: editForm.assignee || null,
+      task_owner: editForm.task_owner || null,
+      due_date: editForm.due_date || null,
+    };
 
+    // Optimistic update - update UI immediately
+    const previousItems = localActionItems;
+    setLocalActionItems(prev => 
+      prev.map(item => 
+        item.id === itemId ? { ...item, ...updateData } : item
+      )
+    );
+
+    try {
       await openPointsAPI.updateStatus(itemId, updateData);
       showSuccess("Action item updated successfully");
       setEditingItem(null);
+      
+      // Sync with server in background
       if (onRefresh) onRefresh();
     } catch (error) {
+      // Revert optimistic update on error
+      setLocalActionItems(previousItems);
       showError("Failed to update action item");
       console.error("Error updating item:", error);
     }
@@ -158,7 +236,7 @@ const ActionItemsList = ({
     }
   };
 
-  if (actionItems.length === 0) {
+  if (localActionItems.length === 0) {
     return (
       <div className="no-action-items">
         <div className="no-items-icon">
@@ -188,7 +266,7 @@ const ActionItemsList = ({
           </tr>
         </thead>
         <tbody>
-          {actionItems.map((item) => (
+          {localActionItems.map((item) => (
             <tr
               key={item.id}
               className={`action-item-row ${getStatusClass(item.status)}`}
@@ -209,11 +287,39 @@ const ActionItemsList = ({
                   </td>
                   {!hideClientColumn && (
                     <td className="col-client">
-                      {getClientName(item.client_id)}
+                      {getClientName(item)}
                     </td>
                   )}
                   <td className="col-owner">
-                    {item.task_owner ? getUserName(item.task_owner) : "—"}
+                    <select
+                      className="edit-select"
+                      value={editForm.task_owner || ""}
+                      onChange={(e) => {
+                        const newTaskOwner = e.target.value || null;
+                        const isClient = newTaskOwner && clients.some(client => client.id === newTaskOwner);
+                        setEditForm({
+                          ...editForm,
+                          task_owner: newTaskOwner,
+                          assignee: isClient ? null : editForm.assignee, // Clear assignee if client selected
+                        });
+                      }}
+                    >
+                      <option value="">Select task owner...</option>
+                      <optgroup label="Users">
+                        {users.map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.full_name || user.name || user.email}
+                          </option>
+                        ))}
+                      </optgroup>
+                      <optgroup label="Clients">
+                        {clients.map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    </select>
                   </td>
                   <td className="col-assignee">
                     <select
@@ -225,6 +331,7 @@ const ActionItemsList = ({
                           assignee: e.target.value || null,
                         })
                       }
+                      disabled={isTaskOwnerClient(editForm.task_owner)}
                     >
                       <option value="">Select assignee...</option>
                       {users.map((user) => (
@@ -242,9 +349,11 @@ const ActionItemsList = ({
                         setEditForm({ ...editForm, status: e.target.value })
                       }
                     >
-                      <option value="open">Open</option>
-                      <option value="in_progress">In Progress</option>
-                      <option value="completed">Completed</option>
+                      {getStatusOptions().map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
                     </select>
                   </td>
                   <td className="col-priority">—</td>
@@ -296,14 +405,14 @@ const ActionItemsList = ({
                   {!hideClientColumn && (
                     <td className="col-client">
                       <div className="client-cell">
-                        {getClientName(item.client_id)}
+                        {getClientName(item)}
                       </div>
                     </td>
                   )}
 
                   <td className="col-owner">
                     <div className="owner-cell">
-                      {item.task_owner ? getUserName(item.task_owner) : "—"}
+                      {item.task_owner ? getTaskOwnerName(item.task_owner) : "—"}
                     </div>
                   </td>
 
@@ -316,8 +425,7 @@ const ActionItemsList = ({
                       permissions={[PERMISSIONS.UPDATE_TASK]}
                       fallback={
                         <span className={`status-badge status-${item.status || "open"}`}>
-                          {item.status === 'in_progress' ? 'In Progress' : 
-                           item.status === 'completed' ? 'Completed' : 'Open'}
+                          {getStatusDisplayName(item.status)}
                         </span>
                       }
                     >
@@ -330,9 +438,11 @@ const ActionItemsList = ({
                           updateItemStatus(item.id, e.target.value)
                         }
                       >
-                        <option value="open">Open</option>
-                        <option value="in_progress">In Progress</option>
-                        <option value="completed">Completed</option>
+                        {getStatusOptions().map(option => (
+                          <option key={option.value} value={option.value}>
+                            {option.label}
+                          </option>
+                        ))}
                       </select>
                     </PermissionGuard>
                   </td>
@@ -344,9 +454,9 @@ const ActionItemsList = ({
                       ) : item.due_date &&
                         new Date(item.due_date) <=
                           new Date(Date.now() + 7 * 24 * 60 * 60 * 1000) ? (
-                        <span className="priority-medium">⚡ Medium</span>
+                        <span className="priority-medium">Medium</span>
                       ) : (
-                        <span className="priority-low">— Low</span>
+                        <span className="priority-low"> Low</span>
                       )}
                     </div>
                   </td>

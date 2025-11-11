@@ -1,0 +1,420 @@
+/* Minutes of Meeting Component Styles - Consistent with other tabs */
+.minutes-of-meeting {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  background: #ffffff;
+}
+
+.mom-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.5rem;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e5e5;
+  margin-bottom: 1rem;
+}
+
+.mom-title h3 {
+  margin: 0;
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: #001f3f;
+}
+
+.last-saved {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-top: 0.25rem;
+  display: block;
+}
+
+.mom-actions {
+  display: flex;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.mom-actions .btn {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  padding: 0.375rem 0.75rem;
+  border-radius: 4px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  cursor: pointer;
+  background: #ffffff;
+  height: 32px;
+  min-width: auto;
+}
+
+.mom-actions .btn-primary {
+  background: #001f3f;
+  color: #ffffff;
+  border-color: #001f3f;
+}
+
+.mom-actions .btn-primary:hover:not(:disabled) {
+  background: #003366;
+  border-color: #003366;
+}
+
+.mom-actions .btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mom-actions .btn svg {
+  width: 14px;
+  height: 14px;
+}
+
+.mom-editor-container {
+  flex: 1;
+  padding: 0 1.5rem 1.5rem;
+  overflow-y: auto;
+  background: #ffffff;
+}
+
+/* Override BlockNote Mantine theme completely */
+.mom-editor-container,
+.mom-editor-container *,
+.mom-editor-container .mantine-BlockNoteView-root,
+.mom-editor-container .bn-container,
+.mom-editor-container .bn-editor,
+.mom-editor-container [data-color-scheme="dark"],
+.mom-editor-container [data-mantine-color-scheme="dark"] {
+  background: #ffffff !important;
+  background-color: #ffffff !important;
+  color: #1f2937 !important;
+  border-color: #e5e5e5 !important;
+}
+
+.mom-editor-container .bn-container {
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1) !important;
+}
+
+.mom-editor-container .bn-editor {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "Roboto",
+    sans-serif !important;
+  line-height: 1.6 !important;
+  padding: 1.5rem !important;
+  min-height: 400px !important;
+}
+
+/* Force light theme on all Mantine components */
+.mom-editor-container .mantine-BlockNoteView-root {
+  --mantine-color-scheme: light !important;
+}
+
+/* Override any dark backgrounds */
+.mom-editor-container div,
+.mom-editor-container section,
+.mom-editor-container article {
+  background: transparent !important;
+}
+
+/* Nuclear option - override everything with white background */
+.mom-editor-container * {
+  background-color: #ffffff !important;
+}
+
+.mom-editor-container
+  *:not(.bn-block-content):not(h1):not(h2):not(h3):not(p):not(li):not(span):not(
+    strong
+  ):not(em) {
+  background: #ffffff !important;
+}
+
+/* Ensure text content has proper background */
+.mom-editor-container .bn-block-content,
+.mom-editor-container .ProseMirror {
+  background: #ffffff !important;
+  color: #1f2937 !important;
+}
+
+/* BlockNote content styling */
+.mom-editor-container .bn-block-content {
+  color: #1f2937 !important;
+}
+
+.mom-editor-container h1 {
+  color: #001f3f !important;
+  font-weight: 700 !important;
+  margin-bottom: 1rem !important;
+  border-bottom: 2px solid #e5e5e5 !important;
+  padding-bottom: 0.5rem !important;
+}
+
+.mom-editor-container h2 {
+  color: #001f3f !important;
+  font-weight: 600 !important;
+  margin-top: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.mom-editor-container h3 {
+  color: #374151 !important;
+  font-weight: 600 !important;
+  margin-top: 1rem !important;
+  margin-bottom: 0.5rem !important;
+}
+
+.mom-editor-container p {
+  color: #4b5563 !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.mom-editor-container ul,
+.mom-editor-container ol {
+  margin-bottom: 0.75rem !important;
+  padding-left: 1.5rem !important;
+}
+
+.mom-editor-container li {
+  color: #4b5563 !important;
+  margin-bottom: 0.25rem !important;
+}
+
+/* BlockNote toolbar styling */
+.mom-editor-container .bn-toolbar {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.mom-editor-container .bn-toolbar-button {
+  color: #374151 !important;
+  background: transparent !important;
+}
+
+.mom-editor-container .bn-toolbar-button:hover {
+  background: #f3f4f6 !important;
+  color: #001f3f !important;
+}
+
+/* BlockNote side menu styling */
+.mom-editor-container .bn-side-menu {
+  background: #ffffff !important;
+  border: 1px solid #e5e5e5 !important;
+  border-radius: 6px !important;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1) !important;
+}
+
+.mom-editor-container .bn-side-menu-button {
+  color: #6b7280 !important;
+  background: transparent !important;
+}
+
+.mom-editor-container .bn-side-menu-button:hover {
+  background: #f3f4f6 !important;
+  color: #001f3f !important;
+}
+
+/* Loading state */
+.mom-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  background: #ffffff;
+}
+
+/* Responsive design */
+@media (max-width: 768px) {
+  .mom-header {
+    flex-direction: column;
+    gap: 0.75rem;
+    align-items: flex-start;
+    padding: 1rem;
+  }
+
+  .mom-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .mom-editor-container {
+    padding: 0 1rem 1rem;
+  }
+}
+
+/* BlockNote Editor Customizations */
+.mom-editor .bn-editor {
+  background: #ffffff;
+  color: #001f3f;
+}
+
+.mom-editor .bn-block-content {
+  color: #001f3f;
+}
+
+.mom-editor h1 {
+  color: #001f3f;
+  font-weight: 700;
+  margin-bottom: 1rem;
+  border-bottom: 2px solid #d4af37;
+  padding-bottom: 0.5rem;
+}
+
+.mom-editor h2 {
+  color: #001f3f;
+  font-weight: 600;
+  margin-top: 2rem;
+  margin-bottom: 1rem;
+  position: relative;
+}
+
+.mom-editor h2::before {
+  content: "";
+  position: absolute;
+  left: -1rem;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 4px;
+  height: 1.5rem;
+  background: #d4af37;
+  border-radius: 2px;
+}
+
+.mom-editor h3 {
+  color: #003366;
+  font-weight: 600;
+  margin-top: 1.5rem;
+  margin-bottom: 0.75rem;
+}
+
+.mom-editor p {
+  color: #333333;
+  margin-bottom: 1rem;
+}
+
+.mom-editor ul,
+.mom-editor ol {
+  margin-bottom: 1rem;
+  padding-left: 1.5rem;
+}
+
+.mom-editor li {
+  color: #333333;
+  margin-bottom: 0.5rem;
+}
+
+.mom-editor blockquote {
+  border-left: 4px solid #d4af37;
+  background: #f8f9fa;
+  padding: 1rem 1.5rem;
+  margin: 1rem 0;
+  border-radius: 0 6px 6px 0;
+}
+
+.mom-editor code {
+  background: #f5f5f5;
+  color: #001f3f;
+  padding: 0.25rem 0.5rem;
+  border-radius: 4px;
+  font-family: "Monaco", "Menlo", "Ubuntu Mono", monospace;
+}
+
+.mom-editor pre {
+  background: #f8f9fa;
+  border: 1px solid #e5e5e5;
+  border-radius: 6px;
+  padding: 1rem;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.mom-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 400px;
+  background: #ffffff;
+  border-radius: 8px;
+}
+
+.mom-saving-indicator {
+  position: absolute;
+  bottom: 1rem;
+  right: 1rem;
+  background: rgba(0, 31, 63, 0.9);
+  color: #ffffff;
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+  font-size: 0.875rem;
+  z-index: 1000;
+  animation: fadeInOut 2s ease-in-out;
+}
+
+@keyframes fadeInOut {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .mom-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .mom-actions {
+    width: 100%;
+    justify-content: flex-end;
+  }
+
+  .mom-editor-container {
+    padding: 1rem;
+  }
+
+  .mom-editor {
+    padding: 1rem;
+  }
+}
+
+/* Dark mode support (if needed) */
+@media (prefers-color-scheme: dark) {
+  .mom-editor-container {
+    background: #1a1a1a;
+  }
+
+  .mom-editor {
+    background: #2d2d2d;
+    border-color: #404040;
+    color: #ffffff;
+  }
+
+  .mom-editor .bn-editor {
+    background: #2d2d2d;
+    color: #ffffff;
+  }
+
+  .mom-editor .bn-block-content {
+    color: #ffffff;
+  }
+
+  .mom-editor h1,
+  .mom-editor h2,
+  .mom-editor h3 {
+    color: #ffffff;
+  }
+
+  .mom-editor p,
+  .mom-editor li {
+    color: #e0e0e0;
+  }
+}

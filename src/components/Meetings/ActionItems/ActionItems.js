@@ -1,92 +1,96 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Assignment as AssignmentIcon,
   Refresh as RefreshIcon,
+  Add as AddIcon,
 } from "@mui/icons-material";
 import {
-  openPointsAPI,
-  meetingAPI,
-  clientAPI,
-} from "../../../utils/apiServices";
+  useActionItemsByMeeting,
+  useUsers,
+  useClients,
+} from "../../../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
-import { ActionItemsList } from "../../ActionItems";
+import { ActionItemsList, ActionItemForm } from "../../ActionItems";
+import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import "./ActionItems.css";
 
 const ActionItems = ({ meetingId, meeting, onRefresh }) => {
-  const [actionItems, setActionItems] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [meetings, setMeetings] = useState([]);
-  const [loading, setLoading] = useState(true);
   const [generationStatus, setGenerationStatus] = useState(null);
   const [polling, setPolling] = useState(false);
+  const [showActionItemForm, setShowActionItemForm] = useState(false);
+  const queryClient = useQueryClient();
 
   const { showSuccess, showError, showInfo } = useNotificationContext();
 
-  useEffect(() => {
-    if (meetingId) {
-      loadActionItems();
-      loadUsers();
-      loadClients();
-      loadMeetings();
+  // Use cached queries
+  const {
+    data: actionItemsData,
+    isLoading: loadingActionItems,
+    error: actionItemsError,
+    refetch: refetchActionItems,
+  } = useActionItemsByMeeting(meetingId, { enabled: !!meetingId });
 
-      // Start polling if this is a Fathom meeting and might have background generation
-      if (meeting?.source === "fathom") {
-        checkGenerationStatus();
-      }
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+  } = useUsers();
+
+  const {
+    data: clientsData,
+    isLoading: loadingClients,
+  } = useClients();
+
+  const loading = loadingActionItems || loadingUsers || loadingClients;
+
+  // Process action items with client info
+  const actionItems = useMemo(() => {
+    const items = actionItemsData || [];
+    return items.map((item) => ({
+      ...item,
+      client_name: meeting?.client_name || "Unknown Client",
+      client_id: meeting?.client_id,
+    }));
+  }, [actionItemsData, meeting]);
+
+  const meetings = useMemo(() => {
+    return meeting ? [meeting] : [];
+  }, [meeting]);
+
+  useEffect(() => {
+    if (actionItemsError) {
+      showError("Failed to load action items");
+    }
+  }, [actionItemsError, showError]);
+
+  useEffect(() => {
+    if (meetingId && meeting?.source === "fathom") {
+      checkGenerationStatus();
     }
   }, [meetingId, meeting]);
 
-  const loadUsers = async () => {
-    try {
-      const usersData = await clientAPI.getAllUsers();
-      setUsers(usersData || []);
-    } catch (error) {
-      console.error("Error loading users:", error);
-    }
-  };
-
-  const loadClients = async () => {
-    try {
-      const clientsData = await clientAPI.getAll();
-      setClients(clientsData || []);
-    } catch (error) {
-      console.error("Error loading clients:", error);
-    }
-  };
-
-  const loadMeetings = async () => {
-    try {
-      // For the meeting context, we just need the current meeting
-      if (meeting) {
-        setMeetings([meeting]);
-      }
-    } catch (error) {
-      console.error("Error loading meetings:", error);
-    }
-  };
-
   const checkGenerationStatus = async () => {
+    // This would need to be implemented as a query hook if needed
+    // For now, keeping the original logic
     try {
+      const { meetingAPI } = await import("../../../utils/apiServices");
       const status = await meetingAPI.getActionItemsStatus(meetingId);
       setGenerationStatus(status);
 
       if (status.status === "pending") {
-        // Start polling every 5 seconds
         setPolling(true);
         const pollInterval = setInterval(async () => {
           try {
-            const updatedStatus = await meetingAPI.getActionItemsStatus(
-              meetingId
-            );
+            const updatedStatus = await meetingAPI.getActionItemsStatus(meetingId);
             setGenerationStatus(updatedStatus);
 
             if (updatedStatus.status === "completed") {
               clearInterval(pollInterval);
               setPolling(false);
               showInfo("Action items have been generated!");
-              await loadActionItems();
+              await refetchActionItems();
             } else if (updatedStatus.status === "error") {
               clearInterval(pollInterval);
               setPolling(false);
@@ -96,7 +100,6 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
           }
         }, 5000);
 
-        // Stop polling after 5 minutes
         setTimeout(() => {
           clearInterval(pollInterval);
           setPolling(false);
@@ -107,26 +110,24 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
     }
   };
 
-  const loadActionItems = async () => {
-    try {
-      setLoading(true);
-      const items = await openPointsAPI.getByMeeting(meetingId);
-      // Add client info to action items for consistency with main ActionItems page
-      const itemsWithClientInfo = (Array.isArray(items) ? items : []).map(
-        (item) => ({
-          ...item,
-          client_name: meeting?.client_name || "Unknown Client",
-          client_id: meeting?.client_id,
-        })
-      );
-      setActionItems(itemsWithClientInfo);
-    } catch (error) {
-      showError("Failed to load action items");
-      console.error("Error loading action items:", error);
-      setActionItems([]);
-    } finally {
-      setLoading(false);
-    }
+  const handleAddActionItem = () => {
+    setShowActionItemForm(true);
+  };
+
+  const handleActionItemFormSave = () => {
+    setShowActionItemForm(false);
+    // React Query will automatically refetch due to cache invalidation
+    refetchActionItems();
+  };
+
+  const handleActionItemFormCancel = () => {
+    setShowActionItemForm(false);
+  };
+
+  const handleRefresh = () => {
+    refetchActionItems();
+    queryClient.invalidateQueries({ queryKey: ['users'] });
+    queryClient.invalidateQueries({ queryKey: ['clients'] });
   };
 
   if (loading) {
@@ -148,9 +149,19 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
         </div>
 
         <div className="header-actions">
+          <PermissionGuard permissions={[PERMISSIONS.CREATE_TASK]}>
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleAddActionItem}
+              disabled={loading}
+            >
+              <AddIcon />
+              Add Action Item
+            </button>
+          </PermissionGuard>
           <button
             className="btn btn-secondary btn-sm"
-            onClick={loadActionItems}
+            onClick={handleRefresh}
             disabled={loading}
           >
             <RefreshIcon />
@@ -188,11 +199,25 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       {/* Use the professional ActionItemsList component */}
       <ActionItemsList
         actionItems={actionItems}
-        onRefresh={loadActionItems}
+        onRefresh={handleRefresh}
         meetings={meetings}
-        clients={clients}
-        users={users}
+        clients={clientsData || []}
+        users={usersData || []}
         hideClientColumn={true}
+      />
+
+      {/* Action Item Form Modal */}
+      <ActionItemForm
+        isOpen={showActionItemForm}
+        onSave={handleActionItemFormSave}
+        onCancel={handleActionItemFormCancel}
+        prefilledData={{
+          client_id: meeting?.client_id,
+          meeting_id: meetingId
+        }}
+        clients={clientsData || []}
+        meetings={meetings}
+        users={usersData || []}
       />
     </div>
   );

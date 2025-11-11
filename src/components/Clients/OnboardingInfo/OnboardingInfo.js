@@ -27,11 +27,30 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
       setError(null);
 
       const response = await clientAPI.fetchPreOnboardingInfo(clientId);
-      setOnboardingData(response.onboarding_info);
-      showSuccess("Onboarding information fetched successfully");
+      
+      // Check if onboarding_info contains error metadata (shouldn't happen with new backend)
+      const onboardingInfo = response.onboarding_info;
+      
+      // Detect if onboarding_info contains error metadata instead of real data
+      if (onboardingInfo && onboardingInfo.webhook_status === "empty_response") {
+        // This is error metadata, not real data - treat as error
+        setError(onboardingInfo.message || "Webhook returned no data");
+        showError("Webhook returned no data. Please try again.");
+        setOnboardingData(null);
+      } else {
+        // Valid data
+        setOnboardingData(onboardingInfo);
+        showSuccess("Onboarding information fetched successfully");
+      }
     } catch (err) {
-      setError(err.message || "Failed to fetch onboarding information");
-      showError("Failed to fetch onboarding information");
+      // Handle API errors
+      const errorMessage = err.response?.data?.error?.details?.message 
+        || err.response?.data?.error?.message
+        || err.message 
+        || "Failed to fetch onboarding information";
+      
+      setError(errorMessage);
+      showError(errorMessage);
       console.error("Error fetching onboarding info:", err);
     } finally {
       setLoading(false);
@@ -39,8 +58,11 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
   };
 
   // Check if we need to fetch onboarding info
+  // Also check if onboardingData contains error metadata instead of real data
   const needsOnboardingInfo =
-    !onboardingData || Object.keys(onboardingData).length === 0;
+    !onboardingData || 
+    Object.keys(onboardingData).length === 0 ||
+    onboardingData.webhook_status === "empty_response";
 
   if (loading) {
     return (
@@ -99,15 +121,17 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
     <div className="onboarding-info">
       <div className="onboarding-header">
         <div className="onboarding-title">
-          <h3>Onboarding Information</h3>
+          <BusinessIcon className="title-icon" />
+          <h3>Company Information</h3>
         </div>
         <button
           className="btn btn-outline refresh-btn"
           onClick={fetchOnboardingInfo}
           disabled={loading}
-          title="Refresh onboarding information"
+          title="Refresh company information"
         >
           <RefreshIcon />
+          Refresh
         </button>
       </div>
 
@@ -115,41 +139,58 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
         {company && (
           <>
             {/* Company Overview */}
-            <div className="onboarding-section">
+            <div className="onboarding-section company-overview-section">
               <div className="section-header">
-                <BusinessIcon className="section-icon" />
-                <h4>Company Overview</h4>
+                <div className="section-header-left">
+                  <div className="section-icon-wrapper">
+                    <BusinessIcon className="section-icon" />
+                  </div>
+                  <h4>Company Overview</h4>
+                </div>
               </div>
               <div className="company-overview">
                 <div className="company-basic-info">
                   <div className="info-row">
-                    <label>Company Name</label>
-                    <span>{company.name || "Not provided"}</span>
+                    <div className="info-item-icon-wrapper">
+                      <BusinessIcon className="info-icon" />
+                    </div>
+                    <div className="info-item-content">
+                      <label>Company Name</label>
+                      <span>{company.name || "Not provided"}</span>
+                    </div>
                   </div>
                   {company.website && (
                     <div className="info-row">
-                      <WebsiteIcon className="info-icon" />
-                      <label>Website</label>
-                      <a
-                        href={company.website}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="website-link"
-                      >
-                        {company.website}
-                      </a>
+                      <div className="info-item-icon-wrapper">
+                        <WebsiteIcon className="info-icon" />
+                      </div>
+                      <div className="info-item-content">
+                        <label>Website</label>
+                        <a
+                          href={company.website}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="website-link"
+                        >
+                          {company.website}
+                        </a>
+                      </div>
                     </div>
                   )}
                   {company.overview && (
                     <div className="info-row full-width">
                       <label>Overview</label>
-                      <p className="overview-text">{company.overview}</p>
+                      <div className="text-content-wrapper">
+                        <p className="overview-text">{company.overview}</p>
+                      </div>
                     </div>
                   )}
                   {company.about_us && (
                     <div className="info-row full-width">
                       <label>About Us</label>
-                      <p className="about-text">{company.about_us}</p>
+                      <div className="text-content-wrapper">
+                        <p className="about-text">{company.about_us}</p>
+                      </div>
                     </div>
                   )}
                 </div>
@@ -160,8 +201,12 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
             {company.regions && company.regions.length > 0 && (
               <div className="onboarding-section">
                 <div className="section-header">
-                  <LocationIcon className="section-icon" />
-                  <h4>Operating Regions</h4>
+                  <div className="section-header-left">
+                    <div className="section-icon-wrapper">
+                      <LocationIcon className="section-icon" />
+                    </div>
+                    <h4>Operating Regions</h4>
+                  </div>
                 </div>
                 <div className="regions-list">
                   {company.regions.map((region, index) => (
@@ -177,8 +222,12 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
             {company.clients && company.clients.length > 0 && (
               <div className="onboarding-section">
                 <div className="section-header">
-                  <BusinessIcon className="section-icon" />
-                  <h4>Notable Clients</h4>
+                  <div className="section-header-left">
+                    <div className="section-icon-wrapper">
+                      <BusinessIcon className="section-icon" />
+                    </div>
+                    <h4>Notable Clients</h4>
+                  </div>
                 </div>
                 <div className="clients-grid">
                   {company.clients.map((client, index) => (
@@ -194,8 +243,12 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
             {company.key_team && company.key_team.length > 0 && (
               <div className="onboarding-section">
                 <div className="section-header">
-                  <TeamIcon className="section-icon" />
-                  <h4>Key Team Members</h4>
+                  <div className="section-header-left">
+                    <div className="section-icon-wrapper">
+                      <TeamIcon className="section-icon" />
+                    </div>
+                    <h4>Key Team Members</h4>
+                  </div>
                 </div>
                 <div className="team-grid">
                   {company.key_team.map((member, index) => (
@@ -217,13 +270,19 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
             {company.ai_services && company.ai_services.length > 0 && (
               <div className="onboarding-section">
                 <div className="section-header">
-                  <AIIcon className="section-icon ai-icon" />
-                  <h4>AI Services</h4>
+                  <div className="section-header-left">
+                    <div className="section-icon-wrapper ai-icon-wrapper">
+                      <AIIcon className="section-icon ai-icon" />
+                    </div>
+                    <h4>AI Services</h4>
+                  </div>
                 </div>
                 <div className="ai-services">
                   {company.ai_services.map((service, index) => (
                     <div key={index} className="service-item">
-                      <CheckIcon className="service-check" />
+                      <div className="service-check-wrapper">
+                        <CheckIcon className="service-check" />
+                      </div>
                       <p>{service}</p>
                     </div>
                   ))}
@@ -237,8 +296,12 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
         {ai_opportunities && ai_opportunities.length > 0 && (
           <div className="onboarding-section">
             <div className="section-header">
-              <AIIcon className="section-icon ai-icon" />
-              <h4>AI Opportunities</h4>
+              <div className="section-header-left">
+                <div className="section-icon-wrapper ai-icon-wrapper">
+                  <AIIcon className="section-icon ai-icon" />
+                </div>
+                <h4>AI Opportunities</h4>
+              </div>
             </div>
             <div className="ai-opportunities">
               {ai_opportunities.map((opportunity, index) => (

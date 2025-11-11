@@ -17,6 +17,8 @@ const AdminPanel = () => {
   const [userPermissions, setUserPermissions] = useState(null);
   const [selectedRole, setSelectedRole] = useState(null);
   const [rolePermissions, setRolePermissions] = useState([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [roleFilter, setRoleFilter] = useState("all");
 
   // Form states
   const [newRole, setNewRole] = useState({
@@ -39,11 +41,28 @@ const AdminPanel = () => {
   const loadData = async () => {
     try {
       setLoading(true);
-      const [rolesData, permissionsData] = await Promise.all([
-        rbacAPI.getRoles(),
-        rbacAPI.getPermissions(),
+      console.log("Loading admin data...");
+      
+      const [usersData, rolesData, permissionsData] = await Promise.all([
+        rbacAPI.getAllUsersAdmin().catch(err => {
+          console.error("Error loading users:", err);
+          return { users: [] };
+        }),
+        rbacAPI.getRoles().catch(err => {
+          console.error("Error loading roles:", err);
+          return [];
+        }),
+        rbacAPI.getPermissions().catch(err => {
+          console.error("Error loading permissions:", err);
+          return [];
+        }),
       ]);
 
+      console.log("Users data:", usersData);
+      console.log("Roles data:", rolesData);
+      console.log("Permissions data:", permissionsData);
+
+      setUsers(usersData.users || []);
       setRoles(rolesData);
       setPermissions(permissionsData);
     } catch (error) {
@@ -237,24 +256,157 @@ const AdminPanel = () => {
           <div className="user-management">
             <h2>User Management</h2>
 
-            <div className="user-actions">
-              <div className="user-selector">
-                <label>Select User (Enter User ID):</label>
+            {/* Users Table */}
+            <div className="users-table-section">
+              <h3>All Users ({users.length})</h3>
+              
+              {/* Search and Filter */}
+              <div className="users-filters">
                 <input
                   type="text"
-                  placeholder="User ID"
-                  value={selectedUser || ""}
-                  onChange={(e) => setSelectedUser(e.target.value)}
+                  placeholder="Search by name or email..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  className="search-input"
                 />
-                <button
-                  onClick={() =>
-                    selectedUser && loadUserPermissions(selectedUser)
-                  }
-                  disabled={!selectedUser}
+                <select
+                  value={roleFilter}
+                  onChange={(e) => setRoleFilter(e.target.value)}
+                  className="role-filter"
                 >
-                  Load User Data
-                </button>
+                  <option value="all">All Roles</option>
+                  {roles.map(role => (
+                    <option key={role.id} value={role.name}>
+                      {role.display_name}
+                    </option>
+                  ))}
+                </select>
               </div>
+
+              {/* Users Table */}
+              <div className="users-table-container">
+                <table className="users-table">
+                  <thead>
+                    <tr>
+                      <th>User</th>
+                      <th>Email</th>
+                      <th>Role</th>
+                      <th>Permissions</th>
+                      <th>Joined</th>
+                      <th>Actions</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {users
+                      .filter(user => {
+                        const matchesSearch = !searchTerm || 
+                          user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+                        
+                        const matchesRole = roleFilter === "all" || user.role?.name === roleFilter;
+                        
+                        return matchesSearch && matchesRole;
+                      })
+                      .map(user => (
+                        <tr key={user.id}>
+                          <td>
+                            <div className="user-cell">
+                              <div className="user-avatar">
+                                {(user.full_name || user.email)[0].toUpperCase()}
+                              </div>
+                              <div className="user-info">
+                                <div className="user-name">{user.full_name || 'N/A'}</div>
+                                <div className="user-id">ID: {user.id.slice(0, 8)}...</div>
+                              </div>
+                            </div>
+                          </td>
+                          <td>{user.email}</td>
+                          <td>
+                            <span className={`role-badge role-${user.role?.name || 'none'}`}>
+                              {user.role?.display_name || 'No Role'}
+                            </span>
+                          </td>
+                          <td>
+                            <span className="permission-count">
+                              {user.permission_count} permissions
+                            </span>
+                          </td>
+                          <td>
+                            {new Date(user.created_at).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            })}
+                          </td>
+                          <td>
+                            <div className="user-actions-buttons">
+                              <button
+                                className="btn-small btn-primary"
+                                onClick={() => {
+                                  setSelectedUser(user.id);
+                                  loadUserPermissions(user.id);
+                                }}
+                                title="Manage this user"
+                              >
+                                Manage
+                              </button>
+                              <button
+                                className="btn-small btn-secondary"
+                                onClick={() => {
+                                  navigator.clipboard.writeText(user.id);
+                                  alert('User ID copied to clipboard');
+                                }}
+                                title="Copy User ID"
+                              >
+                                Copy ID
+                              </button>
+                            </div>
+                          </td>
+                        </tr>
+                      ))}
+                  </tbody>
+                </table>
+
+                {users.filter(user => {
+                  const matchesSearch = !searchTerm || 
+                    user.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    user.full_name?.toLowerCase().includes(searchTerm.toLowerCase());
+                  
+                  const matchesRole = roleFilter === "all" || user.role?.name === roleFilter;
+                  
+                  return matchesSearch && matchesRole;
+                }).length === 0 && (
+                  <div className="no-users-found">
+                    <p>No users found matching your criteria.</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Existing Manual User Management */}
+            <div className="manual-user-management">
+              <h3>Manual User Management</h3>
+              <p>Use the tools below to manage specific users by ID or select a user from the table above.</p>
+              
+              <div className="user-actions">
+                <div className="user-selector">
+                  <label>Select User (Enter User ID):</label>
+                  <input
+                    type="text"
+                    placeholder="User ID"
+                    value={selectedUser || ""}
+                    onChange={(e) => setSelectedUser(e.target.value)}
+                  />
+                  <button
+                    onClick={() =>
+                      selectedUser && loadUserPermissions(selectedUser)
+                    }
+                    disabled={!selectedUser}
+                  >
+                    Load User Data
+                  </button>
+                </div>
 
               {selectedUser && (
                 <div className="user-role-assignment">
@@ -383,6 +535,7 @@ const AdminPanel = () => {
                   </div>
                 </div>
               )}
+            </div>
             </div>
           </div>
         )}

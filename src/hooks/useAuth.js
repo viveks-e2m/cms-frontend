@@ -1,5 +1,8 @@
 import { useState, useEffect, createContext, useContext } from 'react';
 import { authAPI } from '../utils/api';
+import { rbacAPI } from '../utils/rbacAPI';
+import { isFirstLogin } from '../utils/cacheStorage';
+import { prefetchAllData } from '../utils/dataPrefetch';
 
 const AuthContext = createContext();
 
@@ -17,6 +20,8 @@ export const AuthProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [prefetchProgress, setPrefetchProgress] = useState(null);
+  const [isPrefetching, setIsPrefetching] = useState(false);
 
   // Load user data and permissions on mount
   useEffect(() => {
@@ -36,34 +41,15 @@ export const AuthProvider = ({ children }) => {
       setUser(userResponse);
       setIsAuthenticated(true);
 
-      // Get user permissions and role from RBAC service
+      // Get user permissions and role from RBAC service using the proper API utility
       console.log('Loading RBAC data...');
-      const rbacResponse = await fetch(`${process.env.REACT_APP_API_URL || 'https://py-cms.sitepreviews.dev'}/rbac/my-permissions`, {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      console.log('RBAC response status:', rbacResponse.status);
-
-      if (rbacResponse.ok) {
-        const rbacData = await rbacResponse.json();
-        console.log('RBAC data received:', rbacData);
-        if (rbacData.success) {
-          const userData = rbacData.data;
-          console.log('Setting role:', userData.role);
-          console.log('Setting permissions:', userData.permissions);
-          setRole(userData.role);
-          setPermissions(userData.permissions || []);
-        } else {
-          console.error('RBAC API returned success=false:', rbacData);
-        }
-      } else {
-        console.error('RBAC API call failed:', rbacResponse.status, rbacResponse.statusText);
-        const errorText = await rbacResponse.text();
-        console.error('Error response:', errorText);
-      }
+      const rbacData = await rbacAPI.getMyPermissions();
+      console.log('RBAC data received:', rbacData);
+      
+      console.log('Setting role:', rbacData.role);
+      console.log('Setting permissions:', rbacData.permissions);
+      setRole(rbacData.role);
+      setPermissions(rbacData.permissions || []);
     } catch (error) {
       console.error('Error loading user data:', error);
       // Clear invalid token
@@ -77,7 +63,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  const login = async (credentials) => {
+  const login = async (credentials, onProgress = null) => {
     try {
       // Ensure credentials is an object with email and password
       if (!credentials || typeof credentials !== 'object' || !credentials.email || !credentials.password) {
@@ -86,8 +72,9 @@ export const AuthProvider = ({ children }) => {
       
       const result = await authAPI.login(credentials);
       
-      // Store token and user data
+      // Store tokens and user data
       localStorage.setItem('authToken', result.token);
+      localStorage.setItem('refreshToken', result.refreshToken);
       localStorage.setItem('user', JSON.stringify(result.user));
       
       setUser(result.user);
@@ -95,11 +82,64 @@ export const AuthProvider = ({ children }) => {
       
       // Load RBAC data after login
       await loadUserData();
+      
+      // Check if this is first login and prefetch data
+      const firstLogin = await isFirstLogin();
+      if (firstLogin) {
+        setIsPrefetching(true);
+        setPrefetchProgress({ percentage: 0, message: 'Preparing your workspace...' });
+        
+        try {
+          const prefetchResult = await prefetchAllData((progress) => {
+            if (onProgress) {
+              onProgress(progress);
+            }
+            setPrefetchProgress(progress);
+          });
+          
+          setPrefetchProgress({ 
+            percentage: 100, 
+            message: 'Setup complete! Redirecting...' 
+          });
+          
+          // Small delay to show completion
+          await new Promise(resolve => setTimeout(resolve, 500));
+        } catch (error) {
+          console.error('Error prefetching data:', error);
+          // Continue even if prefetching fails
+        } finally {
+          setIsPrefetching(false);
+          setPrefetchProgress(null);
+        }
+      }
+      
       return { success: true };
     } catch (error) {
+      // Clean up prefetching state on error
+      setIsPrefetching(false);
+      setPrefetchProgress(null);
+      
+      console.log('useAuth login error:', error);
+      console.log('Error message:', error.message);
+      console.log('Error code:', error.code);
+      console.log('Error name:', error.name);
+      
+      // Enhanced error handling with user-friendly messages
+      let errorMessage = 'Login failed';
+      
+      if (error.message) {
+        errorMessage = error.message;
+      } else if (error.code === 'NETWORK_ERROR' || error.name === 'NetworkError') {
+        errorMessage = 'Unable to connect to the server. Please check your internet connection and try again.';
+      } else if (error.code === 'TIMEOUT_ERROR') {
+        errorMessage = 'The request timed out. Please try again.';
+      }
+      
+      console.log('Final error message being returned:', errorMessage);
+      
       return { 
         success: false, 
-        error: error.message || 'Login failed' 
+        error: errorMessage
       };
     }
   };
@@ -112,6 +152,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       // Clear local state regardless of API call success
       localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
       setUser(null);
       setRole(null);
@@ -189,7 +230,9 @@ export const AuthProvider = ({ children }) => {
     isAiIntern,
     isAccountManager,
     isAdoptionSpecialist,
-    loadUserData
+    loadUserData,
+    prefetchProgress,
+    isPrefetching,
   };
 
   return (

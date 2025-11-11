@@ -1,24 +1,38 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { useAuth } from "../../hooks/useAuth";
 import { PermissionGuard } from "../../components/PermissionGuard";
+import { PERMISSIONS } from "../../constants/permissions";
 import {
-  clientAPI,
-  meetingAPI,
-  secretsAPI,
-  workflowAPI,
-} from "../../utils/apiServices";
+  useClients,
+  useUsers,
+  useMeetingSummary,
+  // useWorkflows,
+  useSecrets,
+  useMeeting,
+  useActionItems,
+} from "../../hooks/useQueries";
+import {
+  useCreateClient,
+  useUpdateClient,
+  useDeleteClient,
+  useDeleteMeeting,
+} from "../../hooks/useMutations";
+import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   MeetingsList,
   MeetingDetails,
   MeetingForm,
 } from "../../components/Meetings";
+import { ActionItemsList } from "../../components/ActionItems";
 import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import SecretsManager from "../../components/Clients/SecretsManager";
-import WorkflowManager from "../../components/Clients/WorkflowManager/WorkflowManager";
+// import WorkflowManager from "../../components/Clients/WorkflowManager/WorkflowManager";
 import ClientForm from "../../components/Clients/ClientForm";
+import ClientNotes from "../../components/Clients/ClientNotes/ClientNotes";
 import ClientAvatar from "../../components/UI/ClientAvatar";
 import {
   People as PeopleIcon,
@@ -40,23 +54,41 @@ import {
   ArrowBack as ArrowBackIcon,
   FilterList as FilterIcon,
   Sort as SortIcon,
+  Close as CloseIcon,
   Info as OnboardingIcon,
+  Notes as NotesIcon,
+  Assignment as PlanIcon,
+  Chat as CommunicationIcon,
+  SmartToy as AIExecutorIcon,
+  DateRange as DateIcon,
+  Link as LinkIcon,
+  Assessment as AuditIcon,
+  Assignment as ActionItemsIcon,
+  ViewModule as GridViewIcon,
+  TableChart as TableViewIcon,
+  ExpandMore as ExpandMoreIcon,
+  ExpandLess as ExpandLessIcon,
 } from "@mui/icons-material";
 import "./ClientsPage.css";
 
 const ClientsPage = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
   const { hasPermission } = useAuth();
-  const [clients, setClients] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { showError, showSuccess } = useNotificationContext();
+  const queryClient = useQueryClient();
+
+  // State
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [accountManagerFilter, setAccountManagerFilter] = useState("");
+  const [adoptionSpecialistFilter, setAdoptionSpecialistFilter] = useState("");
   const [sortBy, setSortBy] = useState("name");
   const [sortOrder, setSortOrder] = useState("asc");
+  const [showFilterPopup, setShowFilterPopup] = useState(false);
   const [selectedClient, setSelectedClient] = useState(null);
-  const [clientDetails, setClientDetails] = useState(null);
-  const [detailsLoading, setDetailsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("overview");
-  const [users, setUsers] = useState([]);
+  const [viewMode, setViewMode] = useState("grid"); // 'grid' or 'table'
 
   // Meeting-related state
   const [selectedMeeting, setSelectedMeeting] = useState(null);
@@ -68,71 +100,110 @@ const ClientsPage = () => {
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
 
-  const { showError, showSuccess } = useNotificationContext();
+  // Status group collapse state - inactive is collapsed by default
+  const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive"]));
 
+  // Use cached queries
+  const {
+    data: clientsData,
+    isLoading: loadingClients,
+    error: clientsError,
+  } = useClients();
+
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+    error: usersError,
+  } = useUsers();
+
+  // Load client details when selected
+  const {
+    data: meetingsSummary,
+    isLoading: loadingMeetings,
+  } = useMeetingSummary(selectedClient?.id, { enabled: !!selectedClient });
+
+  // const {
+  //   data: workflowsData,
+  //   isLoading: loadingWorkflows,
+  // } = useWorkflows(selectedClient?.id, { enabled: !!selectedClient });
+
+  const {
+    data: secretsData,
+    isLoading: loadingSecrets,
+  } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
+
+  const {
+    data: actionItemsData,
+    isLoading: loadingActionItems,
+  } = useActionItems({ client_id: selectedClient?.id }, { enabled: !!selectedClient });
+
+  // Load full meeting details when selected
+  const {
+    data: fullMeetingDetails,
+    isLoading: loadingMeetingDetails,
+  } = useMeeting(selectedMeeting?.id, { enabled: !!selectedMeeting?.id });
+
+  // Mutations
+  const createClientMutation = useCreateClient();
+  const updateClientMutation = useUpdateClient();
+  const deleteClientMutation = useDeleteClient();
+  const deleteMeetingMutation = useDeleteMeeting();
+
+  // Handle URL parameters on mount and location change
   useEffect(() => {
-    loadClients();
-    loadUsers();
-  }, []);
+    const searchParams = new URLSearchParams(location.search);
+    const statusParam = searchParams.get('status');
+    const clientIdParam = searchParams.get('clientId');
 
-  const loadUsers = async () => {
-    try {
-      const usersData = await clientAPI.getAllUsers();
-      setUsers(usersData || []);
-    } catch (error) {
-      console.error("Error loading users:", error);
+    // Apply status filter from URL
+    if (statusParam) {
+      setStatusFilter(statusParam);
     }
-  };
 
-  const loadClients = async () => {
-    try {
-      setLoading(true);
-      const clientsData = await clientAPI.getAll();
-      setClients(clientsData);
-    } catch (error) {
+    // Auto-select client from URL
+    if (clientIdParam && clientsData) {
+      const client = clientsData.find(c => c.id === clientIdParam);
+      if (client) {
+        setSelectedClient(client);
+        setActiveTab('overview');
+      }
+    }
+  }, [location.search, clientsData]);
+
+  // Combine client data with related data
+  const clientDetails = useMemo(() => {
+    if (!selectedClient) return null;
+    const client = (clientsData || []).find((c) => c.id === selectedClient.id);
+    if (!client) return null;
+
+    return {
+      ...client,
+      meetings: meetingsSummary || [],
+      // workflows: workflowsData || [],
+      secrets: secretsData || [],
+      actionItems: actionItemsData?.items || [],
+    };
+  }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
+
+  const loadingState = loadingClients || loadingUsers;
+  const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
+
+  // Handle errors
+  React.useEffect(() => {
+    if (clientsError) {
       showError("Failed to load clients");
-      console.error("Error loading clients:", error);
-    } finally {
-      setLoading(false);
     }
-  };
-
-  const loadClientDetails = async (clientId) => {
-    try {
-      setDetailsLoading(true);
-
-      // Load client basic info
-      const client = clients.find((c) => c.id === clientId);
-
-      // Load related data
-      const [meetings, workflows, secrets] = await Promise.all([
-        meetingAPI.getByClient(clientId).catch(() => []),
-        workflowAPI.getByClient(clientId).catch(() => []),
-        secretsAPI.getByClient(clientId).catch(() => []),
-      ]);
-
-      setClientDetails({
-        ...client,
-        meetings,
-        workflows: workflows || [],
-        secrets: secrets || [],
-      });
-    } catch (error) {
-      showError("Failed to load client details");
-      console.error("Error loading client details:", error);
-    } finally {
-      setDetailsLoading(false);
+    if (usersError) {
+      console.error("Error loading users:", usersError);
     }
-  };
+  }, [clientsError, usersError, showError]);
 
   const handleClientSelect = (client) => {
     setSelectedClient(client);
-    loadClientDetails(client.id);
   };
 
   const handleBackToList = () => {
     setSelectedClient(null);
-    setClientDetails(null);
     setActiveTab("overview");
     setSelectedMeeting(null);
     setShowMeetingForm(false);
@@ -141,9 +212,10 @@ const ClientsPage = () => {
   };
 
   // Meeting handlers
-  const handleMeetingSelect = (meeting) => {
+  const handleMeetingSelect = async (meeting) => {
     setSelectedMeeting(meeting);
     setMeetingsView("details");
+    // Meeting details will be loaded via useMeeting hook
   };
 
   const handleBackToMeetings = () => {
@@ -168,20 +240,20 @@ const ClientsPage = () => {
       return;
     }
 
-    try {
-      await meetingAPI.delete(meeting.id);
-      showSuccess("Meeting deleted successfully");
-      loadClientDetails(selectedClient.id);
-    } catch (error) {
-      showError("Failed to delete meeting");
-      console.error("Error deleting meeting:", error);
-    }
+    deleteMeetingMutation.mutate(meeting.id, {
+      onSuccess: () => {
+        // Invalidate client details to refresh meetings list
+        queryClient.invalidateQueries({ queryKey: ['clients', 'meetings', selectedClient?.id] });
+        queryClient.invalidateQueries({ queryKey: ['meetings'] });
+      },
+    });
   };
 
   const handleMeetingFormSave = () => {
     setShowMeetingForm(false);
     setEditingMeeting(null);
-    loadClientDetails(selectedClient.id);
+    // Cache will be invalidated by mutation hooks
+    queryClient.invalidateQueries({ queryKey: ['clients', 'meetings', selectedClient?.id] });
   };
 
   const handleMeetingFormCancel = () => {
@@ -205,7 +277,7 @@ const ClientsPage = () => {
   const handleClientFormSave = () => {
     setShowClientForm(false);
     setEditingClient(null);
-    loadClients(); // Reload the clients list
+    // Cache will be invalidated by mutation hooks
   };
 
   const handleClientFormCancel = () => {
@@ -216,25 +288,20 @@ const ClientsPage = () => {
   const handleDeleteClient = async (client) => {
     if (
       !window.confirm(
-        `Are you sure you want to delete "${client.name}"? This will permanently delete the client and all associated data including meetings, workflows, and secrets.`
+        `Are you sure you want to delete "${client.name}"? This will permanently delete the client and all associated data including meetings, and secrets.`
       )
     ) {
       return;
     }
 
-    try {
-      await clientAPI.delete(client.id);
-      showSuccess("Client deleted successfully");
-      loadClients(); // Reload the clients list
-
-      // If the deleted client was currently selected, go back to list
-      if (selectedClient && selectedClient.id === client.id) {
-        handleBackToList();
-      }
-    } catch (error) {
-      showError("Failed to delete client");
-      console.error("Error deleting client:", error);
-    }
+    deleteClientMutation.mutate(client.id, {
+      onSuccess: () => {
+        // If the deleted client was currently selected, go back to list
+        if (selectedClient && selectedClient.id === client.id) {
+          handleBackToList();
+        }
+      },
+    });
   };
 
   // Enhanced filtering and sorting logic
@@ -257,6 +324,8 @@ const ClientsPage = () => {
         return "Assessment";
       case "active":
         return "Active";
+      case "inactive":
+        return "Inactive";
       default:
         return "Pre-boarding";
     }
@@ -272,6 +341,8 @@ const ClientsPage = () => {
         return "secondary";
       case "active":
         return "success";
+      case "inactive":
+        return "danger";
       default:
         return "warning";
     }
@@ -279,11 +350,24 @@ const ClientsPage = () => {
 
   const getUserName = (userId) => {
     if (!userId) return null;
-    const user = users.find((u) => u.id === userId);
+    const user = (usersData || []).find((u) => u.id === userId);
     return user ? user.name || user.email : "Unknown User";
   };
 
-  const filteredAndSortedClients = clients
+  // Count active filters
+  const activeFilterCount = [
+    statusFilter,
+    accountManagerFilter,
+    adoptionSpecialistFilter
+  ].filter(Boolean).length;
+
+  const handleClearFilters = () => {
+    setStatusFilter("");
+    setAccountManagerFilter("");
+    setAdoptionSpecialistFilter("");
+  };
+
+  const filteredAndSortedClients = (clientsData || [])
     .filter((client) => {
       // Search filter
       const matchesSearch =
@@ -295,7 +379,15 @@ const ClientsPage = () => {
       const matchesStatus =
         !statusFilter || getClientStatus(client) === statusFilter;
 
-      return matchesSearch && matchesStatus;
+      // Account Manager filter
+      const matchesAccountManager =
+        !accountManagerFilter || client.account_manager === accountManagerFilter;
+
+      // Adoption Specialist filter
+      const matchesAdoptionSpecialist =
+        !adoptionSpecialistFilter || client.adoption_specialist === adoptionSpecialistFilter;
+
+      return matchesSearch && matchesStatus && matchesAccountManager && matchesAdoptionSpecialist;
     })
     .sort((a, b) => {
       let aValue, bValue;
@@ -326,7 +418,54 @@ const ClientsPage = () => {
       return 0;
     });
 
-  if (loading) {
+  // Group clients by status
+  const clientsByStatus = useMemo(() => {
+    const grouped = {};
+    filteredAndSortedClients.forEach((client) => {
+      const status = getClientStatus(client);
+      if (!grouped[status]) {
+        grouped[status] = [];
+      }
+      grouped[status].push(client);
+    });
+    return grouped;
+  }, [filteredAndSortedClients]);
+
+  // Order status groups: active and other statuses first, inactive last
+  const statusOrder = ["active", "assessment", "onboarding", "pre-boarding", "inactive"];
+  const orderedStatusGroups = useMemo(() => {
+    const ordered = [];
+    const statusSet = new Set(Object.keys(clientsByStatus));
+    
+    // Add statuses in order (if they exist)
+    statusOrder.forEach((status) => {
+      if (statusSet.has(status)) {
+        ordered.push(status);
+        statusSet.delete(status);
+      }
+    });
+    
+    // Add any remaining statuses
+    statusSet.forEach((status) => {
+      ordered.push(status);
+    });
+    
+    return ordered;
+  }, [clientsByStatus]);
+
+  const toggleStatusGroup = (status) => {
+    setCollapsedStatusGroups((prev) => {
+      const newSet = new Set(prev);
+      if (newSet.has(status)) {
+        newSet.delete(status);
+      } else {
+        newSet.add(status);
+      }
+      return newSet;
+    });
+  };
+
+  if (loadingState) {
     return (
       <DashboardLayout>
         <div className="page-loading">
@@ -364,16 +503,22 @@ const ClientsPage = () => {
               onClick={() => setActiveTab("overview")}
             >
               <PersonIcon />
-              Overview
+              Dashboard
             </button>
             <button
               className={`tab-btn ${activeTab === "meetings" ? "active" : ""}`}
               onClick={() => setActiveTab("meetings")}
             >
               <VideoCallIcon />
-              Meetings
+              Meetings ({clientDetails?.meetings?.length || 0})
             </button>
-
+            <button
+              className={`tab-btn ${activeTab === "action-items" ? "active" : ""}`}
+              onClick={() => setActiveTab("action-items")}
+            >
+              <ActionItemsIcon />
+              Action Items ({clientDetails?.actionItems?.length || 0})
+            </button>
             <button
               className={`tab-btn ${
                 activeTab === "onboarding" ? "active" : ""
@@ -381,28 +526,35 @@ const ClientsPage = () => {
               onClick={() => setActiveTab("onboarding")}
             >
               <OnboardingIcon />
-              Onboarding
+              Company Information
             </button>
-            <button
+            {/* <button
               className={`tab-btn ${activeTab === "workflows" ? "active" : ""}`}
               onClick={() => setActiveTab("workflows")}
             >
               <WorkflowIcon />
               Workflows
-            </button>
+            </button> */}
             <button
               className={`tab-btn ${activeTab === "secrets" ? "active" : ""}`}
               onClick={() => setActiveTab("secrets")}
             >
               <SecurityIcon />
-              Secrets
+              Secrets ({clientDetails?.secrets?.length || 0})
+            </button>
+            <button
+              className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
+              onClick={() => setActiveTab("notes")}
+            >
+              <NotesIcon />
+              Notes
             </button>
           </div>
 
           <div className="client-details-content">
-            {detailsLoading ? (
+            {detailsLoadingState ? (
               <div className="details-loading">
-                <LoadingSpinner message="Loading client details..." />
+                <LoadingSpinner message="Loading client details and meetings... This may take up to 2 minutes." />
               </div>
             ) : (
               <>
@@ -416,13 +568,19 @@ const ClientsPage = () => {
                     }
                   >
                     <div className="overview-tab">
+                      {/* Main Content Grid */}
                       <div className="overview-cards">
-                        <div className="overview-card">
-                          <h3>Client Information</h3>
+                        <div className="overview-card info-card">
+                          <div className="card-header">
+                            <PersonIcon className="card-header-icon" />
+                            <h3>Client Information</h3>
+                          </div>
                           <div className="info-grid">
                             <div className="client-info-item">
-                              <PersonIcon className="info-icon" />
-                              <div>
+                              <div className="info-item-icon-wrapper">
+                                <PersonIcon className="info-icon" />
+                              </div>
+                              <div className="info-item-content">
                                 <label>Name</label>
                                 <span>
                                   {selectedClient.name || "Not provided"}
@@ -430,30 +588,32 @@ const ClientsPage = () => {
                               </div>
                             </div>
 
-                            <div className="client-info-item">
-                              <WebsiteIcon className="info-icon" />
-                              <div>
-                                <label>Website</label>
-                                <span>
-                                  {selectedClient.website ? (
+                            {selectedClient.website && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <WebsiteIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Website</label>
+                                  <span>
                                     <a
                                       href={selectedClient.website}
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="website-link"
                                     >
-                                      {selectedClient.website}
+                                      {selectedClient.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
                                     </a>
-                                  ) : (
-                                    "Not provided"
-                                  )}
-                                </span>
+                                  </span>
+                                </div>
                               </div>
-                            </div>
+                            )}
 
                             <div className="client-info-item">
-                              <AccountManagerIcon className="info-icon" />
-                              <div>
+                              <div className="info-item-icon-wrapper">
+                                <AccountManagerIcon className="info-icon" />
+                              </div>
+                              <div className="info-item-content">
                                 <label>Account Manager</label>
                                 <span>
                                   {getUserName(
@@ -464,8 +624,10 @@ const ClientsPage = () => {
                             </div>
 
                             <div className="client-info-item">
-                              <AdoptionSpecialistIcon className="info-icon" />
-                              <div>
+                              <div className="info-item-icon-wrapper">
+                                <AdoptionSpecialistIcon className="info-icon" />
+                              </div>
+                              <div className="info-item-content">
                                 <label>Adoption Specialist</label>
                                 <span>
                                   {getUserName(
@@ -474,92 +636,211 @@ const ClientsPage = () => {
                                 </span>
                               </div>
                             </div>
-                          </div>
-                        </div>
 
-                        <div className="overview-card">
-                          <h3>Statistics</h3>
-                          <div className="stats-grid">
-                            <div className="stat-item">
-                              <VideoCallIcon className="stat-icon meetings" />
-                              <div>
-                                <span className="stat-number">
-                                  {clientDetails?.meetings?.length || 0}
-                                </span>
-                                <label>Meetings</label>
+                            {selectedClient.plan_details && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <PlanIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Plan Details</label>
+                                  <span>
+                                    {selectedClient.plan_details.replace(/_/g, ' ').replace(/AI /g, 'AI ')}
+                                  </span>
+                                </div>
                               </div>
-                            </div>
+                            )}
 
-                            <div className="stat-item">
-                              <WorkflowIcon className="stat-icon workflows" />
-                              <div>
-                                <span className="stat-number">
-                                  {clientDetails?.workflows?.length || 0}
-                                </span>
-                                <label>Workflows</label>
+                            {selectedClient.communication_tool && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <CommunicationIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Communication Tool</label>
+                                  <span>{selectedClient.communication_tool}</span>
+                                </div>
                               </div>
-                            </div>
-                            <div className="stat-item">
-                              <SecurityIcon className="stat-icon secrets" />
-                              <div>
-                                <span className="stat-number">
-                                  {clientDetails?.secrets?.length || 0}
-                                </span>
-                                <label>Secrets</label>
-                              </div>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
+                            )}
 
-                      {/* Recent Activity Section */}
-                      <div className="recent-activity-section">
-                        <h3>Recent Activity</h3>
-                        <div className="activity-cards">
-                          {/* Recent Meetings */}
-                          <div className="activity-card">
-                            <div className="activity-header">
-                              <VideoCallIcon className="activity-icon meetings" />
-                              <h4>Recent Meetings</h4>
-                              <button
-                                className="view-all-btn"
-                                onClick={() => setActiveTab("meetings")}
-                              >
-                                View All
-                              </button>
-                            </div>
-                            <div className="activity-content">
-                              {clientDetails?.meetings?.length > 0 ? (
-                                clientDetails.meetings
-                                  .slice(0, 3)
-                                  .map((meeting) => (
-                                    <div
-                                      key={meeting.id}
-                                      className="activity-item"
+                            {selectedClient.ai_executor && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <AIExecutorIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>AI Executor</label>
+                                  <span>
+                                    {getUserName(selectedClient.ai_executor) || "Not assigned"}
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {(selectedClient.assessment_start_date || selectedClient.assessment_end_date) && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <DateIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Assessment Period</label>
+                                  <span>
+                                    {selectedClient.assessment_start_date && selectedClient.assessment_end_date
+                                      ? `${new Date(selectedClient.assessment_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(selectedClient.assessment_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                      : selectedClient.assessment_start_date
+                                      ? `From ${new Date(selectedClient.assessment_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                      : `Until ${new Date(selectedClient.assessment_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
+                                    }
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedClient.document_link && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <LinkIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Drive Link</label>
+                                  <span>
+                                    <a
+                                      href={selectedClient.document_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="website-link"
                                     >
-                                      <div className="activity-item-info">
-                                        <h5>
-                                          {meeting.meeting_name ||
-                                            meeting.title ||
-                                            `Meeting #${
-                                              meeting.id?.slice(-8) || "Unknown"
-                                            }`}
-                                        </h5>
-                                        <span className="activity-date">
-                                          {new Date(
-                                            meeting.created_at
-                                          ).toLocaleDateString()}
+                                      View Drive
+                                    </a>
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {selectedClient.task_audit_sheet_link && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <AuditIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Task Audit Sheet</label>
+                                  <span>
+                                    <a
+                                      href={selectedClient.task_audit_sheet_link}
+                                      target="_blank"
+                                      rel="noopener noreferrer"
+                                      className="website-link"
+                                    >
+                                      View Audit Sheet
+                                    </a>
+                                  </span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Recent Activity Section */}
+                        <div className="overview-card activity-card-main">
+                          <div className="card-header">
+                            <VideoCallIcon className="card-header-icon" />
+                            <h3>Recent Activity</h3>
+                            <button
+                              className="view-all-btn"
+                              onClick={() => setActiveTab("meetings")}
+                            >
+                              View All
+                            </button>
+                          </div>
+                          <div className="activity-content">
+                            {clientDetails?.meetings?.length > 0 ? (
+                              clientDetails.meetings
+                                .slice(0, 3)
+                                .map((meeting, index) => (
+                                  <div
+                                    key={meeting.id}
+                                    className="activity-item"
+                                    onClick={() => handleMeetingSelect(meeting)}
+                                  >
+                                    <div className="activity-item-bullet"></div>
+                                    <div className="activity-item-content">
+                                      <h5>
+                                        {meeting.meeting_name ||
+                                          meeting.title ||
+                                          `Meeting #${
+                                            meeting.id?.slice(-8) || "Unknown"
+                                          }`}
+                                      </h5>
+                                      <span className="activity-date">
+                                        {new Date(
+                                          meeting.created_at
+                                        ).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric'
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="activity-empty">
+                                <VideoCallIcon className="empty-icon" />
+                                <p>No meetings yet</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Recent Action Items Section */}
+                        <div className="overview-card action-items-card-main">
+                          <div className="card-header">
+                            <ActionItemsIcon className="card-header-icon" />
+                            <h3>Recent Action Items</h3>
+                            <button
+                              className="view-all-btn"
+                              onClick={() => setActiveTab("action-items")}
+                            >
+                              View All
+                            </button>
+                          </div>
+                          <div className="activity-content">
+                            {clientDetails?.actionItems?.length > 0 ? (
+                              clientDetails.actionItems
+                                .slice(0, 3)
+                                .map((item, index) => (
+                                  <div
+                                    key={item.id}
+                                    className="activity-item"
+                                    onClick={() => setActiveTab("action-items")}
+                                  >
+                                    <div className="activity-item-bullet"></div>
+                                    <div className="activity-item-content">
+                                      <h5>
+                                        {item.message || item.task || `Action Item #${item.id?.slice(-8) || "Unknown"}`}
+                                      </h5>
+                                      <div className="task-meta">
+                                        <span className={`status-badge status-${item.status || "open"}`}>
+                                          {item.status === "completed" ? "Done" : 
+                                           item.status === "in_progress" ? "In Progress" : "Open"}
                                         </span>
+                                        {item.due_date && (
+                                          <span className="activity-date">
+                                            Due {new Date(item.due_date).toLocaleDateString('en-US', { 
+                                              month: 'short', 
+                                              day: 'numeric'
+                                            })}
+                                          </span>
+                                        )}
                                       </div>
                                     </div>
-                                  ))
-                              ) : (
-                                <div className="activity-empty">
-                                  <VideoCallIcon className="empty-icon" />
-                                  <p>No meetings yet</p>
-                                </div>
-                              )}
-                            </div>
+                                  </div>
+                                ))
+                            ) : (
+                              <div className="activity-empty">
+                                <ActionItemsIcon className="empty-icon" />
+                                <p>No action items yet</p>
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
@@ -569,7 +850,7 @@ const ClientsPage = () => {
 
                 {activeTab === "meetings" && (
                   <PermissionGuard
-                    permissions={["read_meeting"]}
+                    permissions={[PERMISSIONS.READ_MEETING]}
                     fallback={
                       <div className="access-denied-message">
                         <p>You don't have permission to view meetings.</p>
@@ -584,17 +865,42 @@ const ClientsPage = () => {
                           onAddMeeting={handleAddMeeting}
                           onEditMeeting={handleEditMeeting}
                           onDeleteMeeting={handleDeleteMeeting}
-                          loading={detailsLoading}
+                          loading={detailsLoadingState}
                         />
                       ) : (
                         <MeetingDetails
                           meetingId={selectedMeeting?.id}
+                          meeting={fullMeetingDetails || selectedMeeting}
                           onBack={handleBackToMeetings}
                           onEdit={handleEditMeeting}
                           onDelete={handleDeleteMeeting}
                           clientName={selectedClient?.name}
                         />
                       )}
+                    </div>
+                  </PermissionGuard>
+                )}
+
+                {activeTab === "action-items" && (
+                  <PermissionGuard
+                    permissions={[PERMISSIONS.READ_TASK]}
+                    fallback={
+                      <div className="access-denied-message">
+                        <p>You don't have permission to view action items.</p>
+                      </div>
+                    }
+                  >
+                    <div className="action-items-tab">
+                      <ActionItemsList
+                        actionItems={clientDetails?.actionItems || []}
+                        onRefresh={() => {
+                          queryClient.invalidateQueries({ queryKey: ['action-items'] });
+                        }}
+                        meetings={clientDetails?.meetings || []}
+                        clients={clientsData || []}
+                        users={usersData || []}
+                        hideClientColumn={true}
+                      />
                     </div>
                   </PermissionGuard>
                 )}
@@ -608,20 +914,31 @@ const ClientsPage = () => {
                   </div>
                 )}
 
-                {activeTab === "workflows" && (
+                {/* {activeTab === "workflows" && (
                   <div className="workflows-tab">
                     <WorkflowManager
                       clientId={selectedClient.id}
                       clientName={selectedClient.name}
                     />
                   </div>
-                )}
+                )} */}
 
                 {activeTab === "secrets" && (
                   <div className="secrets-tab">
                     <SecretsManager
                       clientId={selectedClient.id}
                       clientName={selectedClient.name}
+                    />
+                  </div>
+                )}
+
+                {activeTab === "notes" && (
+                  <div className="notes-tab">
+                    <ClientNotes
+                      clientId={selectedClient.id}
+                      onNotesUpdate={() => {
+                        queryClient.invalidateQueries({ queryKey: ['clients', 'notes', selectedClient.id] });
+                      }}
                     />
                   </div>
                 )}
@@ -646,45 +963,108 @@ const ClientsPage = () => {
   return (
     <DashboardLayout>
       <div className="clients-page">
-        <div className="page-header">
-          <div className="page-title-section">
-            <h1 className="page-title">
-              <PeopleIcon className="page-icon" />
-              Manage Clients
-            </h1>
-            <p className="page-subtitle">
-              Manage your client information, assignments, and relationships
-            </p>
-          </div>
-          <PermissionGuard permissions={["create_client"]}>
-            <button className="btn btn-primary" onClick={handleAddClient}>
-              <AddIcon />
-              Add New Client
+        {/* Compact Controls Bar */}
+        <div className="compact-controls-bar">
+          <div className="controls-left">
+            <div className="search-input-wrapper">
+              <SearchIcon className="search-icon" />
+              <input
+                type="text"
+                placeholder="Search clients..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="search-input"
+              />
+            </div>
+            <button
+              className={`filter-btn ${activeFilterCount > 0 ? "active" : ""}`}
+              onClick={() => setShowFilterPopup(!showFilterPopup)}
+            >
+              <FilterIcon />
+              Filters
+              {activeFilterCount > 0 && (
+                <span className="filter-badge">{activeFilterCount}</span>
+              )}
             </button>
-          </PermissionGuard>
+            <div className="sort-group">
+              <select
+                className="sort-select"
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value)}
+              >
+                <option value="name">Sort by Name</option>
+                <option value="email">Sort by Email</option>
+                <option value="company">Sort by Company</option>
+                <option value="created">Sort by Date Added</option>
+              </select>
+              <button
+                className={`sort-order-btn ${
+                  sortOrder === "desc" ? "desc" : "asc"
+                }`}
+                onClick={() =>
+                  setSortOrder(sortOrder === "asc" ? "desc" : "asc")
+                }
+                title={`Sort ${
+                  sortOrder === "asc" ? "Descending" : "Ascending"
+                }`}
+              >
+                {sortOrder === "asc" ? "↑" : "↓"}
+              </button>
+            </div>
+          </div>
+          <div className="controls-right">
+            <div className="results-info">
+              <span className="results-count">
+                {filteredAndSortedClients.length} of {clientsData?.length || 0} clients
+              </span>
+            </div>
+            <div className="view-toggle">
+              <button
+                className={`view-toggle-btn ${viewMode === "grid" ? "active" : ""}`}
+                onClick={() => setViewMode("grid")}
+                title="Grid View"
+              >
+                <GridViewIcon />
+              </button>
+              <button
+                className={`view-toggle-btn ${viewMode === "table" ? "active" : ""}`}
+                onClick={() => setViewMode("table")}
+                title="Table View"
+              >
+                <TableViewIcon />
+              </button>
+            </div>
+            <PermissionGuard permissions={["create_client"]}>
+              <button className="btn btn-primary" onClick={handleAddClient}>
+                <AddIcon />
+                Add
+              </button>
+            </PermissionGuard>
+          </div>
         </div>
 
-        <div className="page-content">
-          <div className="content-header">
-            <div className="search-section">
-              <div className="search-input-wrapper">
-                <SearchIcon className="search-icon" />
-                <input
-                  type="text"
-                  placeholder="Search clients by name, email, or company..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="search-input"
-                />
+        {/* Filter Popup */}
+        {showFilterPopup && (
+          <>
+            <div
+              className="filter-popup-overlay"
+              onClick={() => setShowFilterPopup(false)}
+            />
+            <div className="filter-popup">
+              <div className="filter-popup-header">
+                <h3>Filter Clients</h3>
+                <button
+                  className="close-btn"
+                  onClick={() => setShowFilterPopup(false)}
+                >
+                  <CloseIcon />
+                </button>
               </div>
-            </div>
-
-            <div className="controls-section">
-              <div className="filter-controls">
-                <div className="filter-group">
-                  <FilterIcon className="filter-icon" />
+              <div className="filter-popup-content">
+                <div className="filter-field">
+                  <label>Status</label>
                   <select
-                    className="filter-select"
+                    className="filter-popup-select"
                     value={statusFilter}
                     onChange={(e) => setStatusFilter(e.target.value)}
                   >
@@ -693,125 +1073,216 @@ const ClientsPage = () => {
                     <option value="onboarding">Onboarding</option>
                     <option value="assessment">Assessment</option>
                     <option value="active">Active</option>
+                    <option value="inactive">Inactive</option>
                   </select>
                 </div>
-
-                <div className="sort-group">
-                  <SortIcon className="sort-icon" />
+                <div className="filter-field">
+                  <label>Account Manager</label>
                   <select
-                    className="sort-select"
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
+                    className="filter-popup-select"
+                    value={accountManagerFilter}
+                    onChange={(e) => setAccountManagerFilter(e.target.value)}
                   >
-                    <option value="name">Sort by Name</option>
-                    <option value="email">Sort by Email</option>
-                    <option value="company">Sort by Company</option>
-                    <option value="created">Sort by Date Added</option>
+                    <option value="">All Account Managers</option>
+                    {(usersData || [])
+                      .filter((user) => (clientsData || []).some((client) => client.account_manager === user.id))
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name || user.email}
+                        </option>
+                      ))}
                   </select>
-
-                  <button
-                    className={`sort-order-btn ${
-                      sortOrder === "desc" ? "desc" : "asc"
-                    }`}
-                    onClick={() =>
-                      setSortOrder(sortOrder === "asc" ? "desc" : "asc")
-                    }
-                    title={`Sort ${
-                      sortOrder === "asc" ? "Descending" : "Ascending"
-                    }`}
+                </div>
+                <div className="filter-field">
+                  <label>Adoption Specialist</label>
+                  <select
+                    className="filter-popup-select"
+                    value={adoptionSpecialistFilter}
+                    onChange={(e) => setAdoptionSpecialistFilter(e.target.value)}
                   >
-                    {sortOrder === "asc" ? "↑" : "↓"}
-                  </button>
+                    <option value="">All Adoption Specialists</option>
+                    {(usersData || [])
+                      .filter((user) => (clientsData || []).some((client) => client.adoption_specialist === user.id))
+                      .map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.name || user.email}
+                        </option>
+                      ))}
+                  </select>
                 </div>
               </div>
-
-              <div className="results-info">
-                <span className="results-count">
-                  {filteredAndSortedClients.length} of {clients.length} clients
-                </span>
+              <div className="filter-popup-footer">
+                <button
+                  className="btn btn-secondary"
+                  onClick={handleClearFilters}
+                  disabled={activeFilterCount === 0}
+                >
+                  Clear Filters
+                </button>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => setShowFilterPopup(false)}
+                >
+                  Apply Filters
+                </button>
               </div>
             </div>
-          </div>
+          </>
+        )}
 
-          <div className="clients-grid">
-            {filteredAndSortedClients.length > 0 ? (
-              filteredAndSortedClients.map((client) => {
-                const clientStatus = getClientStatus(client);
+        <div className="page-content">
 
-                return (
-                  <div
-                    key={client.id}
-                    className="client-card"
-                    onClick={() => handleClientSelect(client)}
-                  >
-                    <ClientAvatar client={client} size="medium" />
-                    <div className="client-info">
-                      <h3 className="client-name">
-                        {client.name || "Unnamed Client"}
-                      </h3>
-                      {client.company && (
-                        <p className="client-company">
-                          <BusinessIcon className="company-icon" />
-                          {client.company}
-                        </p>
-                      )}
-                      <div className="client-meta">
-                        <span className={`client-status ${clientStatus}`}>
-                          {getStatusLabel(clientStatus)}
-                        </span>
-                        <span className="client-date">
-                          Added{" "}
-                          {new Date(
-                            client.created_at || Date.now()
-                          ).toLocaleDateString()}
-                        </span>
+          {viewMode === "grid" ? (
+            <div className="clients-grouped-container">
+              {orderedStatusGroups.length > 0 ? (
+                orderedStatusGroups
+                  .filter((status) => {
+                    const clients = clientsByStatus[status] || [];
+                    return clients.length > 0;
+                  })
+                  .map((status) => {
+                    const clients = clientsByStatus[status] || [];
+                    const isCollapsed = collapsedStatusGroups.has(status);
+                    const isInactive = status === "inactive";
+
+                  return (
+                    <div key={status} className="status-group">
+                      <div 
+                        className={`status-group-header ${isInactive ? 'inactive-group' : ''}`}
+                        onClick={isInactive ? () => toggleStatusGroup(status) : undefined}
+                        style={isInactive ? { cursor: 'pointer' } : {}}
+                      >
+                        <div className="status-group-title">
+                          <h3 className="status-group-name">
+                            {getStatusLabel(status)}
+                          </h3>
+                          <span className="status-group-count">
+                            ({clients.length})
+                          </span>
+                        </div>
+                        {isInactive && (
+                          <button 
+                            className="status-group-toggle"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleStatusGroup(status);
+                            }}
+                          >
+                            {isCollapsed ? <ExpandMoreIcon /> : <ExpandLessIcon />}
+                          </button>
+                        )}
                       </div>
+                      {(!isInactive || !isCollapsed) && (
+                        <div className="clients-grid">
+                          {clients.map((client) => {
+                            const clientStatus = getClientStatus(client);
+
+                            return (
+                              <div
+                                key={client.id}
+                                className="client-card-modern"
+                                onClick={() => handleClientSelect(client)}
+                              >
+                                <div className="client-card-header">
+                                  <div className="client-card-header-left">
+                                    <ClientAvatar client={client} size="medium" />
+                                    <div className="client-card-title-section">
+                                      <h3 className="client-name-modern">
+                                        {client.name || "Unnamed Client"}
+                                      </h3>
+                                      {client.company && (
+                                        <p className="client-company-modern">
+                                          {client.company}
+                                        </p>
+                                      )}
+                                    </div>
+                                  </div>
+                                  <div className="client-card-status-badge">
+                                    <span className={`client-status-modern ${clientStatus}`}>
+                                      {getStatusLabel(clientStatus)}
+                                    </span>
+                                  </div>
+                                </div>
+                                
+                                <div className="client-card-body">
+                                  <div className="client-card-assignments">
+                                    <div className="assignment-item-modern">
+                                      <AccountManagerIcon className="assignment-icon-modern" />
+                                      <span className={`assignment-text ${!getUserName(client.account_manager) ? 'unassigned' : ''}`}>
+                                        {getUserName(client.account_manager) || "Unassigned"}
+                                      </span>
+                                    </div>
+                                    <div className="assignment-item-modern">
+                                      <AdoptionSpecialistIcon className="assignment-icon-modern" />
+                                      <span className={`assignment-text ${!getUserName(client.adoption_specialist) ? 'unassigned' : ''}`}>
+                                        {getUserName(client.adoption_specialist) || "Unassigned"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <div className="client-card-footer">
+                                  <div className="client-card-date">
+                                    <DateIcon className="date-icon-modern" />
+                                    <span>
+                                      {new Date(client.created_at || Date.now()).toLocaleDateString('en-US', {
+                                        month: 'short',
+                                        day: 'numeric',
+                                        year: 'numeric'
+                                      })}
+                                    </span>
+                                  </div>
+                                  <div
+                                    className="client-card-actions"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <PermissionGuard permissions={["read_client"]}>
+                                      <button
+                                        className="card-action-btn"
+                                        title="View Details"
+                                        onClick={() => handleClientSelect(client)}
+                                      >
+                                        <VisibilityIcon />
+                                      </button>
+                                    </PermissionGuard>
+                                    <PermissionGuard permissions={["update_client"]}>
+                                      <button
+                                        className="card-action-btn"
+                                        title="Edit Client"
+                                        onClick={() => handleEditClient(client)}
+                                      >
+                                        <EditIcon />
+                                      </button>
+                                    </PermissionGuard>
+                                    <PermissionGuard permissions={["delete_client"]}>
+                                      <button
+                                        className="card-action-btn delete"
+                                        title="Delete Client"
+                                        onClick={() => handleDeleteClient(client)}
+                                      >
+                                        <DeleteIcon />
+                                      </button>
+                                    </PermissionGuard>
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      )}
                     </div>
-                    <div
-                      className="client-actions"
-                      onClick={(e) => e.stopPropagation()}
-                    >
-                      <PermissionGuard permissions={["update_client"]}>
-                        <button
-                          className="client-action-btn edit"
-                          title="Edit Client"
-                          onClick={() => handleEditClient(client)}
-                        >
-                          <EditIcon />
-                        </button>
-                      </PermissionGuard>
-                      <PermissionGuard permissions={["read_client"]}>
-                        <button
-                          className="client-action-btn view"
-                          title="View Details"
-                          onClick={() => handleClientSelect(client)}
-                        >
-                          <VisibilityIcon />
-                        </button>
-                      </PermissionGuard>
-                      <PermissionGuard permissions={["delete_client"]}>
-                        <button
-                          className="client-action-btn delete"
-                          title="Delete Client"
-                          onClick={() => handleDeleteClient(client)}
-                        >
-                          <DeleteIcon />
-                        </button>
-                      </PermissionGuard>
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
+                  );
+                })
+              ) : (
               <div className="empty-state">
                 <PeopleIcon className="empty-icon" />
                 <h3>No Clients Found</h3>
                 <p>
-                  {searchTerm || statusFilter
+                  {searchTerm || statusFilter || accountManagerFilter || adoptionSpecialistFilter
                     ? `No clients match your current filters. Try adjusting your search criteria.`
                     : "Start by adding your first client to get started with the CMS."}
                 </p>
-                {!searchTerm && !statusFilter && (
+                {!searchTerm && !statusFilter && !accountManagerFilter && !adoptionSpecialistFilter && (
                   <PermissionGuard permissions={["create_client"]}>
                     <button
                       className="btn btn-primary"
@@ -822,12 +1293,14 @@ const ClientsPage = () => {
                     </button>
                   </PermissionGuard>
                 )}
-                {(searchTerm || statusFilter) && (
+                {(searchTerm || statusFilter || accountManagerFilter || adoptionSpecialistFilter) && (
                   <button
                     className="btn btn-secondary"
                     onClick={() => {
                       setSearchTerm("");
                       setStatusFilter("");
+                      setAccountManagerFilter("");
+                      setAdoptionSpecialistFilter("");
                     }}
                   >
                     Clear Filters
@@ -836,6 +1309,154 @@ const ClientsPage = () => {
               </div>
             )}
           </div>
+          ) : (
+            <div className="clients-table-wrapper">
+              <table className="clients-table">
+                <thead>
+                  <tr>
+                    <th className="table-header-client">Client</th>
+                    <th className="table-header-assignments">Account Manager</th>
+                    <th className="table-header-assignments">Adoption Specialist</th>
+                    <th className="table-header-status">Status</th>
+                    <th className="table-header-date">Added Date</th>
+                    <th className="table-header-actions">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filteredAndSortedClients.length > 0 ? (
+                    filteredAndSortedClients.map((client) => {
+                      const clientStatus = getClientStatus(client);
+                      return (
+                        <tr
+                          key={client.id}
+                          className="client-table-row"
+                          onClick={() => handleClientSelect(client)}
+                        >
+                          <td className="client-name-cell">
+                            <div className="client-name-content">
+                              <ClientAvatar client={client} size="small" />
+                              <div className="client-name-info">
+                                <span className="client-name-text">
+                                  {client.name || "Unnamed Client"}
+                                </span>
+                                {client.company && (
+                                  <span className="client-company-text">
+                                    {client.company}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          </td>
+                          <td className="client-assignment-cell">
+                            <div className="client-assignment-content">
+                              <AccountManagerIcon className="assignment-icon-small" />
+                              <span>
+                                {getUserName(client.account_manager) || "Unassigned"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="client-assignment-cell">
+                            <div className="client-assignment-content">
+                              <AdoptionSpecialistIcon className="assignment-icon-small" />
+                              <span>
+                                {getUserName(client.adoption_specialist) || "Unassigned"}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="client-status-cell">
+                            <span className={`client-status ${clientStatus}`}>
+                              {getStatusLabel(clientStatus)}
+                            </span>
+                          </td>
+                          <td className="client-date-cell">
+                            <div className="client-date-content">
+                              <DateIcon className="client-date-icon" />
+                              <span>
+                                {new Date(client.created_at || Date.now()).toLocaleDateString('en-US', {
+                                  month: 'short',
+                                  day: 'numeric',
+                                  year: 'numeric'
+                                })}
+                              </span>
+                            </div>
+                          </td>
+                          <td className="client-actions-cell">
+                            <div className="client-table-actions" onClick={(e) => e.stopPropagation()}>
+                              <PermissionGuard permissions={["update_client"]}>
+                                <button
+                                  className="action-btn edit"
+                          title="Edit Client"
+                          onClick={() => handleEditClient(client)}
+                        >
+                          <EditIcon />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permissions={["read_client"]}>
+                        <button
+                                  className="action-btn view"
+                          title="View Details"
+                          onClick={() => handleClientSelect(client)}
+                        >
+                          <VisibilityIcon />
+                        </button>
+                      </PermissionGuard>
+                      <PermissionGuard permissions={["delete_client"]}>
+                        <button
+                                  className="action-btn delete"
+                          title="Delete Client"
+                          onClick={() => handleDeleteClient(client)}
+                        >
+                          <DeleteIcon />
+                        </button>
+                      </PermissionGuard>
+                    </div>
+                          </td>
+                        </tr>
+                );
+              })
+            ) : (
+                    <tr>
+                      <td colSpan={6} className="empty-table-cell">
+              <div className="empty-state">
+                <PeopleIcon className="empty-icon" />
+                <h3>No Clients Found</h3>
+                <p>
+                  {searchTerm || statusFilter || accountManagerFilter || adoptionSpecialistFilter
+                    ? `No clients match your current filters. Try adjusting your search criteria.`
+                    : "Start by adding your first client to get started with the CMS."}
+                </p>
+                {!searchTerm && !statusFilter && !accountManagerFilter && !adoptionSpecialistFilter && (
+                  <PermissionGuard permissions={["create_client"]}>
+                    <button
+                      className="btn btn-primary"
+                      onClick={handleAddClient}
+                    >
+                      <AddIcon />
+                      Add Your First Client
+                    </button>
+                  </PermissionGuard>
+                )}
+                {(searchTerm || statusFilter || accountManagerFilter || adoptionSpecialistFilter) && (
+                  <button
+                    className="btn btn-secondary"
+                    onClick={() => {
+                      setSearchTerm("");
+                      setStatusFilter("");
+                      setAccountManagerFilter("");
+                      setAdoptionSpecialistFilter("");
+                    }}
+                  >
+                    Clear Filters
+                  </button>
+                )}
+              </div>
+                      </td>
+                    </tr>
+            )}
+                </tbody>
+              </table>
+          </div>
+          )}
         </div>
 
         {/* Client Form Modal - Available in both views */}

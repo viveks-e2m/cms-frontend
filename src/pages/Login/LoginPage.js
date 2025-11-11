@@ -53,6 +53,7 @@ const LoginPage = () => {
 
         <div className="login-footer">
           <p>© 2025 CMS Dashboard. All rights reserved.</p>
+          <p>Version 1.0.1 | Dt. 04/11/2025 | Time 03:16 PM</p>
         </div>
       </div>
     </div>

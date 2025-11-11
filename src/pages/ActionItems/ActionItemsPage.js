@@ -1,102 +1,126 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useMemo, useEffect } from "react";
+import { useLocation } from "react-router-dom";
 import {
-  Assignment as ActionItemsIcon,
   Refresh as RefreshIcon,
   Search as SearchIcon,
   FilterList as FilterIcon,
-  Person as PersonIcon,
   ViewList as ListViewIcon,
   ViewModule as KanbanViewIcon,
+  Add as AddIcon,
+  Close as CloseIcon,
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import {
   ActionItemsList,
   ActionItemsKanban,
+  ActionItemForm,
 } from "../../components/ActionItems";
-import { openPointsAPI, clientAPI, meetingAPI } from "../../utils/apiServices";
+import { useActionItems, useClients, useUsers } from "../../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
+import { getStatusOptions } from "../../utils/statusUtils";
+
 import "./ActionItemsPage.css";
 
 const ActionItemsPage = () => {
+  const location = useLocation();
   const { showSuccess, showError } = useNotificationContext();
+  const queryClient = useQueryClient();
 
-  const [actionItems, setActionItems] = useState([]);
-  const [clients, setClients] = useState([]);
-  const [meetings, setMeetings] = useState([]);
-  const [users, setUsers] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState("all");
   const [clientFilter, setClientFilter] = useState("all");
+  const [taskOwnerFilter, setTaskOwnerFilter] = useState("all");
+  const [assigneeFilter, setAssigneeFilter] = useState("all");
   const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
+  const [showActionItemForm, setShowActionItemForm] = useState(false);
+  const [showFilterPopup, setShowFilterPopup] = useState(false);
 
-  useEffect(() => {
-    loadData();
-  }, []);
+  // Prepare filters for query
+  const currentFilters = useMemo(() => ({
+    status: statusFilter !== "all" ? statusFilter : undefined,
+    client_id: clientFilter !== "all" ? clientFilter : undefined,
+    task_owner: taskOwnerFilter !== "all" ? taskOwnerFilter : undefined,
+    assignee: assigneeFilter !== "all" ? assigneeFilter : undefined,
+  }), [statusFilter, clientFilter, taskOwnerFilter, assigneeFilter]);
 
-  const loadData = async () => {
-    try {
-      setLoading(true);
+  // Use cached queries
+  const {
+    data: actionItemsData,
+    isLoading: loadingActionItems,
+    error: actionItemsError,
+    refetch: refetchActionItems,
+  } = useActionItems(currentFilters);
 
-      // Load clients and users
-      const [clientsData, usersData] = await Promise.all([
-        clientAPI.getAll(),
-        clientAPI.getAllUsers(),
-      ]);
-      setClients(clientsData || []);
-      setUsers(usersData || []);
+  const {
+    data: clientsData,
+    isLoading: loadingClients,
+    error: clientsError,
+  } = useClients();
 
-      // Load all action items for all clients
-      const allActionItems = [];
-      const allMeetings = [];
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+    error: usersError,
+  } = useUsers();
 
-      for (const client of clientsData || []) {
-        try {
-          const clientActionItems = await openPointsAPI.getByClient(client.id);
-          const clientMeetings = await meetingAPI.getByClient(client.id);
+  const loading = loadingActionItems || loadingClients || loadingUsers;
+  const refreshing = false; // React Query handles refetching
 
-          // Add client info to action items
-          const itemsWithClientInfo = (clientActionItems || []).map((item) => ({
-            ...item,
-            client_name: client.name,
-            client_id: client.id,
-          }));
-
-          allActionItems.push(...itemsWithClientInfo);
-          allMeetings.push(...(clientMeetings || []));
-        } catch (error) {
-          console.error(`Error loading data for client ${client.name}:`, error);
-        }
-      }
-
-      console.log("Loaded action items:", allActionItems);
-      console.log("Loaded meetings:", allMeetings);
-      console.log("Loaded clients:", clientsData);
-      console.log("Loaded users:", usersData);
-
-      setActionItems(allActionItems);
-      setMeetings(allMeetings);
-    } catch (error) {
-      console.error("Error loading action items:", error);
+  // Handle errors
+  React.useEffect(() => {
+    if (actionItemsError) {
       showError("Failed to load action items");
-    } finally {
-      setLoading(false);
     }
-  };
+    if (clientsError) {
+      showError("Failed to load clients");
+    }
+    if (usersError) {
+      showError("Failed to load users");
+    }
+  }, [actionItemsError, clientsError, usersError, showError]);
+
+  // Handle URL parameters on mount and location change
+  useEffect(() => {
+    const searchParams = new URLSearchParams(location.search);
+    const statusParam = searchParams.get('status');
+
+    // Apply status filter from URL
+    if (statusParam) {
+      setStatusFilter(statusParam);
+    }
+  }, [location.search]);
+
+
+  // Process action items with client names
+  const actionItems = useMemo(() => {
+    const clients = clientsData || [];
+    const items = actionItemsData?.items || [];
+    
+    // Create client lookup map
+    const clientMap = clients.reduce((map, client) => {
+      map[client.id] = client.name;
+      return map;
+    }, {});
+
+    // Add client names to action items (only if not already provided by backend)
+    return items.map((item) => ({
+      ...item,
+      client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
+    }));
+  }, [actionItemsData, clientsData]);
 
   const handleRefresh = async () => {
     try {
-      setRefreshing(true);
-      await loadData();
+      await refetchActionItems();
+      queryClient.invalidateQueries({ queryKey: ['clients'] });
+      queryClient.invalidateQueries({ queryKey: ['users'] });
       showSuccess("Action items refreshed successfully");
     } catch (error) {
       showError("Failed to refresh action items");
-    } finally {
-      setRefreshing(false);
     }
   };
 
@@ -104,6 +128,45 @@ const ActionItemsPage = () => {
     setSearchTerm("");
     setStatusFilter("all");
     setClientFilter("all");
+    setTaskOwnerFilter("all");
+    setAssigneeFilter("all");
+  };
+
+  // Count active filters
+  const activeFilterCount = [
+    statusFilter !== "all" ? statusFilter : null,
+    clientFilter !== "all" ? clientFilter : null,
+    taskOwnerFilter !== "all" ? taskOwnerFilter : null,
+    assigneeFilter !== "all" ? assigneeFilter : null,
+  ].filter(Boolean).length;
+
+  const handleStatusFilterChange = (newStatus) => {
+    setStatusFilter(newStatus);
+  };
+
+  const handleClientFilterChange = (newClientId) => {
+    setClientFilter(newClientId);
+  };
+
+  const handleTaskOwnerFilterChange = (newTaskOwnerId) => {
+    setTaskOwnerFilter(newTaskOwnerId);
+  };
+
+  const handleAssigneeFilterChange = (newAssigneeId) => {
+    setAssigneeFilter(newAssigneeId);
+  };
+
+  const handleAddActionItem = () => {
+    setShowActionItemForm(true);
+  };
+
+  const handleActionItemFormSave = () => {
+    setShowActionItemForm(false);
+    // React Query will automatically refetch due to cache invalidation from mutation
+  };
+
+  const handleActionItemFormCancel = () => {
+    setShowActionItemForm(false);
   };
 
   const toggleViewMode = () => {
@@ -112,23 +175,20 @@ const ActionItemsPage = () => {
 
   const filteredActionItems = actionItems.filter((item) => {
     const matchesSearch =
-      item.task?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      item.client_name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      meetings
-        .find((m) => m.id === item.meeting_id)
-        ?.title?.toLowerCase()
-        .includes(searchTerm.toLowerCase());
+      item.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      item.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
 
-    const matchesStatus =
-      statusFilter === "all" || item.status === statusFilter;
-    const matchesClient =
-      clientFilter === "all" || item.client_id === clientFilter;
+    // Task Owner filter (client-side for now)
+    const matchesTaskOwner =
+      taskOwnerFilter === "all" || item.task_owner === taskOwnerFilter;
 
-    return matchesSearch && matchesStatus && matchesClient;
+    // Assignee filter (client-side for now)
+    const matchesAssignee =
+      assigneeFilter === "all" || item.assignee === assigneeFilter;
+
+    // Apply search filter and additional client-side filters
+    return matchesSearch && matchesTaskOwner && matchesAssignee;
   });
-
-  const hasFilters =
-    searchTerm || statusFilter !== "all" || clientFilter !== "all";
 
   if (loading) {
     return (
@@ -140,7 +200,7 @@ const ActionItemsPage = () => {
 
   return (
     <DashboardLayout>
-      <PermissionGuard 
+      <PermissionGuard
         permissions={[PERMISSIONS.READ_TASK]}
         fallback={
           <div className="action-items-page">
@@ -151,55 +211,9 @@ const ActionItemsPage = () => {
         }
       >
         <div className="action-items-page">
-        {/* Header */}
-        <div className="page-header">
-          <div className="page-title-section">
-            <div className="page-title">
-              <ActionItemsIcon className="page-icon" />
-              Action Items
-            </div>
-            <div className="page-subtitle">
-              Manage all action items across meetings and clients
-            </div>
-          </div>
-          <div className="header-actions">
-            <div className="view-toggle">
-              <button
-                className={`btn btn-outline view-btn ${
-                  viewMode === "list" ? "active" : ""
-                }`}
-                onClick={() => setViewMode("list")}
-                title="List View"
-              >
-                <ListViewIcon />
-                List
-              </button>
-              <button
-                className={`btn btn-outline view-btn ${
-                  viewMode === "kanban" ? "active" : ""
-                }`}
-                onClick={() => setViewMode("kanban")}
-                title="Kanban View"
-              >
-                <KanbanViewIcon />
-                Kanban
-              </button>
-            </div>
-            <button
-              className="btn btn-outline refresh-btn"
-              onClick={handleRefresh}
-              disabled={refreshing}
-              title={refreshing ? "Refreshing..." : "Refresh Action Items"}
-            >
-              <RefreshIcon className={refreshing ? "spinning" : ""} />
-            </button>
-          </div>
-        </div>
-
-        {/* Filters */}
-        <div className="filters-card">
-          <div className="filters-content">
-            <div className="search-section">
+          {/* Compact Controls Bar */}
+          <div className="compact-controls-bar">
+            <div className="controls-left">
               <div className="search-input-wrapper">
                 <SearchIcon className="search-icon" />
                 <input
@@ -210,84 +224,215 @@ const ActionItemsPage = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              <button
+                className={`filter-btn ${activeFilterCount > 0 ? "active" : ""}`}
+                onClick={() => setShowFilterPopup(!showFilterPopup)}
+              >
+                <FilterIcon />
+                Filters
+                {activeFilterCount > 0 && (
+                  <span className="filter-badge">{activeFilterCount}</span>
+                )}
+              </button>
             </div>
-            <div className="filter-controls">
-              <div className="filter-group">
-                <FilterIcon className="filter-icon" />
-                <select
-                  className="filter-select"
-                  value={statusFilter}
-                  onChange={(e) => setStatusFilter(e.target.value)}
-                >
-                  <option value="all">All Status</option>
-                  <option value="open">Open</option>
-                  <option value="in_progress">In Progress</option>
-                  <option value="completed">Completed</option>
-                </select>
-              </div>
-              <div className="filter-group">
-                <PersonIcon className="filter-icon" />
-                <select
-                  className="filter-select"
-                  value={clientFilter}
-                  onChange={(e) => setClientFilter(e.target.value)}
-                >
-                  <option value="all">All Clients</option>
-                  {clients.map((client) => (
-                    <option key={client.id} value={client.id}>
-                      {client.name}
-                    </option>
-                  ))}
-                </select>
-              </div>
-              {hasFilters && (
+            <div className="controls-right">
+              <div className="view-toggle">
                 <button
-                  className="btn btn-secondary clear-filters-btn"
-                  onClick={handleClearFilters}
+                  className={`btn btn-outline view-btn ${
+                    viewMode === "list" ? "active" : ""
+                  }`}
+                  onClick={() => setViewMode("list")}
+                  title="List View"
                 >
-                  Clear Filters
+                  <ListViewIcon />
+                  List
                 </button>
-              )}
+                <button
+                  className={`btn btn-outline view-btn ${
+                    viewMode === "kanban" ? "active" : ""
+                  }`}
+                  onClick={() => setViewMode("kanban")}
+                  title="Kanban View"
+                >
+                  <KanbanViewIcon />
+                  Kanban
+                </button>
+              </div>
+              <PermissionGuard permissions={[PERMISSIONS.CREATE_TASK]}>
+                <button
+                  className="btn btn-primary"
+                  onClick={handleAddActionItem}
+                  disabled={loading}
+                >
+                  <AddIcon />
+                  Add
+                </button>
+              </PermissionGuard>
+              <button
+                className="btn btn-outline refresh-btn"
+                onClick={handleRefresh}
+                disabled={refreshing || loading}
+                title={refreshing ? "Refreshing..." : "Refresh Action Items"}
+              >
+                <RefreshIcon className={refreshing ? "spinning" : ""} />
+              </button>
             </div>
           </div>
-        </div>
 
-        {/* Action Items Container */}
-        <div
-          className={`action-items-container ${
-            viewMode === "kanban" ? "kanban-mode" : ""
-          }`}
-        >
-          {viewMode === "list" && (
-            <div className="action-items-header">
-              <div className="header-info">
-                <h3>Action Items</h3>
-                <span className="items-count">
-                  {filteredActionItems.length}{" "}
-                  {filteredActionItems.length === 1 ? "item" : "items"}
-                </span>
+          {/* Filter Popup */}
+          {showFilterPopup && (
+            <>
+              <div
+                className="filter-popup-overlay"
+                onClick={() => setShowFilterPopup(false)}
+              />
+              <div className="filter-popup">
+                <div className="filter-popup-header">
+                  <h3>Filter Action Items</h3>
+                  <button
+                    className="close-btn"
+                    onClick={() => setShowFilterPopup(false)}
+                  >
+                    <CloseIcon />
+                  </button>
+                </div>
+                <div className="filter-popup-content">
+                  <div className="filter-field">
+                    <label>Status</label>
+                    <select
+                      className="filter-popup-select"
+                      value={statusFilter}
+                      onChange={(e) => handleStatusFilterChange(e.target.value)}
+                    >
+                      <option value="all">All Status</option>
+                      {getStatusOptions().map(option => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="filter-field">
+                    <label>Client</label>
+                    <select
+                      className="filter-popup-select"
+                      value={clientFilter}
+                      onChange={(e) => handleClientFilterChange(e.target.value)}
+                    >
+                      <option value="all">All Clients</option>
+                      {(clientsData || []).map((client) => (
+                        <option key={client.id} value={client.id}>
+                          {client.name}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
+                  <div className="filter-field">
+                    <label>Task Owner</label>
+                    <select
+                      className="filter-popup-select"
+                      value={taskOwnerFilter}
+                      onChange={(e) => handleTaskOwnerFilterChange(e.target.value)}
+                    >
+                      <option value="all">All Task Owners</option>
+                      {(usersData || [])
+                        .filter((user) => actionItems.some((item) => item.task_owner === user.id))
+                        .map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.full_name || user.name || user.email}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                  <div className="filter-field">
+                    <label>Assignee</label>
+                    <select
+                      className="filter-popup-select"
+                      value={assigneeFilter}
+                      onChange={(e) => handleAssigneeFilterChange(e.target.value)}
+                    >
+                      <option value="all">All Assignees</option>
+                      {(usersData || [])
+                        .filter((user) => actionItems.some((item) => item.assignee === user.id))
+                        .map((user) => (
+                          <option key={user.id} value={user.id}>
+                            {user.full_name || user.name || user.email}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                </div>
+                <div className="filter-popup-footer">
+                  <button
+                    className="btn btn-secondary"
+                    onClick={handleClearFilters}
+                    disabled={activeFilterCount === 0}
+                  >
+                    Clear Filters
+                  </button>
+                  <button
+                    className="btn btn-primary"
+                    onClick={() => setShowFilterPopup(false)}
+                  >
+                    Apply Filters
+                  </button>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
-          {viewMode === "list" ? (
-            <ActionItemsList
-              actionItems={filteredActionItems}
-              onRefresh={loadData}
-              meetings={meetings}
-              clients={clients}
-              users={users}
-            />
-          ) : (
-            <ActionItemsKanban
-              actionItems={filteredActionItems}
-              onRefresh={loadData}
-              meetings={meetings}
-              clients={clients}
-              users={users}
-            />
-          )}
-        </div>
+          {/* Action Items Container */}
+          <div
+            className={`action-items-container ${
+              viewMode === "kanban" ? "kanban-mode" : ""
+            }`}
+          >
+            {viewMode === "list" && (
+              <div className="action-items-header">
+                <div className="header-info">
+                  <h3>Action Items</h3>
+                  <span className="items-count">
+                    {filteredActionItems.length}{" "}
+                    {filteredActionItems.length === 1 ? "item" : "items"}
+                  </span>
+                </div>
+              </div>
+            )}
+
+            {viewMode === "list" ? (
+              <ActionItemsList
+                actionItems={filteredActionItems}
+                onRefresh={handleRefresh}
+                clients={clientsData || []}
+                users={usersData || []}
+              />
+            ) : (
+              <ActionItemsKanban
+                actionItems={filteredActionItems}
+                onRefresh={handleRefresh}
+                clients={clientsData || []}
+                users={usersData || []}
+              />
+            )}
+
+            {/* Summary Info */}
+            <div className="summary-section">
+              <p className="summary-info">
+                Showing {filteredActionItems.length} action items from the last
+                15 days
+              </p>
+            </div>
+          </div>
+
+          {/* Action Item Form Modal */}
+          <ActionItemForm
+            isOpen={showActionItemForm}
+            onSave={handleActionItemFormSave}
+            onCancel={handleActionItemFormCancel}
+            clients={clientsData || []}
+            meetings={[]}
+            users={usersData || []}
+          />
         </div>
       </PermissionGuard>
     </DashboardLayout>

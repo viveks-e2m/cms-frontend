@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import {
   ArrowBack as ArrowBackIcon,
   Edit as EditIcon,
@@ -9,48 +9,46 @@ import {
   Notes as NotesIcon,
   RecordVoiceOver as TranscriptIcon,
   Assignment as AssignmentIcon,
+  Description as MomIcon,
 } from "@mui/icons-material";
-import { meetingAPI } from "../../../utils/apiServices";
+import { useMeeting } from "../../../hooks/useQueries";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
 import TranscriptDisplay from "../TranscriptDisplay/TranscriptDisplay";
 import MarkdownSummary from "../MarkdownSummary/MarkdownSummary";
 import ActionItems from "../ActionItems/ActionItems";
+import MinutesOfMeeting from "../MinutesOfMeeting/MinutesOfMeeting";
 import { PermissionGuard } from "../../PermissionGuard";
 import { PERMISSIONS } from "../../../constants/permissions";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
   meetingId,
+  meeting: propMeeting,
   onBack,
   onEdit,
   onDelete,
   clientName,
 }) => {
-  const [meeting, setMeeting] = useState(null);
-  const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("details");
   const { showError } = useNotificationContext();
 
-  useEffect(() => {
-    if (meetingId) {
-      loadMeetingDetails();
-    }
-  }, [meetingId]);
+  // Use cached query for meeting details
+  const {
+    data: meetingData,
+    isLoading: loading,
+    error,
+  } = useMeeting(meetingId, { enabled: !!meetingId });
 
-  const loadMeetingDetails = async () => {
-    try {
-      setLoading(true);
-      const meetingData = await meetingAPI.getById(meetingId);
-      setMeeting(meetingData);
-    } catch (error) {
+  // Use prop meeting if available, otherwise use query data
+  const meeting = propMeeting || meetingData;
+
+  React.useEffect(() => {
+    if (error) {
       showError("Failed to load meeting details");
-      console.error("Error loading meeting details:", error);
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [error, showError]);
 
   const formatDate = (dateString) => {
     if (!dateString) return "No date set";
@@ -80,7 +78,7 @@ const MeetingDetails = ({
   if (loading) {
     return (
       <div className="meeting-details-loading">
-        <LoadingSpinner message="Loading meeting details..." />
+        <LoadingSpinner message="Loading meeting details... Please wait, this may take up to 2 minutes." />
       </div>
     );
   }
@@ -171,6 +169,13 @@ const MeetingDetails = ({
           Action Items
         </button>
         <button
+          className={`tab-btn ${activeTab === "mom" ? "active" : ""}`}
+          onClick={() => setActiveTab("mom")}
+        >
+          <MomIcon />
+          MoM
+        </button>
+        <button
           className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
           onClick={() => setActiveTab("notes")}
         >
@@ -208,14 +213,27 @@ const MeetingDetails = ({
           <ActionItems
             meetingId={meetingId}
             meeting={meeting}
-            onRefresh={loadMeetingDetails}
+            onRefresh={() => {
+              // React Query will automatically refetch
+            }}
+          />
+        )}
+
+        {activeTab === "mom" && (
+          <MinutesOfMeeting
+            meetingId={meetingId}
+            onContentUpdate={() => {
+              // React Query will automatically refetch
+            }}
           />
         )}
 
         {activeTab === "notes" && (
           <MeetingNotes
             meetingId={meetingId}
-            onNotesUpdate={loadMeetingDetails}
+            onNotesUpdate={() => {
+              // React Query will automatically refetch
+            }}
           />
         )}
       </div>

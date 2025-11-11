@@ -63,6 +63,226 @@
   margin-bottom: 20px;
 }
 
+/* Users Table Section */
+.users-table-section {
+  margin-bottom: 40px;
+  padding: 20px;
+  background: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.users-table-section h3 {
+  color: #1e293b;
+  margin-bottom: 20px;
+  font-size: 1.3rem;
+}
+
+.users-filters {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+
+.admin-panel .search-input {
+  flex: 1;
+  max-width: 300px;
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.role-filter {
+  padding: 8px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  background: white;
+  min-width: 150px;
+}
+
+.users-table-container {
+  background: white;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+.users-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.users-table thead {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.users-table th {
+  padding: 15px 12px;
+  text-align: left;
+  font-weight: 600;
+  font-size: 0.875rem;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.users-table td {
+  padding: 15px 12px;
+  border-bottom: 1px solid #e5e7eb;
+  vertical-align: middle;
+}
+
+.users-table tbody tr:hover {
+  background: #f9fafb;
+}
+
+.user-cell {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.user-avatar {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+.user-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.user-name {
+  font-weight: 500;
+  color: #1f2937;
+  font-size: 0.95rem;
+}
+
+.user-id {
+  font-size: 0.8rem;
+  color: #6b7280;
+  font-family: 'Monaco', 'Menlo', monospace;
+}
+
+.role-badge {
+  padding: 4px 12px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  display: inline-block;
+}
+
+.role-badge.role-admin {
+  background: #fef2f2;
+  color: #dc2626;
+  border: 1px solid #fecaca;
+}
+
+.role-badge.role-manager {
+  background: #fffbeb;
+  color: #d97706;
+  border: 1px solid #fed7aa;
+}
+
+.role-badge.role-user {
+  background: #f0fdf4;
+  color: #16a34a;
+  border: 1px solid #bbf7d0;
+}
+
+.role-badge.role-none {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.permission-count {
+  color: #6b7280;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.user-actions-buttons {
+  display: flex;
+  gap: 8px;
+}
+
+.btn-small {
+  padding: 6px 12px;
+  border: none;
+  border-radius: 4px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.btn-small.btn-primary {
+  background: #3b82f6;
+  color: white;
+}
+
+.btn-small.btn-primary:hover {
+  background: #2563eb;
+  transform: translateY(-1px);
+}
+
+.btn-small.btn-secondary {
+  background: #f3f4f6;
+  color: #6b7280;
+  border: 1px solid #d1d5db;
+}
+
+.btn-small.btn-secondary:hover {
+  background: #e5e7eb;
+  color: #374151;
+}
+
+.no-users-found {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+  background: #f9fafb;
+  border-radius: 6px;
+  margin: 20px;
+}
+
+/* Manual User Management Section */
+.manual-user-management {
+  margin-top: 30px;
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.manual-user-management h3 {
+  color: #1f2937;
+  margin-bottom: 10px;
+  font-size: 1.2rem;
+}
+
+.manual-user-management > p {
+  color: #6b7280;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+}
+
 .user-selector {
   margin-bottom: 20px;
   padding: 20px;
@@ -334,6 +554,41 @@
   .roles-grid,
   .permissions-grid {
     grid-template-columns: 1fr;
+  }
+
+  /* Users table responsive */
+  .users-filters {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .admin-panel .search-input,
+  .role-filter {
+    max-width: none;
+  }
+
+  .users-table-container {
+    overflow-x: auto;
+  }
+
+  .users-table {
+    min-width: 700px;
+  }
+
+  .user-cell {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .user-actions-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .btn-small {
+    font-size: 0.75rem;
+    padding: 4px 8px;
   }
 }/* Ac
 cess Denied Message */

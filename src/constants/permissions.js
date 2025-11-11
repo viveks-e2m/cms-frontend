@@ -12,6 +12,7 @@ export const PERMISSIONS = {
   UPDATE_CLIENT: 'update_client',
   DELETE_CLIENT: 'delete_client',
   READ_ALL_CLIENTS: 'read_all_clients',
+  READ_ASSIGNED_CLIENTS: 'read_assigned_clients',
 
   // Meeting Management Permissions
   READ_MEETING: 'read_meeting',
@@ -21,11 +22,13 @@ export const PERMISSIONS = {
   READ_ALL_MEETINGS: 'read_all_meetings',
 
   // Task/Action Items Permissions
-  READ_TASK: 'read_open_point',
+  READ_TASK: 'read_open_point',  // Basic permission for sidebar tab visibility
   CREATE_TASK: 'create_open_point',
   UPDATE_TASK: 'update_open_point',
   DELETE_TASK: 'delete_open_point',
   ASSIGN_TASK: 'assign_open_point',
+  READ_ASSIGNED_TASKS: 'read_assigned_open_points',  // See only assigned action items
+  READ_ALL_TASKS: 'read_all_open_points',  // See all action items
 
   // Workflow Management Permissions
   READ_WORKFLOW: 'read_workflow',
@@ -63,6 +66,7 @@ export const PERMISSION_GROUPS = {
     PERMISSIONS.UPDATE_CLIENT,
     PERMISSIONS.DELETE_CLIENT,
     PERMISSIONS.READ_ALL_CLIENTS,
+    PERMISSIONS.READ_ASSIGNED_CLIENTS,
   ],
   
   MEETING_MANAGEMENT: [
@@ -79,6 +83,8 @@ export const PERMISSION_GROUPS = {
     PERMISSIONS.UPDATE_TASK,
     PERMISSIONS.DELETE_TASK,
     PERMISSIONS.ASSIGN_TASK,
+    PERMISSIONS.READ_ASSIGNED_TASKS,
+    PERMISSIONS.READ_ALL_TASKS,
   ],
   
   WORKFLOW_MANAGEMENT: [

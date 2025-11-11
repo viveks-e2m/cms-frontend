@@ -25,7 +25,7 @@ A professional ReactJS frontend application for the CMS project with authenticat
 
 ### Prerequisites
 
-- Node.js 18+
+- Node.js 20+
 - Docker & Docker Compose
 - Backend API running
 

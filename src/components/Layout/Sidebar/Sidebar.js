@@ -56,7 +56,7 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       icon: <WorkflowIcon />,
       label: "n8n Workflows",
       path: "/n8n-workflows",
-      description: "Workflow automation and executions",
+      description: "Coming soon - Workflow automation and executions",
       permissions: [PERMISSIONS.READ_WORKFLOW],
       // roles: ["admin", "ai_intern"],
     },
@@ -66,53 +66,33 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       label: "Admin Panel",
       path: "/admin",
       description: "User and role management",
-      permissions: [PERMISSIONS.ADMIN_ACCESS],
-      // roles: ["admin"],
+      roles: ["admin"], // Only show to admin role, not account_manager
     },
   ];
 
-  // Debug logging for role and permissions
-  console.log("=== Sidebar Debug ===");
-  console.log("Current user:", user);
-  console.log("Current role:", role);
-  console.log("Current permissions:", permissions);
-  console.log("Role name:", role?.name);
+
 
   // Filter menu items based on user permissions and roles
   const visibleMenuItems = menuItems.filter((item) => {
-    console.log(`Checking item: ${item.label}`);
-    console.log(`Item show: ${item.show}`);
-    console.log(`Item roles: ${item.roles}`);
-    console.log(`Item permissions: ${item.permissions}`);
-
-    // Temporary: Show all items if role is not loaded (for debugging)
+    // Show all items if role is not loaded (for debugging)
     if (!role) {
-      console.log(`⚠️ No role loaded, showing all items for debugging`);
       return true;
     }
 
     if (item.show) {
-      console.log(`✅ Showing ${item.label} - marked as always show`);
       return true;
     }
 
     if (item.roles && item.roles.length > 0) {
-      const hasRole = item.roles.includes(role?.name);
-      console.log(
-        `Role check for ${item.label}: ${hasRole} (looking for ${item.roles} in ${role?.name})`
-      );
-      return hasRole;
+      return item.roles.includes(role?.name);
     }
 
     if (item.permissions && item.permissions.length > 0) {
-      const hasPerms = item.permissions.some((permission) =>
+      return item.permissions.some((permission) =>
         hasPermission(permission)
       );
-      console.log(`Permission check for ${item.label}: ${hasPerms}`);
-      return hasPerms;
     }
 
-    console.log(`❌ Hiding ${item.label} - no matching criteria`);
     return false;
   });
 

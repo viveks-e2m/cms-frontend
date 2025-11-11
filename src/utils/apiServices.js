@@ -1,11 +1,25 @@
 import api from "./api";
+import { API_CONFIG } from "../constants/api";
 
 // Helper function to handle API responses
 const handleApiResponse = (response) => {
   const { success, data, error } = response.data;
 
   if (!success) {
-    throw new Error(error?.message || "API request failed");
+    // Extract the most specific error message available
+    let errorMessage = "API request failed";
+    
+    if (error) {
+      if (typeof error === 'string') {
+        errorMessage = error;
+      } else if (error.message) {
+        errorMessage = error.message;
+      } else if (error.details && typeof error.details === 'string') {
+        errorMessage = error.details;
+      }
+    }
+    
+    throw new Error(errorMessage);
   }
 
   return data;
@@ -27,13 +41,16 @@ export const clientAPI = {
 
   // Get recent clients for dashboard (optimized)
   getRecent: async (limit = 5) => {
-    const response = await api.post(`/clients/recent?limit=${limit}`);
+    const queryParams = limit ? `?limit=${limit}` : '';
+    const response = await api.post(`/clients/recent${queryParams}`);
     return handleApiResponse(response);
   },
 
   // Get client by ID
   getById: async (clientId) => {
-    const response = await api.get(`/clients/${clientId}`);
+    const response = await api.get(`/clients/${clientId}`, {
+      timeout: API_CONFIG.LONG_TIMEOUT, // 2 minutes timeout for client details
+    });
     return handleApiResponse(response);
   },
 
@@ -55,7 +72,7 @@ export const clientAPI = {
     const response = await api.get(
       `/clients/${clientId}/fetch_pre_onboarding_info${params}`,
       {
-        timeout: 300000, // 5 minutes timeout for onboarding fetch
+        timeout: 300000, // 5 minutes timeout for onboarding fetch (keep longer for this heavy operation)
       }
     );
     return handleApiResponse(response);
@@ -82,6 +99,23 @@ export const clientAPI = {
     const response = await api.get("/clients/users/all");
     return handleApiResponse(response);
   },
+
+  // Get client statistics for dashboard (optimized)
+  getStatistics: async () => {
+    const response = await api.post("/clients/statistics");
+    return handleApiResponse(response);
+  },
+
+  // Client notes
+  updateNotes: async (clientId, notes) => {
+    const response = await api.put(`/clients/${clientId}/notes`, { client_notes: notes });
+    return handleApiResponse(response);
+  },
+
+  getNotes: async (clientId) => {
+    const response = await api.get(`/clients/${clientId}/notes`);
+    return handleApiResponse(response);
+  },
 };
 
 // Meeting API services
@@ -99,14 +133,27 @@ export const meetingAPI = {
   },
 
   // Get all meetings for client
-  getByClient: async (clientId) => {
-    const response = await api.get(`/clients/${clientId}/meetings`);
+  getByClient: async (clientId, lightweight = false) => {
+    const params = lightweight ? "?lightweight=true" : "";
+    const response = await api.get(`/clients/${clientId}/meetings${params}`, {
+      timeout: lightweight ? API_CONFIG.DEFAULT_TIMEOUT : API_CONFIG.LONG_TIMEOUT,
+    });
+    return handleApiResponse(response);
+  },
+
+  // Get lightweight meeting list for client (optimized for performance)
+  getSummaryByClient: async (clientId) => {
+    const response = await api.get(`/clients/${clientId}/meetings/basic`, {
+      timeout: API_CONFIG.DEFAULT_TIMEOUT,
+    });
     return handleApiResponse(response);
   },
 
   // Get meeting details
   getById: async (meetingId) => {
-    const response = await api.get(`/meetings/${meetingId}`);
+    const response = await api.get(`/meetings/${meetingId}`, {
+      timeout: API_CONFIG.LONG_TIMEOUT, // 2 minutes timeout for meeting details
+    });
     return handleApiResponse(response);
   },
 
@@ -158,6 +205,12 @@ export const openPointsAPI = {
     return handleApiResponse(response);
   },
 
+  // Create manual action item
+  createManual: async (actionItemData) => {
+    const response = await api.post('/open-points/manual', actionItemData);
+    return handleApiResponse(response);
+  },
+
   // Generate open points from Fathom webhook
   generateFromFathomWebhook: async (meetingId, webhookUrl, clientId) => {
     const response = await api.post(
@@ -203,6 +256,20 @@ export const openPointsAPI = {
   // Get open points statistics for dashboard (optimized)
   getStatistics: async () => {
     const response = await api.post("/open-points/statistics");
+    return handleApiResponse(response);
+  },
+
+  // Get recent open points (last 15 days) with caching support
+  getRecentOptimized: async (params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.status && params.status !== "all") queryParams.append("status", params.status);
+    if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
+
+
+    const url = `/open-points/recent${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    const response = await api.post(url, {
+      timeout: API_CONFIG.DEFAULT_TIMEOUT, // Faster timeout for optimized endpoint
+    });
     return handleApiResponse(response);
   },
 };
@@ -335,6 +402,33 @@ export const n8nAPI = {
   // Get all cached workflow details
   getCachedWorkflowDetails: async () => {
     const response = await api.get("/n8n/workflows/details/cached");
+    return handleApiResponse(response);
+  },
+};
+
+// Minutes of Meeting (MoM) API services
+export const momAPI = {
+  // Get MoM by meeting ID
+  getByMeetingId: async (meetingId) => {
+    const response = await api.get(`/meetings/${meetingId}/mom`);
+    return handleApiResponse(response);
+  },
+
+  // Save MoM content
+  save: async (meetingId, momData) => {
+    const response = await api.post(`/meetings/${meetingId}/mom`, momData);
+    return handleApiResponse(response);
+  },
+
+  // Update MoM content
+  update: async (meetingId, momData) => {
+    const response = await api.put(`/meetings/${meetingId}/mom`, momData);
+    return handleApiResponse(response);
+  },
+
+  // Delete MoM
+  delete: async (meetingId) => {
+    const response = await api.delete(`/meetings/${meetingId}/mom`);
     return handleApiResponse(response);
   },
 };

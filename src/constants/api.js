@@ -1,7 +1,41 @@
+// Get API URL from environment variable or runtime config
+const getApiUrl = () => {
+  // First try environment variable (build-time)
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Then try runtime config
+  if (window.APP_CONFIG && window.APP_CONFIG.API_URL) {
+    return window.APP_CONFIG.API_URL;
+  }
+  
+  // Fallback - use the backend URL directly
+  return 'https://py-cms.sitepreviews.dev';
+};
+
+// Create a function to get API URL dynamically (for runtime updates)
+const getDynamicApiUrl = () => {
+  // Check runtime config first (in case it was loaded after initial module load)
+  if (window.APP_CONFIG && window.APP_CONFIG.API_URL) {
+    return window.APP_CONFIG.API_URL;
+  }
+  
+  // Then check environment variable
+  if (process.env.REACT_APP_API_URL) {
+    return process.env.REACT_APP_API_URL;
+  }
+  
+  // Fallback
+  return 'https://py-cms.sitepreviews.dev';
+};
+
 // API Configuration Constants
 export const API_CONFIG = {
-  BASE_URL: process.env.REACT_APP_API_URL || 'https://py-cms.sitepreviews.dev',
-  TIMEOUT: 10000,
+  BASE_URL: getApiUrl(),
+  DYNAMIC_BASE_URL: getDynamicApiUrl, // Function to get URL at runtime
+  TIMEOUT: 30000, // Increased from 10s to 30s for general requests
+  LONG_TIMEOUT: 120000, // 2 minutes for client/meeting data loading
   RETRY_ATTEMPTS: 3,
   RETRY_DELAY: 1000
 };
