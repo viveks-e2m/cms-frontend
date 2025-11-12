@@ -545,13 +545,14 @@ const ClientsPage = () => {
               <WorkflowIcon />
               Workflows
             </button> */}
-            <button
+            {/* Temporarily hidden - Secrets tab */}
+            {/* <button
               className={`tab-btn ${activeTab === "secrets" ? "active" : ""}`}
               onClick={() => setActiveTab("secrets")}
             >
               <SecurityIcon />
               Secrets ({clientDetails?.secrets?.length || 0})
-            </button>
+            </button> */}
             <button
               className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
               onClick={() => setActiveTab("notes")}
