@@ -348,7 +348,7 @@ const ClientsPage = () => {
       case "assessment":
         return "Assessment";
       case "active":
-        return "Active";
+        return "Execution";
       case "inactive":
         return "Inactive";
       default:
@@ -440,8 +440,8 @@ const ClientsPage = () => {
     return grouped;
   }, [filteredAndSortedClients]);
 
-  // Order status groups: active and other statuses first, inactive last
-  const statusOrder = ["active", "assessment", "onboarding", "pre-boarding", "inactive"];
+  // Order status groups: pre-boarding, onboarding, assessment, execution (active), inactive last
+  const statusOrder = ["pre-boarding", "onboarding", "assessment", "active", "inactive"];
   const orderedStatusGroups = useMemo(() => {
     const ordered = [];
     const statusSet = new Set(Object.keys(clientsByStatus));
@@ -1092,7 +1092,7 @@ const ClientsPage = () => {
                     <option value="pre-boarding">Pre-boarding</option>
                     <option value="onboarding">Onboarding</option>
                     <option value="assessment">Assessment</option>
-                    <option value="active">Active</option>
+                    <option value="active">Execution</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
