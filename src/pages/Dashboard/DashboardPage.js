@@ -67,7 +67,11 @@ const DashboardPage = () => {
 
   // Prepare dashboard data
   const dashboardData = React.useMemo(() => {
-    const clients = recentClientsData?.recent_clients || recentClientsData || [];
+    const allClients = recentClientsData?.recent_clients || recentClientsData || [];
+    // Filter out inactive clients from recent clients list
+    const clients = allClients.filter(client => 
+      client.status?.toLowerCase() !== 'inactive'
+    );
     const stats = clientStats || {};
     const meetings = meetingStats || {};
     const actionItems = openPointsStats || {};
@@ -262,7 +266,7 @@ const DashboardPage = () => {
             <div className="section-header-modern">
               <div className="section-header-content">
                 <PeopleIcon className="section-title-icon" />
-                <h3 className="section-title-modern">Recent Clients</h3>
+                <h3 className="section-title-modern">Recent {dashboardData.clients.length} Clients Added</h3>
               </div>
             </div>
             <div className="section-content-modern">
