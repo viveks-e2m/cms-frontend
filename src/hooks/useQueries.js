@@ -181,13 +181,14 @@ export const useMoM = (meetingId, options = {}) => {
 };
 
 // Action Items queries
-export const useActionItems = (filters = {}) => {
+export const useActionItems = (filters = {}, options = {}) => {
   const queryKey = queryKeys.actionItems.list(filters);
   return useQuery({
     queryKey,
     queryFn: createCachedQueryFn(() => openPointsAPI.getRecentOptimized(filters), queryKey),
     staleTime: 3 * 60 * 1000, // 3 minutes
     gcTime: 10 * 60 * 1000, // 10 minutes
+    ...options,
   });
 };
 

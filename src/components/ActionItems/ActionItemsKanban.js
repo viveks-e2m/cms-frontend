@@ -6,6 +6,7 @@ import {
   Delete as DeleteIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  Assignment as AssignmentIcon,
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
@@ -445,8 +446,10 @@ const ActionItemsKanban = ({
 
   if (localActionItems.length === 0) {
     return (
-      <div className="kanban-empty">
-        <div className="empty-icon">📋</div>
+      <div className="no-action-items">
+        <div className="no-items-icon">
+          <AssignmentIcon />
+        </div>
         <h4>No Action Items Found</h4>
         <p>
           Action items will appear here when they are created from meetings.
