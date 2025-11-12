@@ -10,7 +10,7 @@ import {
   // useWorkflows,
   useSecrets,
   useMeeting,
-  useActionItems,
+  useActionItemsByClient,
 } from "../../hooks/useQueries";
 import {
   useDeleteClient,
@@ -120,14 +120,18 @@ const ClientsPage = () => {
     isLoading: loadingSecrets,
   } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
 
+  // Fetch action items for the client with backend pagination
   const {
     data: actionItemsData,
     isLoading: loadingActionItems,
-  } = useActionItems({ 
-    client_id: selectedClient?.id,
-    page: clientActionItemsPage,
-    page_size: clientActionItemsPageSize
-  }, { enabled: !!selectedClient });
+  } = useActionItemsByClient(
+    selectedClient?.id,
+    {
+      page: clientActionItemsPage,
+      page_size: clientActionItemsPageSize
+    },
+    { enabled: !!selectedClient }
+  );
 
   // Load full meeting details when selected
   const {

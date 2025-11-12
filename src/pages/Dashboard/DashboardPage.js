@@ -67,11 +67,8 @@ const DashboardPage = () => {
 
   // Prepare dashboard data
   const dashboardData = React.useMemo(() => {
-    const allClients = recentClientsData?.recent_clients || recentClientsData || [];
-    // Filter out inactive clients from recent clients list
-    const clients = allClients.filter(client => 
-      client.status?.toLowerCase() !== 'inactive'
-    );
+    // Recent clients are already filtered (inactive clients excluded in the hook)
+    const clients = recentClientsData?.recent_clients || recentClientsData || [];
     const stats = clientStats || {};
     const meetings = meetingStats || {};
     const actionItems = openPointsStats || {};

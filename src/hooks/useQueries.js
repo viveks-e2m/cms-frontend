@@ -40,15 +40,16 @@ export const useRecentClients = (limit = 5) => {
     queryKey,
     queryFn: () => clientAPI.getAll(), // Fetch all clients
     select: (allClients) => {
-      // Calculate recent clients by sorting by created_at descending and taking first 'limit'
+      // Filter out inactive clients first, then sort and take limit
       const recentClients = Array.isArray(allClients)
         ? [...allClients]
+            .filter(client => client.status?.toLowerCase() !== 'inactive') // Filter inactive first
             .sort((a, b) => {
               const dateA = new Date(a.created_at || 0);
               const dateB = new Date(b.created_at || 0);
               return dateB - dateA; // Descending order (newest first)
             })
-            .slice(0, limit)
+            .slice(0, limit) // Take limit after filtering
         : [];
       
       // Return in the same format as the old API response
@@ -210,10 +211,11 @@ export const useActionItems = (filters = {}, options = {}) => {
   });
 };
 
-export const useActionItemsByClient = (clientId, options = {}) => {
+export const useActionItemsByClient = (clientId, filters = {}, options = {}) => {
+  const queryKey = queryKeys.actionItems.byClient(clientId, filters);
   return useQuery({
-    queryKey: queryKeys.actionItems.byClient(clientId),
-    queryFn: () => openPointsAPI.getByClient(clientId),
+    queryKey,
+    queryFn: () => openPointsAPI.getByClientPaginated(clientId, filters),
     enabled: !!clientId && (options.enabled !== false),
     staleTime: CACHE_TIMES.LISTS,
     gcTime: CACHE_TIMES.LISTS_CACHE,
