@@ -17,22 +17,14 @@ import {
   People as PeopleIcon,
   VideoCall as VideoCallIcon,
   Assignment as AssignmentIcon,
-  CheckCircle as CheckCircleIcon,
-  TrendingUp as TrendingUpIcon,
-  TrendingDown as TrendingDownIcon,
-  ArrowUpward as ArrowUpIcon,
-  ArrowDownward as ArrowDownIcon,
   WavingHand as WavingHandIcon,
-  Business as BusinessIcon,
   Schedule as ScheduleIcon,
-  BarChart as BarChartIcon,
-  Timeline as TimelineIcon,
 } from "@mui/icons-material";
 import "./DashboardPage.css";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
-  const { user, hasPermission } = useAuth();
+  const { user } = useAuth();
   const { showError } = useNotificationContext();
 
   // Use cached queries
@@ -112,16 +104,6 @@ const DashboardPage = () => {
 
   const getUserDisplayName = () => {
     return user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || user?.email?.split("@")[0] || "User";
-  };
-
-  const calculateActivePercentage = () => {
-    if (dashboardData.clientStats.total_clients === 0) return 0;
-    return Math.round((dashboardData.clientStats.active_clients / dashboardData.clientStats.total_clients) * 100);
-  };
-
-  const calculateCompletionProgress = () => {
-    if (dashboardData.actionItemStats.total_tasks === 0) return 0;
-    return Math.round((dashboardData.actionItemStats.completed_tasks / dashboardData.actionItemStats.total_tasks) * 100);
   };
 
   // Navigation handlers

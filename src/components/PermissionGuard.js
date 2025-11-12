@@ -9,7 +9,7 @@ export const PermissionGuard = ({
   children, 
   fallback = null 
 }) => {
-  const { hasPermission, hasAnyPermission, hasAllPermissions, hasRole, hasAnyRole } = useAuth();
+  const { hasAnyPermission, hasAllPermissions, hasAnyRole } = useAuth();
 
   // Check role-based access
   if (roles.length > 0) {

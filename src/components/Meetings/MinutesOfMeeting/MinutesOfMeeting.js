@@ -55,6 +55,7 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
     if (meetingId && editor) {
       loadMinutes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, editor]);
 
   const loadMinutes = async () => {

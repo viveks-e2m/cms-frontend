@@ -1,13 +1,11 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation, useNavigate } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { useAuth } from "../../hooks/useAuth";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
   useClients,
-  useUsers,
   useMeetingSummary,
   // useWorkflows,
   useSecrets,
@@ -15,8 +13,6 @@ import {
   useActionItems,
 } from "../../hooks/useQueries";
 import {
-  useCreateClient,
-  useUpdateClient,
   useDeleteClient,
   useDeleteMeeting,
 } from "../../hooks/useMutations";
@@ -43,18 +39,13 @@ import {
   Visibility as VisibilityIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
-  PersonOutline as PersonOutlineIcon,
-  Email as EmailIcon,
-  Business as BusinessIcon,
   AccountCircle as AccountManagerIcon,
   Support as AdoptionSpecialistIcon,
   Language as WebsiteIcon,
   VideoCall as VideoCallIcon,
   Security as SecurityIcon,
-  AccountTree as WorkflowIcon,
   ArrowBack as ArrowBackIcon,
   FilterList as FilterIcon,
-  Sort as SortIcon,
   Close as CloseIcon,
   Info as OnboardingIcon,
   Notes as NotesIcon,
@@ -74,9 +65,7 @@ import "./ClientsPage.css";
 
 const ClientsPage = () => {
   const location = useLocation();
-  const navigate = useNavigate();
-  const { hasPermission } = useAuth();
-  const { showError, showSuccess } = useNotificationContext();
+  const { showError } = useNotificationContext();
   const queryClient = useQueryClient();
 
   // State
@@ -115,12 +104,6 @@ const ClientsPage = () => {
     error: clientsError,
   } = useClients();
 
-  const {
-    data: usersData,
-    isLoading: loadingUsers,
-    error: usersError,
-  } = useUsers();
-
   // Load client details when selected
   const {
     data: meetingsSummary,
@@ -153,8 +136,6 @@ const ClientsPage = () => {
   } = useMeeting(selectedMeeting?.id, { enabled: !!selectedMeeting?.id });
 
   // Mutations
-  const createClientMutation = useCreateClient();
-  const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
   const deleteMeetingMutation = useDeleteMeeting();
 
@@ -194,18 +175,37 @@ const ClientsPage = () => {
     };
   }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
 
-  const loadingState = loadingClients || loadingUsers;
+  const loadingState = loadingClients;
   const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
+
+  // Extract unique users from clients data for filters
+  const usersFromClients = useMemo(() => {
+    if (!clientsData || !Array.isArray(clientsData)) return { accountManagers: [], adoptionSpecialists: [] };
+    
+    const accountManagerIds = new Set();
+    const adoptionSpecialistIds = new Set();
+    
+    clientsData.forEach((client) => {
+      if (client.account_manager) {
+        accountManagerIds.add(client.account_manager);
+      }
+      if (client.adoption_specialist) {
+        adoptionSpecialistIds.add(client.adoption_specialist);
+      }
+    });
+    
+    return {
+      accountManagers: Array.from(accountManagerIds).map(id => ({ id })),
+      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ id })),
+    };
+  }, [clientsData]);
 
   // Handle errors
   React.useEffect(() => {
     if (clientsError) {
       showError("Failed to load clients");
     }
-    if (usersError) {
-      console.error("Error loading users:", usersError);
-    }
-  }, [clientsError, usersError, showError]);
+  }, [clientsError, showError]);
 
   const handleClientSelect = (client) => {
     setSelectedClient(client);
@@ -356,27 +356,11 @@ const ClientsPage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pre-boarding":
-        return "warning";
-      case "onboarding":
-        return "info";
-      case "assessment":
-        return "secondary";
-      case "active":
-        return "success";
-      case "inactive":
-        return "danger";
-      default:
-        return "warning";
-    }
-  };
-
   const getUserName = (userId) => {
     if (!userId) return null;
-    const user = (usersData || []).find((u) => u.id === userId);
-    return user ? user.name || user.email : "Unknown User";
+    // Since we're not fetching users, just return a formatted ID
+    // You can enhance this later if needed
+    return `User ${userId.slice(0, 8)}...`;
   };
 
   // Count active filters
@@ -476,6 +460,7 @@ const ClientsPage = () => {
     });
     
     return ordered;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientsByStatus]);
 
   const toggleStatusGroup = (status) => {
@@ -923,7 +908,7 @@ const ClientsPage = () => {
                         }}
                         meetings={clientDetails?.meetings || []}
                         clients={clientsData || []}
-                        users={usersData || []}
+                        users={[]}
                         hideClientColumn={true}
                       />
                       <Pagination
@@ -1118,13 +1103,11 @@ const ClientsPage = () => {
                     onChange={(e) => setAccountManagerFilter(e.target.value)}
                   >
                     <option value="">All Account Managers</option>
-                    {(usersData || [])
-                      .filter((user) => (clientsData || []).some((client) => client.account_manager === user.id))
-                      .map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </option>
-                      ))}
+                    {usersFromClients.accountManagers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="filter-field">
@@ -1135,13 +1118,11 @@ const ClientsPage = () => {
                     onChange={(e) => setAdoptionSpecialistFilter(e.target.value)}
                   >
                     <option value="">All Adoption Specialists</option>
-                    {(usersData || [])
-                      .filter((user) => (clientsData || []).some((client) => client.adoption_specialist === user.id))
-                      .map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </option>
-                      ))}
+                    {usersFromClients.adoptionSpecialists.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

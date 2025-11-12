@@ -64,11 +64,6 @@ const ActionItemsKanban = ({
     column.count = groupedItems[column.id]?.length || 0;
   });
 
-  const getMeetingTitle = (meetingId) => {
-    const meeting = meetings.find((m) => m.id === meetingId);
-    return meeting?.meeting_name || meeting?.name || "Unknown Meeting";
-  };
-
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
     if (item.client_name) {

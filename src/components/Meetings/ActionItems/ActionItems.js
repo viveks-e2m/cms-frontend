@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
 import {
-  Assignment as AssignmentIcon,
   Refresh as RefreshIcon,
   Add as AddIcon,
 } from "@mui/icons-material";
@@ -19,11 +18,10 @@ import "./ActionItems.css";
 
 const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [generationStatus, setGenerationStatus] = useState(null);
-  const [polling, setPolling] = useState(false);
   const [showActionItemForm, setShowActionItemForm] = useState(false);
   const queryClient = useQueryClient();
 
-  const { showSuccess, showError, showInfo } = useNotificationContext();
+  const { showError, showInfo } = useNotificationContext();
 
   // Use cached queries
   const {
@@ -69,6 +67,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
     if (meetingId && meeting?.source === "fathom") {
       checkGenerationStatus();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, meeting]);
 
   const checkGenerationStatus = async () => {
@@ -80,7 +79,6 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       setGenerationStatus(status);
 
       if (status.status === "pending") {
-        setPolling(true);
         const pollInterval = setInterval(async () => {
           try {
             const updatedStatus = await meetingAPI.getActionItemsStatus(meetingId);
@@ -88,12 +86,10 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
 
             if (updatedStatus.status === "completed") {
               clearInterval(pollInterval);
-              setPolling(false);
               showInfo("Action items have been generated!");
               await refetchActionItems();
             } else if (updatedStatus.status === "error") {
               clearInterval(pollInterval);
-              setPolling(false);
             }
           } catch (error) {
             console.error("Error polling action items status:", error);
@@ -102,7 +98,6 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
 
         setTimeout(() => {
           clearInterval(pollInterval);
-          setPolling(false);
         }, 300000);
       }
     } catch (error) {

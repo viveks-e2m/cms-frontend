@@ -1,40 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import {
   Box,
   Typography,
   Card,
   CardContent,
-  Grid,
   Chip,
-  Button,
-  TextField,
-  FormControl,
-  InputLabel,
-  Select,
-  MenuItem,
-  IconButton,
-  Tooltip,
-  Alert,
 } from '@mui/material';
 import {
-  PlayArrow as PlayIcon,
-  Refresh as RefreshIcon,
-  Search as SearchIcon,
-  FilterList as FilterIcon,
   AccountTree as WorkflowIcon,
-  CheckCircle as SuccessIcon,
-  Error as ErrorIcon,
-  Schedule as PendingIcon,
 } from '@mui/icons-material';
 import DashboardLayout from '../../components/Layout/DashboardLayout/DashboardLayout';
 import LoadingSpinner from '../../components/UI/LoadingSpinner/LoadingSpinner';
-import ExecutionStats from '../../components/N8nWorkflows/ExecutionStats';
-import WorkflowSkeleton, { ExecutionSkeleton, StatsSkeleton } from '../../components/N8nWorkflows/WorkflowSkeleton';
-import { WorkflowsEmptyState, ExecutionsEmptyState } from '../../components/N8nWorkflows/EmptyState';
-import { n8nAPI } from '../../utils/apiServices';
-import { useNotificationContext } from '../../contexts/NotificationContext';
-import { NOTIFICATION_MESSAGES } from '../../utils/notifications';
 import { PermissionGuard } from '../../components/PermissionGuard';
 import { PERMISSIONS } from '../../constants/permissions';
 import './N8nWorkflowsPage.css';
@@ -43,125 +19,15 @@ import '../../components/N8nWorkflows/WorkflowSkeleton.css';
 import '../../components/N8nWorkflows/EmptyState.css';
 
 const N8nWorkflowsPage = () => {
-  const navigate = useNavigate();
-  const { showSuccess, showError } = useNotificationContext();
-  
-  const [workflows, setWorkflows] = useState([]);
-  const [executions, setExecutions] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
-  const [activeFilter, setActiveFilter] = useState('all');
-  const [dataSource, setDataSource] = useState('database'); // Track data source
 
   useEffect(() => {
-    // Detect if this is a hard refresh (page reload)
-    const isHardRefresh = window.performance.navigation.type === window.performance.navigation.TYPE_RELOAD ||
-                         !window.history.state;
-    
-    loadData(isHardRefresh);
-  }, []);
-
-  const loadData = async (forceRefresh = false) => {
-    try {
-      setLoading(true);
-      const [workflowsData, executionsData] = await Promise.all([
-        n8nAPI.getWorkflows({ force_refresh: forceRefresh }),
-        n8nAPI.getExecutions()
-      ]);
-      
-      // Extract workflows data and source information
-      const workflowsResult = workflowsData?.data || workflowsData || [];
-      const workflowsList = workflowsResult.data || workflowsResult;
-      const source = workflowsResult.source || (forceRefresh ? 'api' : 'database');
-      
-      setWorkflows(workflowsList);
-      setExecutions(executionsData || []);
-      setDataSource(source);
-      
-      // Show appropriate success message
-      if (forceRefresh && workflowsResult.sync_stats) {
-        const { new_workflows, updated_workflows, total_processed } = workflowsResult.sync_stats;
-        showSuccess(`Workflows synced: ${new_workflows} new, ${updated_workflows} updated (${total_processed} total)`);
-      } else if (source === 'database') {
-        console.log('Workflows loaded from database cache');
-      } else if (source === 'api_fallback') {
-        showError('Database unavailable, showing live data from n8n API');
-      }
-      
-    } catch (error) {
-      console.error('Error loading n8n data:', error);
-      showError(NOTIFICATION_MESSAGES.N8N_WORKFLOWS_ERROR);
-    } finally {
+    // Simulate loading for coming soon page
+    const timer = setTimeout(() => {
       setLoading(false);
-    }
-  };
-
-  const handleRefresh = async () => {
-    try {
-      setRefreshing(true);
-      // Force refresh from API when user clicks refresh button
-      await loadData(true);
-    } catch (error) {
-      showError(NOTIFICATION_MESSAGES.DATA_REFRESH_ERROR);
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  const handleClearFilters = () => {
-    setSearchTerm('');
-    setActiveFilter('all');
-    setStatusFilter('all');
-  };
-
-  const hasWorkflowFilters = searchTerm || activeFilter !== 'all';
-  const hasExecutionFilters = statusFilter !== 'all';
-
-  const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'success':
-        return <SuccessIcon color="success" />;
-      case 'error':
-      case 'failed':
-        return <ErrorIcon color="error" />;
-      case 'running':
-      case 'waiting':
-        return <PendingIcon color="warning" />;
-      default:
-        return <PendingIcon color="disabled" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case 'success':
-        return 'success';
-      case 'error':
-      case 'failed':
-        return 'error';
-      case 'running':
-      case 'waiting':
-        return 'warning';
-      default:
-        return 'default';
-    }
-  };
-
-  const filteredWorkflows = workflows.filter(workflow => {
-    const matchesSearch = workflow.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         workflow.id?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesActive = activeFilter === 'all' || 
-                         (activeFilter === 'active' && workflow.active) ||
-                         (activeFilter === 'inactive' && !workflow.active);
-    return matchesSearch && matchesActive;
-  });
-
-  const filteredExecutions = executions.filter(execution => {
-    const matchesStatus = statusFilter === 'all' || execution.status === statusFilter;
-    return matchesStatus;
-  }).slice(0, 10); // Show only recent 10 executions
+    }, 500);
+    return () => clearTimeout(timer);
+  }, []);
 
   if (loading) {
     return (

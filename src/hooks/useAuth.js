@@ -1,8 +1,7 @@
-import { useState, useEffect, createContext, useContext } from 'react';
+import { useState, useEffect, createContext, useContext, useRef } from 'react';
 import { authAPI } from '../utils/api';
 import { rbacAPI } from '../utils/rbacAPI';
-import { isFirstLogin } from '../utils/cacheStorage';
-import { prefetchAllData } from '../utils/dataPrefetch';
+import { clearAllUserCache, setCachedUser } from '../utils/userCache';
 
 const AuthContext = createContext();
 
@@ -20,28 +19,42 @@ export const AuthProvider = ({ children }) => {
   const [permissions, setPermissions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [prefetchProgress, setPrefetchProgress] = useState(null);
-  const [isPrefetching, setIsPrefetching] = useState(false);
+  
+  // Ref to prevent duplicate calls in development (React StrictMode)
+  const isLoadingRef = useRef(false);
+  const hasLoadedRef = useRef(false);
 
   // Load user data and permissions on mount
   useEffect(() => {
+    // Prevent duplicate calls in StrictMode
+    if (hasLoadedRef.current || isLoadingRef.current) {
+      return;
+    }
     loadUserData();
   }, []);
 
   const loadUserData = async () => {
+    // Prevent duplicate concurrent calls
+    if (isLoadingRef.current) {
+      return;
+    }
+    
     try {
+      isLoadingRef.current = true;
+      hasLoadedRef.current = true;
+      
       const token = localStorage.getItem('authToken');
       if (!token) {
         setLoading(false);
         return;
       }
 
-      // Get current user info
+      // Get current user info (will use cache if available)
       const userResponse = await authAPI.getCurrentUser();
       setUser(userResponse);
       setIsAuthenticated(true);
 
-      // Get user permissions and role from RBAC service using the proper API utility
+      // Get user permissions and role from RBAC service (will use cache if available)
       console.log('Loading RBAC data...');
       const rbacData = await rbacAPI.getMyPermissions();
       console.log('RBAC data received:', rbacData);
@@ -60,6 +73,7 @@ export const AuthProvider = ({ children }) => {
       setIsAuthenticated(false);
     } finally {
       setLoading(false);
+      isLoadingRef.current = false;
     }
   };
 
@@ -70,6 +84,9 @@ export const AuthProvider = ({ children }) => {
         throw new Error('Invalid credentials format. Expected object with email and password.');
       }
       
+      // Clear any existing cache before login to ensure fresh data
+      clearAllUserCache();
+      
       const result = await authAPI.login(credentials);
       
       // Store tokens and user data
@@ -77,48 +94,24 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('refreshToken', result.refreshToken);
       localStorage.setItem('user', JSON.stringify(result.user));
       
+      // Cache user data
+      setCachedUser(result.user);
+      
       setUser(result.user);
       setIsAuthenticated(true);
       
-      // Load RBAC data after login
-      await loadUserData();
-      
-      // Check if this is first login and prefetch data
-      const firstLogin = await isFirstLogin();
-      if (firstLogin) {
-        setIsPrefetching(true);
-        setPrefetchProgress({ percentage: 0, message: 'Preparing your workspace...' });
-        
-        try {
-          const prefetchResult = await prefetchAllData((progress) => {
-            if (onProgress) {
-              onProgress(progress);
-            }
-            setPrefetchProgress(progress);
-          });
-          
-          setPrefetchProgress({ 
-            percentage: 100, 
-            message: 'Setup complete! Redirecting...' 
-          });
-          
-          // Small delay to show completion
-          await new Promise(resolve => setTimeout(resolve, 500));
-        } catch (error) {
-          console.error('Error prefetching data:', error);
-          // Continue even if prefetching fails
-        } finally {
-          setIsPrefetching(false);
-          setPrefetchProgress(null);
-        }
+      // Load RBAC data after login (force refresh to get fresh data)
+      try {
+        const rbacData = await rbacAPI.getMyPermissions(true);
+        setRole(rbacData.role);
+        setPermissions(rbacData.permissions || []);
+      } catch (error) {
+        console.error('Error loading RBAC data after login:', error);
+        // Don't fail login if RBAC fails, user data is already set
       }
       
       return { success: true };
     } catch (error) {
-      // Clean up prefetching state on error
-      setIsPrefetching(false);
-      setPrefetchProgress(null);
-      
       console.log('useAuth login error:', error);
       console.log('Error message:', error.message);
       console.log('Error code:', error.code);
@@ -150,10 +143,11 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Clear local state regardless of API call success
+      // Clear local state and cache regardless of API call success
       localStorage.removeItem('authToken');
       localStorage.removeItem('refreshToken');
       localStorage.removeItem('user');
+      clearAllUserCache();
       setUser(null);
       setRole(null);
       setPermissions([]);
@@ -231,8 +225,6 @@ export const AuthProvider = ({ children }) => {
     isAccountManager,
     isAdoptionSpecialist,
     loadUserData,
-    prefetchProgress,
-    isPrefetching,
   };
 
   return (

@@ -1,7 +1,6 @@
 import { useQuery } from '@tanstack/react-query';
-import { queryKeys, CACHE_TIMES } from '../utils/queryClient';
-import { setCache, getCache } from '../utils/cacheStorage';
-import { getTTLForQueryKey } from '../utils/queryHelpers';
+import { queryKeys, CACHE_TIMES, queryClient } from '../utils/queryClient';
+import { calculateClientStatistics } from '../utils/clientStatistics';
 import {
   clientAPI,
   meetingAPI,
@@ -12,36 +11,12 @@ import {
   momAPI,
 } from '../utils/apiServices';
 
-// Helper to create a cached query function
-const createCachedQueryFn = (queryFn, queryKey) => {
-  return async () => {
-    // Try cache first
-    const cached = await getCache(queryKey);
-    if (cached) {
-      // Return cached data immediately, but fetch fresh in background
-      queryFn().then(async (freshData) => {
-        const ttl = getTTLForQueryKey(queryKey);
-        await setCache(queryKey, freshData, ttl);
-      }).catch(() => {
-        // Ignore background fetch errors
-      });
-      return cached;
-    }
-    
-    // No cache, fetch and save
-    const data = await queryFn();
-    const ttl = getTTLForQueryKey(queryKey);
-    await setCache(queryKey, data, ttl);
-    return data;
-  };
-};
-
 // Client queries
 export const useClients = () => {
   const queryKey = queryKeys.clients.list();
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => clientAPI.getAll(), queryKey),
+    queryFn: () => clientAPI.getAll(),
     staleTime: CACHE_TIMES.LISTS,
     gcTime: CACHE_TIMES.LISTS_CACHE,
   });
@@ -51,7 +26,7 @@ export const useClient = (clientId, options = {}) => {
   const queryKey = queryKeys.clients.detail(clientId);
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => clientAPI.getById(clientId), queryKey),
+    queryFn: () => clientAPI.getById(clientId),
     enabled: !!clientId && (options.enabled !== false),
     staleTime: CACHE_TIMES.DETAILS,
     gcTime: CACHE_TIMES.DETAILS_CACHE,
@@ -59,20 +34,63 @@ export const useClient = (clientId, options = {}) => {
 };
 
 export const useRecentClients = (limit = 5) => {
-  const queryKey = queryKeys.clients.recent(limit);
+  // Use the same query as useClients to share cache
+  const queryKey = queryKeys.clients.list();
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => clientAPI.getRecent(limit), queryKey),
+    queryFn: () => clientAPI.getAll(), // Fetch all clients
+    select: (allClients) => {
+      // Calculate recent clients by sorting by created_at descending and taking first 'limit'
+      const recentClients = Array.isArray(allClients)
+        ? [...allClients]
+            .sort((a, b) => {
+              const dateA = new Date(a.created_at || 0);
+              const dateB = new Date(b.created_at || 0);
+              return dateB - dateA; // Descending order (newest first)
+            })
+            .slice(0, limit)
+        : [];
+      
+      // Return in the same format as the old API response
+      return {
+        recent_clients: recentClients,
+        total_clients: Array.isArray(allClients) ? allClients.length : 0,
+      };
+    },
     staleTime: CACHE_TIMES.LISTS,
     gcTime: CACHE_TIMES.LISTS_CACHE,
   });
 };
 
 export const useClientStats = () => {
-  const queryKey = queryKeys.clients.statistics();
+  // First load clients to ensure data is available
+  const { data: clientsData, isLoading: clientsLoading } = useClients();
+  
+  // Use a separate query key for statistics but derive from clients
   return useQuery({
-    queryKey,
-    queryFn: createCachedQueryFn(() => clientAPI.getStatistics(), queryKey),
+    queryKey: queryKeys.clients.statistics(),
+    queryFn: async () => {
+      // Get clients from cache or use the data we have
+      const clients = clientsData || queryClient.getQueryData(queryKeys.clients.list());
+      
+      // If still no data, fetch it
+      if (!clients || !Array.isArray(clients)) {
+        const fetched = await clientAPI.getAll();
+        queryClient.setQueryData(queryKeys.clients.list(), fetched);
+        return calculateClientStatistics(Array.isArray(fetched) ? fetched : []);
+      }
+      
+      // Calculate statistics
+      if (!Array.isArray(clients)) {
+        console.warn('Clients data is not an array:', typeof clients, clients);
+        return calculateClientStatistics([]);
+      }
+      
+      const stats = calculateClientStatistics(clients);
+      console.log('Calculated client statistics:', stats, 'from', clients.length, 'clients');
+      return stats;
+    },
+    enabled: !clientsLoading, // Only run when clients are loaded
     staleTime: CACHE_TIMES.STATISTICS,
     gcTime: CACHE_TIMES.STATISTICS_CACHE,
   });
@@ -83,8 +101,8 @@ export const useClientUsers = (clientId, options = {}) => {
     queryKey: queryKeys.clients.users(clientId),
     queryFn: () => clientAPI.getAssignedUsers(clientId),
     enabled: !!clientId && (options.enabled !== false),
-    staleTime: CACHE_TIMES.LISTS,
-    gcTime: CACHE_TIMES.LISTS_CACHE,
+    staleTime: CACHE_TIMES.USERS,
+    gcTime: CACHE_TIMES.USERS_CACHE,
   });
 };
 
@@ -103,7 +121,7 @@ export const useUsers = () => {
   const queryKey = queryKeys.users.list();
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => clientAPI.getAllUsers(), queryKey),
+    queryFn: () => clientAPI.getAllUsers(),
     staleTime: CACHE_TIMES.USERS,
     gcTime: CACHE_TIMES.USERS_CACHE,
   });
@@ -144,7 +162,7 @@ export const useMeetingStats = () => {
   const queryKey = queryKeys.meetings.statistics();
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => meetingAPI.getStatistics(), queryKey),
+    queryFn: () => meetingAPI.getStatistics(),
     staleTime: CACHE_TIMES.STATISTICS,
     gcTime: CACHE_TIMES.STATISTICS_CACHE,
   });
@@ -185,9 +203,9 @@ export const useActionItems = (filters = {}, options = {}) => {
   const queryKey = queryKeys.actionItems.list(filters);
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => openPointsAPI.getRecentOptimized(filters), queryKey),
-    staleTime: 3 * 60 * 1000, // 3 minutes
-    gcTime: 10 * 60 * 1000, // 10 minutes
+    queryFn: () => openPointsAPI.getRecentOptimized(filters),
+    staleTime: CACHE_TIMES.LISTS,
+    gcTime: CACHE_TIMES.LISTS_CACHE,
     ...options,
   });
 };
@@ -226,7 +244,7 @@ export const useActionItemStats = () => {
   const queryKey = queryKeys.actionItems.statistics();
   return useQuery({
     queryKey,
-    queryFn: createCachedQueryFn(() => openPointsAPI.getStatistics(), queryKey),
+    queryFn: () => openPointsAPI.getStatistics(),
     staleTime: CACHE_TIMES.STATISTICS,
     gcTime: CACHE_TIMES.STATISTICS_CACHE,
   });
@@ -289,7 +307,7 @@ export const useN8nWorkflow = (workflowId, forceRefresh = false) => {
     queryKey: queryKeys.n8n.workflow(workflowId, forceRefresh),
     queryFn: () => n8nAPI.getWorkflowDetails(workflowId, forceRefresh),
     enabled: !!workflowId,
-    staleTime: forceRefresh ? 0 : CACHE_TIMES.DETAILS,
+    staleTime: forceRefresh ? 0 : CACHE_TIMES.DETAILS, // No cache if force refresh
     gcTime: CACHE_TIMES.DETAILS_CACHE,
   });
 };
@@ -298,8 +316,8 @@ export const useN8nExecutions = (params = {}) => {
   return useQuery({
     queryKey: queryKeys.n8n.executions(params),
     queryFn: () => n8nAPI.getExecutions(params),
-    staleTime: CACHE_TIMES.STATISTICS,
-    gcTime: CACHE_TIMES.STATISTICS_CACHE,
+    staleTime: CACHE_TIMES.LISTS,
+    gcTime: CACHE_TIMES.LISTS_CACHE,
   });
 };
 
@@ -308,8 +326,9 @@ export const useN8nWorkflowExecutions = (workflowId, options = {}) => {
     queryKey: queryKeys.n8n.workflowExecutions(workflowId),
     queryFn: () => n8nAPI.getWorkflowExecutions(workflowId),
     enabled: !!workflowId && (options.enabled !== false),
-    staleTime: CACHE_TIMES.STATISTICS,
-    gcTime: CACHE_TIMES.STATISTICS_CACHE,
+    staleTime: CACHE_TIMES.LISTS,
+    gcTime: CACHE_TIMES.LISTS_CACHE,
   });
 };
+
 

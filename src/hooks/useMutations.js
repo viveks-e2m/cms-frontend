@@ -6,7 +6,6 @@ import {
   openPointsAPI,
   workflowAPI,
   secretsAPI,
-  n8nAPI,
   momAPI,
 } from '../utils/apiServices';
 import { useNotificationContext } from '../contexts/NotificationContext';
@@ -19,9 +18,15 @@ export const useCreateClient = () => {
   return useMutation({
     mutationFn: (clientData) => clientAPI.create(clientData),
     onSuccess: () => {
-      // Invalidate clients list and statistics
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.statistics() });
+      // Invalidate all client-related queries and force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.all,
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.statistics(),
+        refetchType: 'active' 
+      });
       showSuccess('Client created successfully');
     },
     onError: (error) => {
@@ -37,10 +42,45 @@ export const useUpdateClient = () => {
   return useMutation({
     mutationFn: ({ clientId, clientData }) => clientAPI.update(clientId, clientData),
     onSuccess: (data, variables) => {
-      // Invalidate specific client, list, and statistics
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.detail(variables.clientId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.lists() });
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.statistics() });
+      // Optimistically update the client detail cache with the returned data
+      if (data) {
+        queryClient.setQueryData(queryKeys.clients.detail(variables.clientId), data);
+        
+        // Also update the client in all list caches
+        queryClient.setQueriesData(
+          { queryKey: queryKeys.clients.all, exact: false },
+          (oldData) => {
+            if (!oldData) return oldData;
+            
+            // Handle array of clients (list queries)
+            if (Array.isArray(oldData)) {
+              return oldData.map((client) =>
+                client.id === variables.clientId ? { ...client, ...data } : client
+              );
+            }
+            
+            return oldData;
+          }
+        );
+      }
+      
+      // Invalidate all related queries to ensure UI updates (forces refetch of active queries)
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.detail(variables.clientId),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.lists(),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.all,
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.statistics(),
+        refetchType: 'active' 
+      });
       showSuccess('Client updated successfully');
     },
     onError: (error) => {
@@ -74,7 +114,20 @@ export const useUpdateClientNotes = () => {
   return useMutation({
     mutationFn: ({ clientId, notes }) => clientAPI.updateNotes(clientId, notes),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.clients.notes(variables.clientId) });
+      // Optimistically update the notes cache
+      if (data) {
+        queryClient.setQueryData(queryKeys.clients.notes(variables.clientId), data);
+      }
+      
+      // Invalidate related queries and force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.notes(variables.clientId),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.clients.detail(variables.clientId),
+        refetchType: 'active' 
+      });
       showSuccess('Notes updated successfully');
     },
     onError: (error) => {
@@ -141,8 +194,24 @@ export const useUpdateMeeting = () => {
   return useMutation({
     mutationFn: ({ meetingId, meetingData }) => meetingAPI.update(meetingId, meetingData),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.meetings.detail(variables.meetingId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.meetings.all });
+      // Optimistically update the meeting detail cache
+      if (data) {
+        queryClient.setQueryData(queryKeys.meetings.detail(variables.meetingId), data);
+      }
+      
+      // Invalidate all related queries and force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.meetings.detail(variables.meetingId),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.meetings.all,
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.meetings.statistics(),
+        refetchType: 'active' 
+      });
       showSuccess('Meeting updated successfully');
     },
     onError: (error) => {
@@ -243,9 +312,24 @@ export const useUpdateActionItem = () => {
   return useMutation({
     mutationFn: ({ actionItemId, statusData }) => openPointsAPI.updateStatus(actionItemId, statusData),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.actionItems.detail(variables.actionItemId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.actionItems.all });
-      queryClient.invalidateQueries({ queryKey: queryKeys.actionItems.statistics() });
+      // Optimistically update the action item cache
+      if (data) {
+        queryClient.setQueryData(queryKeys.actionItems.detail(variables.actionItemId), data);
+      }
+      
+      // Invalidate all related queries and force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.actionItems.detail(variables.actionItemId),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.actionItems.all,
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.actionItems.statistics(),
+        refetchType: 'active' 
+      });
       showSuccess('Action item updated successfully');
     },
     onError: (error) => {
@@ -273,7 +357,7 @@ export const useDeleteActionItem = () => {
 
 export const useGenerateActionItems = () => {
   const queryClient = useQueryClient();
-  const { showSuccess, showError, showInfo } = useNotificationContext();
+  const { showSuccess, showError } = useNotificationContext();
 
   return useMutation({
     mutationFn: (meetingId) => openPointsAPI.generateFromMeeting(meetingId),
@@ -313,8 +397,20 @@ export const useUpdateWorkflow = () => {
   return useMutation({
     mutationFn: ({ workflowId, statusData }) => workflowAPI.updateStatus(workflowId, statusData),
     onSuccess: (data, variables) => {
-      queryClient.invalidateQueries({ queryKey: queryKeys.workflows.detail(variables.workflowId) });
-      queryClient.invalidateQueries({ queryKey: queryKeys.workflows.all });
+      // Optimistically update the workflow cache
+      if (data) {
+        queryClient.setQueryData(queryKeys.workflows.detail(variables.workflowId), data);
+      }
+      
+      // Invalidate all related queries and force refetch
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.workflows.detail(variables.workflowId),
+        refetchType: 'active' 
+      });
+      queryClient.invalidateQueries({ 
+        queryKey: queryKeys.workflows.all,
+        refetchType: 'active' 
+      });
       showSuccess('Workflow updated successfully');
     },
     onError: (error) => {

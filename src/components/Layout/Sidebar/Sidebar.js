@@ -1,7 +1,6 @@
-import React, { useState } from "react";
+import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
-import { PermissionGuard } from "../../PermissionGuard";
 import { PERMISSIONS } from "../../../constants/permissions";
 import {
   Dashboard as DashboardIcon,
@@ -14,15 +13,13 @@ import {
   AccountTree as WorkflowIcon,
   Assignment as ActionItemsIcon,
   AdminPanelSettings as AdminIcon,
-  Security as SecurityIcon,
-  VideoCall as MeetingIcon,
 } from "@mui/icons-material";
 import "./Sidebar.css";
 
 const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, role, permissions, logout, hasPermission, hasRole } = useAuth();
+  const { user, role, logout, hasPermission } = useAuth();
 
   const menuItems = [
     {

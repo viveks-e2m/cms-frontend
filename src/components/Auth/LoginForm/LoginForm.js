@@ -2,29 +2,16 @@ import React, { useState } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../../../hooks/useAuth";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
-import ProgressBar from "../../UI/ProgressBar/ProgressBar";
 import "./LoginForm.css";
 
 const LoginForm = ({ onSuccess }) => {
-  const { login, loading, prefetchProgress, isPrefetching } = useAuth();
+  const { login, loading } = useAuth();
   const { showError, showSuccess } = useNotificationContext();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
   const [errors, setErrors] = useState({});
-  const [localProgress, setLocalProgress] = useState(null);
-  const [loginSuccess, setLoginSuccess] = useState(false);
-
-  // Handle redirect after prefetching completes
-  React.useEffect(() => {
-    if (loginSuccess && !isPrefetching && !localProgress && (!prefetchProgress || prefetchProgress.percentage === 100)) {
-      setTimeout(() => {
-        showSuccess("Login successful! Redirecting to dashboard...");
-        onSuccess?.();
-      }, 500);
-    }
-  }, [loginSuccess, isPrefetching, localProgress, prefetchProgress, showSuccess, onSuccess]);
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -69,45 +56,20 @@ const LoginForm = ({ onSuccess }) => {
     }
 
     console.log('Form data being sent to login:', formData);
-    const result = await login(formData, (progress) => {
-      setLocalProgress(progress);
-    });
+    const result = await login(formData);
 
     if (result.success) {
-      setLoginSuccess(true);
-      // If prefetching completed immediately, redirect after a short delay
-      if (!isPrefetching && !localProgress) {
-        showSuccess("Login successful! Redirecting to dashboard...");
-        setTimeout(() => {
-          onSuccess?.();
-        }, 300);
-      }
-      // If still prefetching, wait for it to complete
-      // The useEffect above will handle redirect
+      showSuccess("Login successful! Redirecting to dashboard...");
+      setTimeout(() => {
+        onSuccess?.();
+      }, 300);
     } else {
-      setLocalProgress(null);
-      setLoginSuccess(false);
       showError(result.error);
     }
   };
 
-  // Show progress overlay if prefetching
-  const showProgress = isPrefetching || localProgress || prefetchProgress;
-  const progressData = localProgress || prefetchProgress || { percentage: 0, message: 'Loading...' };
-
   return (
     <>
-      {showProgress && (
-        <div className="progress-bar-overlay">
-          <div className="progress-bar-wrapper">
-            <ProgressBar
-              progress={progressData.percentage || 0}
-              message={progressData.message || 'Loading your data...'}
-              showPercentage={true}
-            />
-          </div>
-        </div>
-      )}
       <form onSubmit={handleSubmit} className="login-form">
       <div className="form-group">
         {/* <label htmlFor="email" className="form-label">

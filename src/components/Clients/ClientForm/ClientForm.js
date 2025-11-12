@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import { useCreateClient, useUpdateClient } from "../../../hooks/useMutations";
 import {
   Close as CloseIcon,
   Business as BusinessIcon,
@@ -33,16 +34,18 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     document_link: "",
     task_audit_sheet_link: "",
   });
-  const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [users, setUsers] = useState([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [usersByRole, setUsersByRole] = useState({
     account_manager: [],
     adoption_specialist: [],
     ai_executor: [],
   });
-  const { showError, showSuccess } = useNotificationContext();
+  const { showError } = useNotificationContext();
+  
+  // Use mutation hooks for proper cache invalidation
+  const createClientMutation = useCreateClient();
+  const updateClientMutation = useUpdateClient();
 
   useEffect(() => {
     if (isOpen) {
@@ -88,6 +91,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       }
       setErrors({});
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, isOpen]);
 
   const loadUsers = async () => {
@@ -95,7 +99,6 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       setLoadingUsers(true);
       const response = await clientAPI.getAllUsers();
       const allUsers = response || [];
-      setUsers(allUsers);
       
       // Filter users by role for dropdowns
       const roleGroups = {
@@ -136,7 +139,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     } else {
       // Basic URL validation
       const urlPattern =
-        /^(https?:\/\/)?([\da-z\.-]+)\.([a-z\.]{2,6})([\/\w \.-]*)*\/?$/;
+        /^(https?:\/\/)?([\da-z.-]+)\.([a-z.]{2,6})([/\w .-]*)*\/?$/;
       if (!urlPattern.test(formData.website)) {
         newErrors.website = "Please enter a valid website URL";
       }
@@ -174,46 +177,52 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       return;
     }
 
-    try {
-      setLoading(true);
+    // Ensure website has protocol
+    let website = formData.website.trim();
+    if (!website.startsWith("http://") && !website.startsWith("https://")) {
+      website = "https://" + website;
+    }
 
-      // Ensure website has protocol
-      let website = formData.website.trim();
-      if (!website.startsWith("http://") && !website.startsWith("https://")) {
-        website = "https://" + website;
-      }
+    const clientData = {
+      name: formData.name.trim(),
+      website: website,
+      status: formData.status,
+      account_manager: formData.account_manager || "",
+      adoption_specialist: formData.adoption_specialist || "",
+      plan_details: formData.plan_details || null,
+      communication_tool: formData.communication_tool.trim() || null,
+      ai_executor: formData.ai_executor || null,
+      assessment_start_date: formData.assessment_start_date || null,
+      assessment_end_date: formData.assessment_end_date || null,
+      document_link: formData.document_link.trim() || null,
+      task_audit_sheet_link: formData.task_audit_sheet_link.trim() || null,
+    };
 
-      const clientData = {
-        name: formData.name.trim(),
-        website: website,
-        status: formData.status,
-        account_manager: formData.account_manager || "",
-        adoption_specialist: formData.adoption_specialist || "",
-        plan_details: formData.plan_details || null,
-        communication_tool: formData.communication_tool.trim() || null,
-        ai_executor: formData.ai_executor || null,
-        assessment_start_date: formData.assessment_start_date || null,
-        assessment_end_date: formData.assessment_end_date || null,
-        document_link: formData.document_link.trim() || null,
-        task_audit_sheet_link: formData.task_audit_sheet_link.trim() || null,
-      };
-
-      if (client) {
-        // Update existing client
-        await clientAPI.update(client.id, clientData);
-        showSuccess("Client updated successfully");
-      } else {
-        // Create new client
-        await clientAPI.create(clientData);
-        showSuccess("Client created successfully");
-      }
-
-      onSave();
-    } catch (error) {
-      showError(client ? "Failed to update client" : "Failed to create client");
-      console.error("Error saving client:", error);
-    } finally {
-      setLoading(false);
+    if (client) {
+      // Update existing client using mutation hook
+      updateClientMutation.mutate(
+        { clientId: client.id, clientData },
+        {
+          onSuccess: () => {
+            onSave();
+          },
+          onError: (error) => {
+            showError(error.message || "Failed to update client");
+            console.error("Error updating client:", error);
+          },
+        }
+      );
+    } else {
+      // Create new client using mutation hook
+      createClientMutation.mutate(clientData, {
+        onSuccess: () => {
+          onSave();
+        },
+        onError: (error) => {
+          showError(error.message || "Failed to create client");
+          console.error("Error creating client:", error);
+        },
+      });
     }
   };
 
@@ -247,7 +256,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               <p>Enter client information below</p>
             </div>
           </div>
-          <button className="close-btn" onClick={onCancel} disabled={loading}>
+          <button className="close-btn" onClick={onCancel} disabled={createClientMutation.isPending || updateClientMutation.isPending}>
             <CloseIcon />
           </button>
         </div>
@@ -265,7 +274,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               placeholder="Enter client name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
               maxLength={100}
             />
             {errors.name && (
@@ -285,7 +294,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               placeholder="https://example.com"
               value={formData.website}
               onChange={(e) => handleInputChange("website", e.target.value)}
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             />
             {errors.website && (
               <span className="error-message">{errors.website}</span>
@@ -305,7 +314,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               className="form-select"
               value={formData.status}
               onChange={(e) => handleInputChange("status", e.target.value)}
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             >
               <option value="pre-boarding">Pre-boarding</option>
               <option value="onboarding">Onboarding</option>
@@ -330,7 +339,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("account_manager", e.target.value)
               }
-              disabled={loading || loadingUsers}
+              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
             >
               <option value="">
                 {client ? "Select Account Manager" : "Default to Current User"}
@@ -364,7 +373,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("adoption_specialist", e.target.value)
               }
-              disabled={loading || loadingUsers}
+              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
             >
               <option value="">Select Adoption Specialist (Optional)</option>
               {usersByRole.adoption_specialist.map((user) => (
@@ -394,7 +403,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("plan_details", e.target.value)
               }
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             >
               <option value="">Select Plan (Optional)</option>
               <option value="AI_OLD_PLAN">AI Old Plan (5 hours/week)</option>
@@ -428,7 +437,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("communication_tool", e.target.value)
               }
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
               maxLength={100}
             />
             <div className="form-help">
@@ -446,7 +455,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               className="form-select"
               value={formData.ai_executor}
               onChange={(e) => handleInputChange("ai_executor", e.target.value)}
-              disabled={loading || loadingUsers}
+              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
             >
               <option value="">Select AI Executor (Optional)</option>
               {usersByRole.ai_executor.map((user) => (
@@ -478,7 +487,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("assessment_start_date", e.target.value)
                 }
-                disabled={loading}
+                disabled={createClientMutation.isPending || updateClientMutation.isPending}
               />
               <div className="form-help">
                 Start date of the assessment period
@@ -500,7 +509,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("assessment_end_date", e.target.value)
                 }
-                disabled={loading}
+                disabled={createClientMutation.isPending || updateClientMutation.isPending}
               />
               {errors.assessment_end_date && (
                 <span className="error-message">
@@ -525,7 +534,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("document_link", e.target.value)
               }
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             />
             {errors.document_link && (
               <span className="error-message">{errors.document_link}</span>
@@ -549,7 +558,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("task_audit_sheet_link", e.target.value)
               }
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             />
             {errors.task_audit_sheet_link && (
               <span className="error-message">
@@ -564,16 +573,16 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               type="button"
               className="btn btn-secondary"
               onClick={onCancel}
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={loading}
+              disabled={createClientMutation.isPending || updateClientMutation.isPending}
             >
-              {loading ? (
+              {(createClientMutation.isPending || updateClientMutation.isPending) ? (
                 <>
                   <div className="btn-spinner" />
                   {client ? "Updating..." : "Creating..."}

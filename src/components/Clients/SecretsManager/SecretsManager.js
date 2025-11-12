@@ -31,6 +31,7 @@ const SecretsManager = ({ clientId, clientName }) => {
       loadSecrets();
       loadUsers();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
   const loadSecrets = async () => {

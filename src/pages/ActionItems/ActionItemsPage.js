@@ -199,10 +199,6 @@ const ActionItemsPage = () => {
     setShowActionItemForm(false);
   };
 
-  const toggleViewMode = () => {
-    setViewMode(viewMode === "list" ? "kanban" : "list");
-  };
-
   const filteredActionItems = actionItems.filter((item) => {
     const matchesSearch =
       item.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||

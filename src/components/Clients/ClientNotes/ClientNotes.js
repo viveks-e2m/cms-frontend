@@ -16,6 +16,7 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
     if (clientId) {
       loadNotes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientId]);
 
   const loadNotes = async () => {
