@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../../components/PermissionGuard";
@@ -65,6 +65,7 @@ import "./ClientsPage.css";
 
 const ClientsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { showError } = useNotificationContext();
   const queryClient = useQueryClient();
 
@@ -215,6 +216,8 @@ const ClientsPage = () => {
     setSelectedClient(client);
     // Reset pagination when selecting a new client
     setClientActionItemsPage(1);
+    // Update URL with client ID
+    navigate(`/clients?clientId=${client.id}`);
   };
 
   const handleBackToList = () => {
@@ -227,6 +230,8 @@ const ClientsPage = () => {
     // Reset pagination
     setClientActionItemsPage(1);
     setClientActionItemsPageSize(20);
+    // Clear URL parameters
+    navigate('/clients');
   };
 
   // Pagination handlers for client action items
