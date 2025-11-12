@@ -11,6 +11,7 @@ import {
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import Pagination from "../../components/UI/Pagination/Pagination";
 import {
   ActionItemsList,
   ActionItemsKanban,
@@ -38,6 +39,10 @@ const ActionItemsPage = () => {
   const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
   const [showActionItemForm, setShowActionItemForm] = useState(false);
   const [showFilterPopup, setShowFilterPopup] = useState(false);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
 
   // Prepare filters for query
   const currentFilters = useMemo(() => ({
@@ -45,7 +50,9 @@ const ActionItemsPage = () => {
     client_id: clientFilter !== "all" ? clientFilter : undefined,
     task_owner: taskOwnerFilter !== "all" ? taskOwnerFilter : undefined,
     assignee: assigneeFilter !== "all" ? assigneeFilter : undefined,
-  }), [statusFilter, clientFilter, taskOwnerFilter, assigneeFilter]);
+    page: currentPage,
+    page_size: pageSize,
+  }), [statusFilter, clientFilter, taskOwnerFilter, assigneeFilter, currentPage, pageSize]);
 
   // Use cached queries
   const {
@@ -95,7 +102,7 @@ const ActionItemsPage = () => {
   }, [location.search]);
 
 
-  // Process action items with client names
+  // Process action items with client names and pagination data
   const actionItems = useMemo(() => {
     const clients = clientsData || [];
     const items = actionItemsData?.items || [];
@@ -112,6 +119,14 @@ const ActionItemsPage = () => {
       client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
     }));
   }, [actionItemsData, clientsData]);
+
+  // Extract pagination metadata
+  const paginationData = useMemo(() => ({
+    total: actionItemsData?.total || 0,
+    page: actionItemsData?.page || 1,
+    page_size: actionItemsData?.page_size || pageSize,
+    total_pages: actionItemsData?.total_pages || 1,
+  }), [actionItemsData, pageSize]);
 
   const handleRefresh = async () => {
     try {
@@ -130,6 +145,17 @@ const ActionItemsPage = () => {
     setClientFilter("all");
     setTaskOwnerFilter("all");
     setAssigneeFilter("all");
+    setCurrentPage(1); // Reset to first page when clearing filters
+  };
+
+  const handlePageChange = (newPage) => {
+    setCurrentPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handlePageSizeChange = (newPageSize) => {
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
   };
 
   // Count active filters
@@ -142,18 +168,22 @@ const ActionItemsPage = () => {
 
   const handleStatusFilterChange = (newStatus) => {
     setStatusFilter(newStatus);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleClientFilterChange = (newClientId) => {
     setClientFilter(newClientId);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleTaskOwnerFilterChange = (newTaskOwnerId) => {
     setTaskOwnerFilter(newTaskOwnerId);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleAssigneeFilterChange = (newAssigneeId) => {
     setAssigneeFilter(newAssigneeId);
+    setCurrentPage(1); // Reset to first page when filter changes
   };
 
   const handleAddActionItem = () => {
@@ -392,36 +422,50 @@ const ActionItemsPage = () => {
                 <div className="header-info">
                   <h3>Action Items</h3>
                   <span className="items-count">
-                    {filteredActionItems.length}{" "}
-                    {filteredActionItems.length === 1 ? "item" : "items"}
+                    {paginationData.total}{" "}
+                    {paginationData.total === 1 ? "item" : "items"}
                   </span>
                 </div>
               </div>
             )}
 
             {viewMode === "list" ? (
-              <ActionItemsList
-                actionItems={filteredActionItems}
-                onRefresh={handleRefresh}
-                clients={clientsData || []}
-                users={usersData || []}
-              />
+              <>
+                <ActionItemsList
+                  actionItems={filteredActionItems}
+                  onRefresh={handleRefresh}
+                  clients={clientsData || []}
+                  users={usersData || []}
+                />
+                <Pagination
+                  currentPage={paginationData.page}
+                  totalPages={paginationData.total_pages}
+                  totalItems={paginationData.total}
+                  pageSize={paginationData.page_size}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  pageSizeOptions={[10, 20, 50, 100]}
+                />
+              </>
             ) : (
-              <ActionItemsKanban
-                actionItems={filteredActionItems}
-                onRefresh={handleRefresh}
-                clients={clientsData || []}
-                users={usersData || []}
-              />
+              <>
+                <ActionItemsKanban
+                  actionItems={filteredActionItems}
+                  onRefresh={handleRefresh}
+                  clients={clientsData || []}
+                  users={usersData || []}
+                />
+                <Pagination
+                  currentPage={paginationData.page}
+                  totalPages={paginationData.total_pages}
+                  totalItems={paginationData.total}
+                  pageSize={paginationData.page_size}
+                  onPageChange={handlePageChange}
+                  onPageSizeChange={handlePageSizeChange}
+                  pageSizeOptions={[10, 20, 50, 100]}
+                />
+              </>
             )}
-
-            {/* Summary Info */}
-            <div className="summary-section">
-              <p className="summary-info">
-                Showing {filteredActionItems.length} action items from the last
-                15 days
-              </p>
-            </div>
           </div>
 
           {/* Action Item Form Modal */}

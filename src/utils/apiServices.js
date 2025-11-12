@@ -259,12 +259,13 @@ export const openPointsAPI = {
     return handleApiResponse(response);
   },
 
-  // Get recent open points (last 15 days) with caching support
+  // Get recent open points with pagination support
   getRecentOptimized: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.status && params.status !== "all") queryParams.append("status", params.status);
     if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
-
+    if (params.page) queryParams.append("page", params.page);
+    if (params.page_size) queryParams.append("page_size", params.page_size);
 
     const url = `/open-points/recent${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
     const response = await api.post(url, {

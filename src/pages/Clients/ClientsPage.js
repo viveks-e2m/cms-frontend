@@ -22,6 +22,7 @@ import {
 } from "../../hooks/useMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import Pagination from "../../components/UI/Pagination/Pagination";
 import {
   MeetingsList,
   MeetingDetails,
@@ -103,6 +104,10 @@ const ClientsPage = () => {
   // Status group collapse state - inactive is collapsed by default
   const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive"]));
 
+  // Pagination state for client action items
+  const [clientActionItemsPage, setClientActionItemsPage] = useState(1);
+  const [clientActionItemsPageSize, setClientActionItemsPageSize] = useState(20);
+
   // Use cached queries
   const {
     data: clientsData,
@@ -135,7 +140,11 @@ const ClientsPage = () => {
   const {
     data: actionItemsData,
     isLoading: loadingActionItems,
-  } = useActionItems({ client_id: selectedClient?.id }, { enabled: !!selectedClient });
+  } = useActionItems({ 
+    client_id: selectedClient?.id,
+    page: clientActionItemsPage,
+    page_size: clientActionItemsPageSize
+  }, { enabled: !!selectedClient });
 
   // Load full meeting details when selected
   const {
@@ -200,6 +209,8 @@ const ClientsPage = () => {
 
   const handleClientSelect = (client) => {
     setSelectedClient(client);
+    // Reset pagination when selecting a new client
+    setClientActionItemsPage(1);
   };
 
   const handleBackToList = () => {
@@ -209,6 +220,20 @@ const ClientsPage = () => {
     setShowMeetingForm(false);
     setEditingMeeting(null);
     setMeetingsView("list");
+    // Reset pagination
+    setClientActionItemsPage(1);
+    setClientActionItemsPageSize(20);
+  };
+
+  // Pagination handlers for client action items
+  const handleClientActionItemsPageChange = (newPage) => {
+    setClientActionItemsPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleClientActionItemsPageSizeChange = (newPageSize) => {
+    setClientActionItemsPageSize(newPageSize);
+    setClientActionItemsPage(1); // Reset to first page
   };
 
   // Meeting handlers
@@ -517,7 +542,7 @@ const ClientsPage = () => {
               onClick={() => setActiveTab("action-items")}
             >
               <ActionItemsIcon />
-              Action Items ({clientDetails?.actionItems?.length || 0})
+              Action Items ({actionItemsData?.total || 0})
             </button>
             <button
               className={`tab-btn ${
@@ -900,6 +925,15 @@ const ClientsPage = () => {
                         clients={clientsData || []}
                         users={usersData || []}
                         hideClientColumn={true}
+                      />
+                      <Pagination
+                        currentPage={actionItemsData?.page || 1}
+                        totalPages={actionItemsData?.total_pages || 1}
+                        totalItems={actionItemsData?.total || 0}
+                        pageSize={actionItemsData?.page_size || clientActionItemsPageSize}
+                        onPageChange={handleClientActionItemsPageChange}
+                        onPageSizeChange={handleClientActionItemsPageSizeChange}
+                        pageSizeOptions={[10, 20, 50, 100]}
                       />
                     </div>
                   </PermissionGuard>
