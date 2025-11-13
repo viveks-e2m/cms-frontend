@@ -11,6 +11,7 @@ import {
   useSecrets,
   useMeeting,
   useActionItemsByClient,
+  useUsers,
 } from "../../hooks/useQueries";
 import {
   useDeleteClient,
@@ -105,6 +106,12 @@ const ClientsPage = () => {
     error: clientsError,
   } = useClients();
 
+  // Fetch users to map IDs to names
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+  } = useUsers();
+
   // Load client details when selected
   const {
     data: meetingsSummary,
@@ -180,8 +187,18 @@ const ClientsPage = () => {
     };
   }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
 
-  const loadingState = loadingClients;
+  const loadingState = loadingClients || loadingUsers;
   const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
+
+  // Create user ID to name mapping
+  const userMap = useMemo(() => {
+    if (!usersData || !Array.isArray(usersData)) return {};
+    const map = {};
+    usersData.forEach(user => {
+      map[user.id] = user.full_name || user.name || user.email;
+    });
+    return map;
+  }, [usersData]);
 
   // Extract unique users from clients data for filters
   const usersFromClients = useMemo(() => {
@@ -200,10 +217,16 @@ const ClientsPage = () => {
     });
     
     return {
-      accountManagers: Array.from(accountManagerIds).map(id => ({ id })),
-      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ id })),
+      accountManagers: Array.from(accountManagerIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
+      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
     };
-  }, [clientsData]);
+  }, [clientsData, userMap]);
 
   // Handle errors
   React.useEffect(() => {
@@ -365,10 +388,13 @@ const ClientsPage = () => {
     }
   };
 
-  const getUserName = (userId) => {
+  const getUserName = (userId, userNameField) => {
+    // If user name is provided directly from backend, use it
+    if (userNameField) return userNameField;
+    // Look up user name from userMap
+    if (userId && userMap[userId]) return userMap[userId];
+    // Fallback: return formatted ID if name not available
     if (!userId) return null;
-    // Since we're not fetching users, just return a formatted ID
-    // You can enhance this later if needed
     return `User ${userId.slice(0, 8)}...`;
   };
 
@@ -918,7 +944,7 @@ const ClientsPage = () => {
                         }}
                         meetings={clientDetails?.meetings || []}
                         clients={clientsData || []}
-                        users={[]}
+                        users={usersData || []}
                         hideClientColumn={true}
                       />
                       <Pagination
