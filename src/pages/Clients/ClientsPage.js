@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../../components/PermissionGuard";
@@ -10,7 +10,8 @@ import {
   // useWorkflows,
   useSecrets,
   useMeeting,
-  useActionItems,
+  useActionItemsByClient,
+  useUsers,
 } from "../../hooks/useQueries";
 import {
   useDeleteClient,
@@ -65,6 +66,7 @@ import "./ClientsPage.css";
 
 const ClientsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { showError } = useNotificationContext();
   const queryClient = useQueryClient();
 
@@ -104,6 +106,12 @@ const ClientsPage = () => {
     error: clientsError,
   } = useClients();
 
+  // Fetch users to map IDs to names
+  const {
+    data: usersData,
+    isLoading: loadingUsers,
+  } = useUsers();
+
   // Load client details when selected
   const {
     data: meetingsSummary,
@@ -120,14 +128,18 @@ const ClientsPage = () => {
     isLoading: loadingSecrets,
   } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
 
+  // Fetch action items for the client with backend pagination
   const {
     data: actionItemsData,
     isLoading: loadingActionItems,
-  } = useActionItems({ 
-    client_id: selectedClient?.id,
-    page: clientActionItemsPage,
-    page_size: clientActionItemsPageSize
-  }, { enabled: !!selectedClient });
+  } = useActionItemsByClient(
+    selectedClient?.id,
+    {
+      page: clientActionItemsPage,
+      page_size: clientActionItemsPageSize
+    },
+    { enabled: !!selectedClient }
+  );
 
   // Load full meeting details when selected
   const {
@@ -175,8 +187,18 @@ const ClientsPage = () => {
     };
   }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
 
-  const loadingState = loadingClients;
+  const loadingState = loadingClients || loadingUsers;
   const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
+
+  // Create user ID to name mapping
+  const userMap = useMemo(() => {
+    if (!usersData || !Array.isArray(usersData)) return {};
+    const map = {};
+    usersData.forEach(user => {
+      map[user.id] = user.full_name || user.name || user.email;
+    });
+    return map;
+  }, [usersData]);
 
   // Extract unique users from clients data for filters
   const usersFromClients = useMemo(() => {
@@ -195,10 +217,16 @@ const ClientsPage = () => {
     });
     
     return {
-      accountManagers: Array.from(accountManagerIds).map(id => ({ id })),
-      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ id })),
+      accountManagers: Array.from(accountManagerIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
+      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
     };
-  }, [clientsData]);
+  }, [clientsData, userMap]);
 
   // Handle errors
   React.useEffect(() => {
@@ -211,6 +239,8 @@ const ClientsPage = () => {
     setSelectedClient(client);
     // Reset pagination when selecting a new client
     setClientActionItemsPage(1);
+    // Update URL with client ID
+    navigate(`/clients?clientId=${client.id}`);
   };
 
   const handleBackToList = () => {
@@ -223,6 +253,8 @@ const ClientsPage = () => {
     // Reset pagination
     setClientActionItemsPage(1);
     setClientActionItemsPageSize(20);
+    // Clear URL parameters
+    navigate('/clients');
   };
 
   // Pagination handlers for client action items
@@ -348,7 +380,7 @@ const ClientsPage = () => {
       case "assessment":
         return "Assessment";
       case "active":
-        return "Active";
+        return "Execution";
       case "inactive":
         return "Inactive";
       default:
@@ -356,10 +388,13 @@ const ClientsPage = () => {
     }
   };
 
-  const getUserName = (userId) => {
+  const getUserName = (userId, userNameField) => {
+    // If user name is provided directly from backend, use it
+    if (userNameField) return userNameField;
+    // Look up user name from userMap
+    if (userId && userMap[userId]) return userMap[userId];
+    // Fallback: return formatted ID if name not available
     if (!userId) return null;
-    // Since we're not fetching users, just return a formatted ID
-    // You can enhance this later if needed
     return `User ${userId.slice(0, 8)}...`;
   };
 
@@ -440,8 +475,8 @@ const ClientsPage = () => {
     return grouped;
   }, [filteredAndSortedClients]);
 
-  // Order status groups: active and other statuses first, inactive last
-  const statusOrder = ["active", "assessment", "onboarding", "pre-boarding", "inactive"];
+  // Order status groups: pre-boarding, onboarding, assessment, execution (active), inactive last
+  const statusOrder = ["pre-boarding", "onboarding", "assessment", "active", "inactive"];
   const orderedStatusGroups = useMemo(() => {
     const ordered = [];
     const statusSet = new Set(Object.keys(clientsByStatus));
@@ -545,13 +580,14 @@ const ClientsPage = () => {
               <WorkflowIcon />
               Workflows
             </button> */}
-            <button
+            {/* Temporarily hidden - Secrets tab */}
+            {/* <button
               className={`tab-btn ${activeTab === "secrets" ? "active" : ""}`}
               onClick={() => setActiveTab("secrets")}
             >
               <SecurityIcon />
               Secrets ({clientDetails?.secrets?.length || 0})
-            </button>
+            </button> */}
             <button
               className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
               onClick={() => setActiveTab("notes")}
@@ -908,7 +944,7 @@ const ClientsPage = () => {
                         }}
                         meetings={clientDetails?.meetings || []}
                         clients={clientsData || []}
-                        users={[]}
+                        users={usersData || []}
                         hideClientColumn={true}
                       />
                       <Pagination
@@ -1091,7 +1127,7 @@ const ClientsPage = () => {
                     <option value="pre-boarding">Pre-boarding</option>
                     <option value="onboarding">Onboarding</option>
                     <option value="assessment">Assessment</option>
-                    <option value="active">Active</option>
+                    <option value="active">Execution</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>

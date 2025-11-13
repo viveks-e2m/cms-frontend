@@ -45,13 +45,13 @@ export const queryKeys = {
     mom: (meetingId) => [...queryKeys.meetings.all, 'mom', meetingId],
   },
   actionItems: {
-    all: ['actionItems'],
+    all: ['action-items'],
     lists: () => [...queryKeys.actionItems.all, 'list'],
     list: (filters) => [...queryKeys.actionItems.lists(), filters],
     details: () => [...queryKeys.actionItems.all, 'detail'],
     detail: (id) => [...queryKeys.actionItems.details(), id],
     statistics: () => [...queryKeys.actionItems.all, 'statistics'],
-    byClient: (clientId) => [...queryKeys.actionItems.all, 'client', clientId],
+    byClient: (clientId, filters) => [...queryKeys.actionItems.all, 'byClient', clientId, filters],
     byMeeting: (meetingId) => [...queryKeys.actionItems.all, 'meeting', meetingId],
   },
   workflows: {

@@ -67,6 +67,7 @@ const DashboardPage = () => {
 
   // Prepare dashboard data
   const dashboardData = React.useMemo(() => {
+    // Recent clients are already filtered (inactive clients excluded in the hook)
     const clients = recentClientsData?.recent_clients || recentClientsData || [];
     const stats = clientStats || {};
     const meetings = meetingStats || {};
@@ -172,10 +173,6 @@ const DashboardPage = () => {
                 </div>
               </div>
               <div className="metric-breakdown">
-                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('active')}>
-                  <span className="breakdown-label">Active</span>
-                  <span className="breakdown-value breakdown-success">{dashboardData.clientStats.active_clients}</span>
-                </div>
                 <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('pre_boarding')}>
                   <span className="breakdown-label">Pre-boarding</span>
                   <span className="breakdown-value breakdown-warning">{dashboardData.clientStats.pre_boarding_clients}</span>
@@ -187,6 +184,10 @@ const DashboardPage = () => {
                 <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('assessment')}>
                   <span className="breakdown-label">Assessment</span>
                   <span className="breakdown-value breakdown-secondary">{dashboardData.clientStats.assessment_clients}</span>
+                </div>
+                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('active')}>
+                  <span className="breakdown-label">Execution</span>
+                  <span className="breakdown-value breakdown-success">{dashboardData.clientStats.active_clients}</span>
                 </div>
               </div>
             </div>
@@ -213,13 +214,13 @@ const DashboardPage = () => {
                   <span className="breakdown-label">In Progress</span>
                   <span className="breakdown-value breakdown-warning">{dashboardData.actionItemStats.in_progress_tasks}</span>
                 </div>
-                <div className="breakdown-item">
-                  <span className="breakdown-label">Completion Rate</span>
-                  <span className="breakdown-value breakdown-success">{dashboardData.actionItemStats.completion_rate}%</span>
-                </div>
                 <div className="breakdown-item breakdown-item-clickable" onClick={() => handleActionItemStatClick('completed')}>
                   <span className="breakdown-label">Completed</span>
                   <span className="breakdown-value breakdown-success">{dashboardData.actionItemStats.completed_tasks}</span>
+                </div>
+                <div className="breakdown-item">
+                  <span className="breakdown-label">Completion Rate</span>
+                  <span className="breakdown-value breakdown-success">{dashboardData.actionItemStats.completion_rate}%</span>
                 </div>
               </div>
             </div>
@@ -262,7 +263,7 @@ const DashboardPage = () => {
             <div className="section-header-modern">
               <div className="section-header-content">
                 <PeopleIcon className="section-title-icon" />
-                <h3 className="section-title-modern">Recent Clients</h3>
+                <h3 className="section-title-modern">Recent {dashboardData.clients.length} Clients Added</h3>
               </div>
             </div>
             <div className="section-content-modern">

@@ -1,4 +1,7 @@
 import React, { useState, useEffect } from "react";
+import { useCreateBlockNote } from "@blocknote/react";
+import { BlockNoteView } from "@blocknote/mantine";
+import "@blocknote/mantine/style.css";
 import { Save as SaveIcon, Notes as NotesIcon } from "@mui/icons-material";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
@@ -6,25 +9,80 @@ import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./ClientNotes.css";
 
 const ClientNotes = ({ clientId, onNotesUpdate }) => {
-  const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [hasChanges, setHasChanges] = useState(false);
   const { showSuccess, showError } = useNotificationContext();
 
+  // Create BlockNote editor
+  const editor = useCreateBlockNote({
+    initialContent: [
+      {
+        type: "paragraph",
+        content: "Add client-specific notes, observations, or important information here...",
+      },
+      {
+        type: "bulletListItem",
+        content: "Client preferences and requirements",
+      },
+      {
+        type: "bulletListItem",
+        content: "Meeting insights and follow-ups",
+      },
+      {
+        type: "bulletListItem",
+        content: "Technical specifications or constraints",
+      },
+      {
+        type: "bulletListItem",
+        content: "Communication preferences",
+      },
+      {
+        type: "bulletListItem",
+        content: "Project milestones and deadlines",
+      },
+      {
+        type: "bulletListItem",
+        content: "Important contacts and relationships",
+      },
+    ],
+  });
+
   useEffect(() => {
-    if (clientId) {
+    if (clientId && editor) {
       loadNotes();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId]);
+  }, [clientId, editor]);
 
   const loadNotes = async () => {
     try {
       setLoading(true);
       const notesData = await clientAPI.getNotes(clientId);
-      setNotes(notesData.client_notes || "");
-      setHasChanges(false);
+      
+      if (notesData && notesData.client_notes) {
+        try {
+          // Try to parse as JSON (BlockNote format)
+          const parsedContent = typeof notesData.client_notes === "string"
+            ? JSON.parse(notesData.client_notes)
+            : notesData.client_notes;
+
+          if (parsedContent && Array.isArray(parsedContent) && parsedContent.length > 0) {
+            await editor.replaceBlocks(editor.document, parsedContent);
+          }
+        } catch (parseError) {
+          // If parsing fails, it might be old plain text format
+          // Convert plain text to BlockNote format
+          const textContent = notesData.client_notes;
+          if (textContent && textContent.trim()) {
+            const lines = textContent.split('\n').filter(line => line.trim());
+            const blocks = lines.map(line => ({
+              type: "paragraph",
+              content: line,
+            }));
+            await editor.replaceBlocks(editor.document, blocks);
+          }
+        }
+      }
     } catch (error) {
       showError("Failed to load client notes");
       console.error("Error loading client notes:", error);
@@ -33,19 +91,14 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
     }
   };
 
-  const handleNotesChange = (e) => {
-    setNotes(e.target.value);
-    setHasChanges(true);
-  };
-
   const handleSave = async () => {
-    if (!clientId) return;
+    if (!clientId || !editor) return;
 
     try {
       setSaving(true);
-      await clientAPI.updateNotes(clientId, notes);
+      const content = editor.document;
+      await clientAPI.updateNotes(clientId, JSON.stringify(content));
       showSuccess("Client notes saved successfully");
-      setHasChanges(false);
       
       if (onNotesUpdate) {
         onNotesUpdate();
@@ -55,13 +108,6 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
       console.error("Error saving client notes:", error);
     } finally {
       setSaving(false);
-    }
-  };
-
-  const handleKeyDown = (e) => {
-    if (e.ctrlKey && e.key === 's') {
-      e.preventDefault();
-      handleSave();
     }
   };
 
@@ -84,7 +130,7 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
         <button
           className="btn btn-primary btn-xs"
           onClick={handleSave}
-          disabled={saving || !hasChanges}
+          disabled={saving}
         >
           <SaveIcon />
           {saving ? "Saving..." : "Save"}
@@ -92,27 +138,22 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
       </div>
 
       <div className="client-notes-content">
-        <textarea
-          className="notes-textarea"
-          value={notes}
-          onChange={handleNotesChange}
-          onKeyDown={handleKeyDown}
-          placeholder="Add client-specific notes, observations, or important information here...
-
-Examples:
-• Client preferences and requirements
-• Meeting insights and follow-ups
-• Technical specifications or constraints
-• Communication preferences
-• Project milestones and deadlines
-• Important contacts and relationships"
-          rows={15}
-        />
-        
-        {hasChanges && (
-          <div className="unsaved-changes">
-            <span>You have unsaved changes</span>
-            <small>Press Ctrl+S to save quickly</small>
+        {loading ? (
+          <div className="notes-loading">
+            <LoadingSpinner message="Loading notes..." />
+          </div>
+        ) : (
+          <div 
+            className="notes-editor-container" 
+            data-color-scheme="light" 
+            data-mantine-color-scheme="light"
+            style={{ backgroundColor: '#FFFFFF' }}
+          >
+            <BlockNoteView 
+              editor={editor} 
+              theme="light"
+              style={{ backgroundColor: '#FFFFFF' }}
+            />
           </div>
         )}
       </div>

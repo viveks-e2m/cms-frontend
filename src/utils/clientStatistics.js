@@ -1,4 +1,4 @@
-nno/**
+/**
  * Utility function to calculate client statistics from clients array
  * This eliminates the need for a separate /clients/statistics API call
  */
