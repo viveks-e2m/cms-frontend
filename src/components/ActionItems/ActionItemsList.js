@@ -1,17 +1,10 @@
 import React, { useState, useEffect } from "react";
 import {
   Assignment as AssignmentIcon,
-  Person as PersonIcon,
-  CalendarToday as CalendarIcon,
-  CheckCircle as CheckCircleIcon,
-  RadioButtonUnchecked as RadioButtonUncheckedIcon,
-  Schedule as ScheduleIcon,
   Delete as DeleteIcon,
   Edit as EditIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
-  Event as MeetingIcon,
-  MoreVert as MoreVertIcon,
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
@@ -53,13 +46,6 @@ const ActionItemsList = ({
   useEffect(() => {
     setLocalActionItems(actionItems);
   }, [actionItems]);
-
-  const getMeetingTitle = (meetingId) => {
-    console.log("Looking for meeting ID:", meetingId, "in meetings:", meetings);
-    const meeting = meetings.find((m) => m.id === meetingId);
-    console.log("Found meeting:", meeting);
-    return meeting?.meeting_name || meeting?.name || "Unknown Meeting";
-  };
 
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
@@ -210,18 +196,6 @@ const ActionItemsList = ({
       setLocalActionItems(previousItems);
       showError("Failed to update action item");
       console.error("Error updating item:", error);
-    }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-      case "completed":
-        return <CheckCircleIcon className="status-icon completed" />;
-      case "in_progress":
-        return <ScheduleIcon className="status-icon in-progress" />;
-      case "pending":
-      default:
-        return <RadioButtonUncheckedIcon className="status-icon open" />;
     }
   };
 

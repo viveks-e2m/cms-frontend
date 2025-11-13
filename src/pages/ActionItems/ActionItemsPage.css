@@ -518,6 +518,10 @@
   border-radius: 0;
 }
 
+.action-items-container.kanban-mode .no-action-items {
+  margin-top: 3rem;
+}
+
 .action-items-container .action-items-list {
   padding: 1.5rem;
 }

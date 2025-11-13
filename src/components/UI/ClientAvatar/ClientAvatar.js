@@ -42,7 +42,7 @@ const ClientAvatar = ({
       return urlObj.hostname.replace('www.', '');
     } catch (error) {
       // If URL parsing fails, try simple regex extraction
-      const match = url.match(/(?:https?:\/\/)?(?:www\.)?([^\/\s]+)/);
+      const match = url.match(/(?:https?:\/\/)?(?:www\.)?([^/\s]+)/);
       return match ? match[1] : null;
     }
   };

@@ -7,7 +7,7 @@ import { PERMISSIONS } from "../../constants/permissions";
 import "./AdminPanel.css";
 
 const AdminPanel = () => {
-  const { user, isAdmin } = useAuth();
+  const { isAdmin } = useAuth();
   const [activeTab, setActiveTab] = useState("users");
   const [users, setUsers] = useState([]);
   const [roles, setRoles] = useState([]);

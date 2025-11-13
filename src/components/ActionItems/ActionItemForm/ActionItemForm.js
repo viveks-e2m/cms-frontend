@@ -46,6 +46,7 @@ const ActionItemForm = ({
     if (isOpen && (clients.length === 0 || users.length === 0)) {
       loadRequiredData();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isOpen, clients.length, users.length]);
 
   // Set prefilled data when modal opens (only once per modal open)
@@ -256,11 +257,6 @@ const ActionItemForm = ({
   const getMeetingName = (meetingId) => {
     const meeting = clientMeetings.find(m => m.id === meetingId) || meetings.find(m => m.id === meetingId);
     return meeting ? (meeting.meeting_name || meeting.title || `Meeting ${meetingId.slice(-8)}`) : "Unknown Meeting";
-  };
-
-  const getUserName = (userId) => {
-    const user = users.find(u => u.id === userId);
-    return user ? (user.full_name || user.name || user.email) : "Unknown User";
   };
 
   // Check if the selected task owner is a client

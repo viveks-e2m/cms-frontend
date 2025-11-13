@@ -4,8 +4,6 @@ import {
   Edit as EditIcon,
   Delete as DeleteIcon,
   VideoCall as VideoCallIcon,
-  CalendarToday as CalendarIcon,
-  Person as PersonIcon,
   Notes as NotesIcon,
   RecordVoiceOver as TranscriptIcon,
   Assignment as AssignmentIcon,
@@ -49,31 +47,6 @@ const MeetingDetails = ({
       showError("Failed to load meeting details");
     }
   }, [error, showError]);
-
-  const formatDate = (dateString) => {
-    if (!dateString) return "No date set";
-    return new Date(dateString).toLocaleDateString("en-US", {
-      weekday: "long",
-      year: "numeric",
-      month: "long",
-      day: "numeric",
-    });
-  };
-
-  const formatTime = (dateString) => {
-    if (!dateString) return "No time set";
-    return new Date(dateString).toLocaleTimeString("en-US", {
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
-
-  const formatDuration = (duration) => {
-    if (!duration) return "Unknown duration";
-    const hours = Math.floor(duration / 60);
-    const minutes = duration % 60;
-    return hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
-  };
 
   if (loading) {
     return (

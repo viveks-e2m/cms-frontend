@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from 'react';
+import { useAuth } from '../../../hooks/useAuth';
 import { PermissionGuard } from '../../PermissionGuard';
 import { PERMISSIONS } from '../../../constants/permissions';
 import {
@@ -21,9 +22,13 @@ const MeetingsList = ({
   onDeleteMeeting,
   loading = false 
 }) => {
+  const { hasAnyPermission } = useAuth();
   const [sortOrder, setSortOrder] = useState('desc'); // 'asc' or 'desc'
   const [viewMode, setViewMode] = useState('grouped'); // 'grouped' or 'list'
   const [collapsedMonths, setCollapsedMonths] = useState(new Set());
+  
+  // Check if user has any action permissions
+  const hasActionPermissions = hasAnyPermission([PERMISSIONS.UPDATE_MEETING, PERMISSIONS.DELETE_MEETING]);
   const handleActionClick = (action, meeting, event) => {
     event.stopPropagation();
     
@@ -179,7 +184,9 @@ const MeetingsList = ({
                             <tr>
                               <th className="table-header-title">Title</th>
                               <th className="table-header-date">Date</th>
-                              <th className="table-header-actions">Actions</th>
+                              {hasActionPermissions && (
+                                <th className="table-header-actions">Actions</th>
+                              )}
                             </tr>
                           </thead>
                           <tbody>
@@ -203,28 +210,30 @@ const MeetingsList = ({
                                     <span>{formatDate(meeting.created_at)}</span>
                                   </div>
                                 </td>
-                                <td className="meeting-actions-cell">
-                                  <div className="meeting-actions" onClick={(e) => e.stopPropagation()}>
-                                    <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
-                                      <button 
-                                        className="action-btn edit"
-                                        onClick={(e) => handleActionClick('edit', meeting, e)}
-                                        title="Edit Meeting"
-                                      >
-                                        <EditIcon />
-                                      </button>
-                                    </PermissionGuard>
-                                    <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
-                                      <button 
-                                        className="action-btn delete"
-                                        onClick={(e) => handleActionClick('delete', meeting, e)}
-                                        title="Delete Meeting"
-                                      >
-                                        <DeleteIcon />
-                                      </button>
-                                    </PermissionGuard>
-                                  </div>
-                                </td>
+                                {hasActionPermissions && (
+                                  <td className="meeting-actions-cell">
+                                    <div className="meeting-actions" onClick={(e) => e.stopPropagation()}>
+                                      <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
+                                        <button 
+                                          className="action-btn edit"
+                                          onClick={(e) => handleActionClick('edit', meeting, e)}
+                                          title="Edit Meeting"
+                                        >
+                                          <EditIcon />
+                                        </button>
+                                      </PermissionGuard>
+                                      <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
+                                        <button 
+                                          className="action-btn delete"
+                                          onClick={(e) => handleActionClick('delete', meeting, e)}
+                                          title="Delete Meeting"
+                                        >
+                                          <DeleteIcon />
+                                        </button>
+                                      </PermissionGuard>
+                                    </div>
+                                  </td>
+                                )}
                               </tr>
                             ))}
                           </tbody>
@@ -243,7 +252,9 @@ const MeetingsList = ({
                   <tr>
                     <th className="table-header-title">Title</th>
                     <th className="table-header-date">Date</th>
-                    <th className="table-header-actions">Actions</th>
+                    {hasActionPermissions && (
+                      <th className="table-header-actions">Actions</th>
+                    )}
                   </tr>
                 </thead>
                 <tbody>
@@ -267,28 +278,30 @@ const MeetingsList = ({
                           <span>{formatDate(meeting.created_at)}</span>
                         </div>
                       </td>
-                      <td className="meeting-actions-cell">
-                        <div className="meeting-actions" onClick={(e) => e.stopPropagation()}>
-                          <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
-                            <button 
-                              className="action-btn edit"
-                              onClick={(e) => handleActionClick('edit', meeting, e)}
-                              title="Edit Meeting"
-                            >
-                              <EditIcon />
-                            </button>
-                          </PermissionGuard>
-                          <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
-                            <button 
-                              className="action-btn delete"
-                              onClick={(e) => handleActionClick('delete', meeting, e)}
-                              title="Delete Meeting"
-                            >
-                              <DeleteIcon />
-                            </button>
-                          </PermissionGuard>
-                        </div>
-                      </td>
+                      {hasActionPermissions && (
+                        <td className="meeting-actions-cell">
+                          <div className="meeting-actions" onClick={(e) => e.stopPropagation()}>
+                            <PermissionGuard permissions={[PERMISSIONS.UPDATE_MEETING]}>
+                              <button 
+                                className="action-btn edit"
+                                onClick={(e) => handleActionClick('edit', meeting, e)}
+                                title="Edit Meeting"
+                              >
+                                <EditIcon />
+                              </button>
+                            </PermissionGuard>
+                            <PermissionGuard permissions={[PERMISSIONS.DELETE_MEETING]}>
+                              <button 
+                                className="action-btn delete"
+                                onClick={(e) => handleActionClick('delete', meeting, e)}
+                                title="Delete Meeting"
+                              >
+                                <DeleteIcon />
+                              </button>
+                            </PermissionGuard>
+                          </div>
+                        </td>
+                      )}
                     </tr>
                   ))}
                 </tbody>

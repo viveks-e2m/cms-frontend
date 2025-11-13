@@ -2,26 +2,24 @@ import React, { useState, useEffect, useMemo } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { useNotificationContext } from "../../contexts/NotificationContext";
-import { useAuth } from "../../hooks/useAuth";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
   useClients,
-  useUsers,
   useMeetingSummary,
   // useWorkflows,
   useSecrets,
   useMeeting,
-  useActionItems,
+  useActionItemsByClient,
+  useUsers,
 } from "../../hooks/useQueries";
 import {
-  useCreateClient,
-  useUpdateClient,
   useDeleteClient,
   useDeleteMeeting,
 } from "../../hooks/useMutations";
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import Pagination from "../../components/UI/Pagination/Pagination";
 import {
   MeetingsList,
   MeetingDetails,
@@ -42,18 +40,13 @@ import {
   Visibility as VisibilityIcon,
   Delete as DeleteIcon,
   Person as PersonIcon,
-  PersonOutline as PersonOutlineIcon,
-  Email as EmailIcon,
-  Business as BusinessIcon,
   AccountCircle as AccountManagerIcon,
   Support as AdoptionSpecialistIcon,
   Language as WebsiteIcon,
   VideoCall as VideoCallIcon,
   Security as SecurityIcon,
-  AccountTree as WorkflowIcon,
   ArrowBack as ArrowBackIcon,
   FilterList as FilterIcon,
-  Sort as SortIcon,
   Close as CloseIcon,
   Info as OnboardingIcon,
   Notes as NotesIcon,
@@ -74,8 +67,7 @@ import "./ClientsPage.css";
 const ClientsPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { hasPermission } = useAuth();
-  const { showError, showSuccess } = useNotificationContext();
+  const { showError } = useNotificationContext();
   const queryClient = useQueryClient();
 
   // State
@@ -103,6 +95,10 @@ const ClientsPage = () => {
   // Status group collapse state - inactive is collapsed by default
   const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive"]));
 
+  // Pagination state for client action items
+  const [clientActionItemsPage, setClientActionItemsPage] = useState(1);
+  const [clientActionItemsPageSize, setClientActionItemsPageSize] = useState(20);
+
   // Use cached queries
   const {
     data: clientsData,
@@ -110,10 +106,10 @@ const ClientsPage = () => {
     error: clientsError,
   } = useClients();
 
+  // Fetch users to map IDs to names
   const {
     data: usersData,
     isLoading: loadingUsers,
-    error: usersError,
   } = useUsers();
 
   // Load client details when selected
@@ -132,10 +128,18 @@ const ClientsPage = () => {
     isLoading: loadingSecrets,
   } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
 
+  // Fetch action items for the client with backend pagination
   const {
     data: actionItemsData,
     isLoading: loadingActionItems,
-  } = useActionItems({ client_id: selectedClient?.id }, { enabled: !!selectedClient });
+  } = useActionItemsByClient(
+    selectedClient?.id,
+    {
+      page: clientActionItemsPage,
+      page_size: clientActionItemsPageSize
+    },
+    { enabled: !!selectedClient }
+  );
 
   // Load full meeting details when selected
   const {
@@ -144,8 +148,6 @@ const ClientsPage = () => {
   } = useMeeting(selectedMeeting?.id, { enabled: !!selectedMeeting?.id });
 
   // Mutations
-  const createClientMutation = useCreateClient();
-  const updateClientMutation = useUpdateClient();
   const deleteClientMutation = useDeleteClient();
   const deleteMeetingMutation = useDeleteMeeting();
 
@@ -188,18 +190,57 @@ const ClientsPage = () => {
   const loadingState = loadingClients || loadingUsers;
   const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
 
+  // Create user ID to name mapping
+  const userMap = useMemo(() => {
+    if (!usersData || !Array.isArray(usersData)) return {};
+    const map = {};
+    usersData.forEach(user => {
+      map[user.id] = user.full_name || user.name || user.email;
+    });
+    return map;
+  }, [usersData]);
+
+  // Extract unique users from clients data for filters
+  const usersFromClients = useMemo(() => {
+    if (!clientsData || !Array.isArray(clientsData)) return { accountManagers: [], adoptionSpecialists: [] };
+    
+    const accountManagerIds = new Set();
+    const adoptionSpecialistIds = new Set();
+    
+    clientsData.forEach((client) => {
+      if (client.account_manager) {
+        accountManagerIds.add(client.account_manager);
+      }
+      if (client.adoption_specialist) {
+        adoptionSpecialistIds.add(client.adoption_specialist);
+      }
+    });
+    
+    return {
+      accountManagers: Array.from(accountManagerIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
+      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ 
+        id,
+        name: userMap[id] || `User ${id.slice(0, 8)}...`
+      })),
+    };
+  }, [clientsData, userMap]);
+
   // Handle errors
   React.useEffect(() => {
     if (clientsError) {
       showError("Failed to load clients");
     }
-    if (usersError) {
-      console.error("Error loading users:", usersError);
-    }
-  }, [clientsError, usersError, showError]);
+  }, [clientsError, showError]);
 
   const handleClientSelect = (client) => {
     setSelectedClient(client);
+    // Reset pagination when selecting a new client
+    setClientActionItemsPage(1);
+    // Update URL with client ID
+    navigate(`/clients?clientId=${client.id}`);
   };
 
   const handleBackToList = () => {
@@ -209,6 +250,22 @@ const ClientsPage = () => {
     setShowMeetingForm(false);
     setEditingMeeting(null);
     setMeetingsView("list");
+    // Reset pagination
+    setClientActionItemsPage(1);
+    setClientActionItemsPageSize(20);
+    // Clear URL parameters
+    navigate('/clients');
+  };
+
+  // Pagination handlers for client action items
+  const handleClientActionItemsPageChange = (newPage) => {
+    setClientActionItemsPage(newPage);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const handleClientActionItemsPageSizeChange = (newPageSize) => {
+    setClientActionItemsPageSize(newPageSize);
+    setClientActionItemsPage(1); // Reset to first page
   };
 
   // Meeting handlers
@@ -323,7 +380,7 @@ const ClientsPage = () => {
       case "assessment":
         return "Assessment";
       case "active":
-        return "Active";
+        return "Execution";
       case "inactive":
         return "Inactive";
       default:
@@ -331,27 +388,14 @@ const ClientsPage = () => {
     }
   };
 
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "pre-boarding":
-        return "warning";
-      case "onboarding":
-        return "info";
-      case "assessment":
-        return "secondary";
-      case "active":
-        return "success";
-      case "inactive":
-        return "danger";
-      default:
-        return "warning";
-    }
-  };
-
-  const getUserName = (userId) => {
+  const getUserName = (userId, userNameField) => {
+    // If user name is provided directly from backend, use it
+    if (userNameField) return userNameField;
+    // Look up user name from userMap
+    if (userId && userMap[userId]) return userMap[userId];
+    // Fallback: return formatted ID if name not available
     if (!userId) return null;
-    const user = (usersData || []).find((u) => u.id === userId);
-    return user ? user.name || user.email : "Unknown User";
+    return `User ${userId.slice(0, 8)}...`;
   };
 
   // Count active filters
@@ -431,8 +475,8 @@ const ClientsPage = () => {
     return grouped;
   }, [filteredAndSortedClients]);
 
-  // Order status groups: active and other statuses first, inactive last
-  const statusOrder = ["active", "assessment", "onboarding", "pre-boarding", "inactive"];
+  // Order status groups: pre-boarding, onboarding, assessment, execution (active), inactive last
+  const statusOrder = ["pre-boarding", "onboarding", "assessment", "active", "inactive"];
   const orderedStatusGroups = useMemo(() => {
     const ordered = [];
     const statusSet = new Set(Object.keys(clientsByStatus));
@@ -451,6 +495,7 @@ const ClientsPage = () => {
     });
     
     return ordered;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [clientsByStatus]);
 
   const toggleStatusGroup = (status) => {
@@ -517,7 +562,7 @@ const ClientsPage = () => {
               onClick={() => setActiveTab("action-items")}
             >
               <ActionItemsIcon />
-              Action Items ({clientDetails?.actionItems?.length || 0})
+              Action Items ({actionItemsData?.total || 0})
             </button>
             <button
               className={`tab-btn ${
@@ -535,13 +580,14 @@ const ClientsPage = () => {
               <WorkflowIcon />
               Workflows
             </button> */}
-            <button
+            {/* Temporarily hidden - Secrets tab */}
+            {/* <button
               className={`tab-btn ${activeTab === "secrets" ? "active" : ""}`}
               onClick={() => setActiveTab("secrets")}
             >
               <SecurityIcon />
               Secrets ({clientDetails?.secrets?.length || 0})
-            </button>
+            </button> */}
             <button
               className={`tab-btn ${activeTab === "notes" ? "active" : ""}`}
               onClick={() => setActiveTab("notes")}
@@ -901,6 +947,15 @@ const ClientsPage = () => {
                         users={usersData || []}
                         hideClientColumn={true}
                       />
+                      <Pagination
+                        currentPage={actionItemsData?.page || 1}
+                        totalPages={actionItemsData?.total_pages || 1}
+                        totalItems={actionItemsData?.total || 0}
+                        pageSize={actionItemsData?.page_size || clientActionItemsPageSize}
+                        onPageChange={handleClientActionItemsPageChange}
+                        onPageSizeChange={handleClientActionItemsPageSizeChange}
+                        pageSizeOptions={[10, 20, 50, 100]}
+                      />
                     </div>
                   </PermissionGuard>
                 )}
@@ -1072,7 +1127,7 @@ const ClientsPage = () => {
                     <option value="pre-boarding">Pre-boarding</option>
                     <option value="onboarding">Onboarding</option>
                     <option value="assessment">Assessment</option>
-                    <option value="active">Active</option>
+                    <option value="active">Execution</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
@@ -1084,13 +1139,11 @@ const ClientsPage = () => {
                     onChange={(e) => setAccountManagerFilter(e.target.value)}
                   >
                     <option value="">All Account Managers</option>
-                    {(usersData || [])
-                      .filter((user) => (clientsData || []).some((client) => client.account_manager === user.id))
-                      .map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </option>
-                      ))}
+                    {usersFromClients.accountManagers.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                      </option>
+                    ))}
                   </select>
                 </div>
                 <div className="filter-field">
@@ -1101,13 +1154,11 @@ const ClientsPage = () => {
                     onChange={(e) => setAdoptionSpecialistFilter(e.target.value)}
                   >
                     <option value="">All Adoption Specialists</option>
-                    {(usersData || [])
-                      .filter((user) => (clientsData || []).some((client) => client.adoption_specialist === user.id))
-                      .map((user) => (
-                        <option key={user.id} value={user.id}>
-                          {user.name || user.email}
-                        </option>
-                      ))}
+                    {usersFromClients.adoptionSpecialists.map((user) => (
+                      <option key={user.id} value={user.id}>
+                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>

@@ -2,8 +2,6 @@ import React, { useState, useEffect } from 'react';
 import {
   Add as AddIcon,
   Notes as NotesIcon,
-  Edit as EditIcon,
-  Delete as DeleteIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
   Person as PersonIcon,
@@ -20,15 +18,14 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
   const [notes, setNotes] = useState([]);
   const [loading, setLoading] = useState(true);
   const [isAddingNote, setIsAddingNote] = useState(false);
-  const [editingNoteId, setEditingNoteId] = useState(null);
   const [newNote, setNewNote] = useState({ note: '' });
-  const [editNote, setEditNote] = useState({ note: '' });
   const { showError, showSuccess } = useNotificationContext();
 
   useEffect(() => {
     if (meetingId) {
       loadNotes();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 
   const loadNotes = async () => {
@@ -67,25 +64,6 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
       showError('Failed to add note');
       console.error('Error adding note:', error);
     }
-  };
-
-  const handleEditNote = async (noteId) => {
-    showError('Note editing is not available in the current backend implementation');
-    setEditingNoteId(null);
-    setEditNote({ note: '' });
-  };
-
-  const handleDeleteNote = async (noteId) => {
-    showError('Note deletion is not available in the current backend implementation');
-  };
-
-  const startEditing = (note) => {
-    showError('Note editing is not available in the current backend implementation');
-  };
-
-  const cancelEditing = () => {
-    setEditingNoteId(null);
-    setEditNote({ note: '' });
   };
 
   const cancelAdding = () => {

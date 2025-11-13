@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback } from 'react';
 
 /**
  * Custom hook for managing notifications
@@ -26,6 +26,7 @@ export const useNotification = () => {
     }
 
     return id;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const removeNotification = useCallback((id) => {

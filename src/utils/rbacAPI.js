@@ -1,15 +1,30 @@
 import api from './api';
+import { getCachedPermissions, setCachedPermissions } from './userCache';
 
 // RBAC API functions
 export const rbacAPI = {
   // Get current user's permissions and role
-  getMyPermissions: async () => {
+  getMyPermissions: async (forceRefresh = false) => {
+    // Check cache first unless force refresh is requested
+    if (!forceRefresh) {
+      const cachedPermissions = getCachedPermissions();
+      if (cachedPermissions) {
+        console.log('Using cached permissions data');
+        return cachedPermissions;
+      }
+    }
+
+    // Fetch from API
     const response = await api.get('/rbac/my-permissions');
     const { success, data, error } = response.data;
     
     if (!success) {
       throw new Error(error?.message || 'Failed to get permissions');
     }
+    
+    // Cache the permissions data
+    setCachedPermissions(data);
+    console.log('Permissions data cached');
     
     return data;
   },

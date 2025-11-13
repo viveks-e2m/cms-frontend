@@ -23,6 +23,7 @@ const RBACTest = () => {
     if (isAuthenticated && user) {
       runTests();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isAuthenticated, user, role, permissions]);
 
   const runTests = async () => {

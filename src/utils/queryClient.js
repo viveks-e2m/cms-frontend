@@ -1,16 +1,15 @@
 import { QueryClient } from '@tanstack/react-query';
-import { getCache } from './cacheStorage';
 
-// Cache time constants (in milliseconds)
+// Cache times in milliseconds
 export const CACHE_TIMES = {
-  STATISTICS: 2 * 60 * 1000,      // 2 minutes staleTime
-  STATISTICS_CACHE: 5 * 60 * 1000, // 5 minutes cacheTime
-  LISTS: 5 * 60 * 1000,            // 5 minutes staleTime
-  LISTS_CACHE: 10 * 60 * 1000,     // 10 minutes cacheTime
-  DETAILS: 10 * 60 * 1000,         // 10 minutes staleTime
-  DETAILS_CACHE: 30 * 60 * 1000,   // 30 minutes cacheTime
-  USERS: 10 * 60 * 1000,            // 10 minutes staleTime
-  USERS_CACHE: 15 * 60 * 1000,     // 15 minutes cacheTime
+  STATISTICS: 5 * 60 * 1000, // 5 minutes
+  STATISTICS_CACHE: 10 * 60 * 1000, // 10 minutes
+  LISTS: 2 * 60 * 1000, // 2 minutes
+  LISTS_CACHE: 5 * 60 * 1000, // 5 minutes
+  DETAILS: 5 * 60 * 1000, // 5 minutes
+  DETAILS_CACHE: 10 * 60 * 1000, // 10 minutes
+  USERS: 5 * 60 * 1000, // 5 minutes
+  USERS_CACHE: 10 * 60 * 1000, // 10 minutes
 };
 
 // Query keys factory for consistent cache key management
@@ -46,13 +45,13 @@ export const queryKeys = {
     mom: (meetingId) => [...queryKeys.meetings.all, 'mom', meetingId],
   },
   actionItems: {
-    all: ['actionItems'],
+    all: ['action-items'],
     lists: () => [...queryKeys.actionItems.all, 'list'],
     list: (filters) => [...queryKeys.actionItems.lists(), filters],
     details: () => [...queryKeys.actionItems.all, 'detail'],
     detail: (id) => [...queryKeys.actionItems.details(), id],
     statistics: () => [...queryKeys.actionItems.all, 'statistics'],
-    byClient: (clientId) => [...queryKeys.actionItems.all, 'client', clientId],
+    byClient: (clientId, filters) => [...queryKeys.actionItems.all, 'byClient', clientId, filters],
     byMeeting: (meetingId) => [...queryKeys.actionItems.all, 'meeting', meetingId],
   },
   workflows: {
@@ -82,51 +81,15 @@ export const queryKeys = {
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      refetchOnWindowFocus: true,
+      refetchOnWindowFocus: false, // Prevent refetch on window focus to reduce duplicate calls
       refetchOnReconnect: true,
       retry: 2,
-      staleTime: CACHE_TIMES.LISTS, // Default to 5 minutes
-      gcTime: CACHE_TIMES.LISTS_CACHE, // Garbage collection time (previously cacheTime)
+      staleTime: 2 * 60 * 1000, // 2 minutes - data is fresh for 2 minutes
+      gcTime: 5 * 60 * 1000, // 5 minutes - keep unused data in cache for 5 minutes
     },
     mutations: {
       retry: 1,
     },
   },
 });
-
-// Hydrate query client from persistent cache on initialization
-export const hydrateQueryClient = async () => {
-  try {
-    // Common query keys to hydrate
-    const commonQueries = [
-      queryKeys.clients.recent(6),
-      queryKeys.clients.statistics(),
-      queryKeys.clients.list(),
-      queryKeys.meetings.statistics(),
-      queryKeys.actionItems.statistics(),
-      queryKeys.actionItems.list({}),
-      queryKeys.users.list(),
-      queryKeys.n8n.workflows({}),
-    ];
-
-    for (const queryKey of commonQueries) {
-      try {
-        const cachedData = await getCache(queryKey);
-        if (cachedData) {
-          queryClient.setQueryData(queryKey, cachedData);
-        }
-      } catch (error) {
-        // Ignore errors for individual cache entries
-        console.debug('Error hydrating cache for', queryKey, error);
-      }
-    }
-  } catch (error) {
-    console.error('Error hydrating query client:', error);
-  }
-};
-
-// Initialize hydration
-if (typeof window !== 'undefined') {
-  hydrateQueryClient();
-}
 

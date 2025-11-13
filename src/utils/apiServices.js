@@ -223,9 +223,21 @@ export const openPointsAPI = {
     return handleApiResponse(response);
   },
 
-  // Get all open points for client
+  // Get all open points for client (without pagination - legacy)
   getByClient: async (clientId) => {
     const response = await api.get(`/clients/${clientId}/open-points`);
+    return handleApiResponse(response);
+  },
+
+  // Get open points for client with pagination support
+  getByClientPaginated: async (clientId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.page) queryParams.append("page", params.page);
+    if (params.page_size) queryParams.append("page_size", params.page_size);
+
+    const url = `/clients/${clientId}/open-points${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
+    console.log('API Request URL for client action items:', url);
+    const response = await api.get(url);
     return handleApiResponse(response);
   },
 
@@ -259,15 +271,20 @@ export const openPointsAPI = {
     return handleApiResponse(response);
   },
 
-  // Get recent open points (last 15 days) with caching support
+  // Get recent open points with pagination support
   getRecentOptimized: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.status && params.status !== "all") queryParams.append("status", params.status);
     if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
-
+    if (params.task_owner && params.task_owner !== "all") queryParams.append("task_owner", params.task_owner);
+    if (params.assignee && params.assignee !== "all") queryParams.append("assignee", params.assignee);
+    if (params.page) queryParams.append("page", params.page);
+    if (params.page_size) queryParams.append("page_size", params.page_size);
 
     const url = `/open-points/recent${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
-    const response = await api.post(url, {
+    console.log('API Request URL:', url);
+    console.log('Query params:', params);
+    const response = await api.post(url, {}, {
       timeout: API_CONFIG.DEFAULT_TIMEOUT, // Faster timeout for optimized endpoint
     });
     return handleApiResponse(response);

@@ -1,6 +1,6 @@
 /**
  * Data Prefetching Service
- * Prefetches all relevant API data on first login and stores in cache
+ * Prefetches all relevant API data on first login
  */
 
 import { queryClient, queryKeys } from './queryClient';
@@ -12,7 +12,6 @@ import {
   secretsAPI,
   n8nAPI,
 } from './apiServices';
-import { setCache } from './cacheStorage';
 
 /**
  * Prefetch all dashboard data
@@ -22,26 +21,24 @@ const prefetchDashboardData = async (onProgress) => {
     {
       name: 'Recent Clients',
       fn: async () => {
-        const data = await clientAPI.getRecent(6);
-        await setCache(queryKeys.clients.recent(6), data, 60 * 24); // 24 hours
-        queryClient.setQueryData(queryKeys.clients.recent(6), data);
-        return data;
+        // Fetch all clients and cache them
+        const allClients = await clientAPI.getAll();
+        queryClient.setQueryData(queryKeys.clients.list(), allClients);
+        return allClients;
       },
     },
     {
       name: 'Client Statistics',
       fn: async () => {
-        const data = await clientAPI.getStatistics();
-        await setCache(queryKeys.clients.statistics(), data, 60 * 2); // 2 hours
-        queryClient.setQueryData(queryKeys.clients.statistics(), data);
-        return data;
+        // Statistics are now calculated from clients data, so we just need to ensure clients are loaded
+        // The statistics will be calculated automatically when useClientStats is called
+        return null;
       },
     },
     {
       name: 'Meeting Statistics',
       fn: async () => {
         const data = await meetingAPI.getStatistics();
-        await setCache(queryKeys.meetings.statistics(), data, 60 * 2); // 2 hours
         queryClient.setQueryData(queryKeys.meetings.statistics(), data);
         return data;
       },
@@ -50,7 +47,6 @@ const prefetchDashboardData = async (onProgress) => {
       name: 'Action Item Statistics',
       fn: async () => {
         const data = await openPointsAPI.getStatistics();
-        await setCache(queryKeys.actionItems.statistics(), data, 60 * 2); // 2 hours
         queryClient.setQueryData(queryKeys.actionItems.statistics(), data);
         return data;
       },
@@ -69,7 +65,6 @@ const prefetchClientsData = async (onProgress) => {
       name: 'All Clients',
       fn: async () => {
         const data = await clientAPI.getAll();
-        await setCache(queryKeys.clients.list(), data, 60 * 12); // 12 hours
         queryClient.setQueryData(queryKeys.clients.list(), data);
         return data;
       },
@@ -78,7 +73,6 @@ const prefetchClientsData = async (onProgress) => {
       name: 'All Users',
       fn: async () => {
         const data = await clientAPI.getAllUsers();
-        await setCache(queryKeys.users.list(), data, 60 * 24); // 24 hours
         queryClient.setQueryData(queryKeys.users.list(), data);
         return data;
       },
@@ -97,7 +91,6 @@ const prefetchActionItemsData = async (onProgress) => {
       name: 'Recent Action Items',
       fn: async () => {
         const data = await openPointsAPI.getRecentOptimized({});
-        await setCache(queryKeys.actionItems.list({}), data, 60 * 3); // 3 hours
         queryClient.setQueryData(queryKeys.actionItems.list({}), data);
         return data;
       },
@@ -116,7 +109,6 @@ const prefetchN8nData = async (onProgress) => {
       name: 'N8N Workflows',
       fn: async () => {
         const data = await n8nAPI.getWorkflows({});
-        await setCache(queryKeys.n8n.workflows({}), data, 60 * 6); // 6 hours
         queryClient.setQueryData(queryKeys.n8n.workflows({}), data);
         return data;
       },
@@ -167,26 +159,24 @@ export const prefetchAllData = async (onProgress) => {
         {
           name: 'Recent Clients',
           fn: async () => {
-            const data = await clientAPI.getRecent(6);
-            await setCache(queryKeys.clients.recent(6), data, 60 * 24);
-            queryClient.setQueryData(queryKeys.clients.recent(6), data);
-            return data;
+            // Fetch all clients and cache them
+            const allClients = await clientAPI.getAll();
+            queryClient.setQueryData(queryKeys.clients.list(), allClients);
+            return allClients;
           },
         },
         {
           name: 'Client Statistics',
           fn: async () => {
-            const data = await clientAPI.getStatistics();
-            await setCache(queryKeys.clients.statistics(), data, 60 * 2);
-            queryClient.setQueryData(queryKeys.clients.statistics(), data);
-            return data;
+            // Statistics are now calculated from clients data, so we just need to ensure clients are loaded
+            // The statistics will be calculated automatically when useClientStats is called
+            return null;
           },
         },
         {
           name: 'Meeting Statistics',
           fn: async () => {
             const data = await meetingAPI.getStatistics();
-            await setCache(queryKeys.meetings.statistics(), data, 60 * 2);
             queryClient.setQueryData(queryKeys.meetings.statistics(), data);
             return data;
           },
@@ -195,7 +185,6 @@ export const prefetchAllData = async (onProgress) => {
           name: 'Action Item Statistics',
           fn: async () => {
             const data = await openPointsAPI.getStatistics();
-            await setCache(queryKeys.actionItems.statistics(), data, 60 * 2);
             queryClient.setQueryData(queryKeys.actionItems.statistics(), data);
             return data;
           },
@@ -209,7 +198,6 @@ export const prefetchAllData = async (onProgress) => {
           name: 'All Clients',
           fn: async () => {
             const data = await clientAPI.getAll();
-            await setCache(queryKeys.clients.list(), data, 60 * 12);
             queryClient.setQueryData(queryKeys.clients.list(), data);
             return data;
           },
@@ -218,7 +206,6 @@ export const prefetchAllData = async (onProgress) => {
           name: 'All Users',
           fn: async () => {
             const data = await clientAPI.getAllUsers();
-            await setCache(queryKeys.users.list(), data, 60 * 24);
             queryClient.setQueryData(queryKeys.users.list(), data);
             return data;
           },
@@ -232,7 +219,6 @@ export const prefetchAllData = async (onProgress) => {
           name: 'Recent Action Items',
           fn: async () => {
             const data = await openPointsAPI.getRecentOptimized({});
-            await setCache(queryKeys.actionItems.list({}), data, 60 * 3);
             queryClient.setQueryData(queryKeys.actionItems.list({}), data);
             return data;
           },
@@ -246,7 +232,6 @@ export const prefetchAllData = async (onProgress) => {
           name: 'N8N Workflows',
           fn: async () => {
             const data = await n8nAPI.getWorkflows({});
-            await setCache(queryKeys.n8n.workflows({}), data, 60 * 6);
             queryClient.setQueryData(queryKeys.n8n.workflows({}), data);
             return data;
           },
@@ -275,7 +260,6 @@ export const prefetchClientData = async (clientId, onProgress) => {
       name: 'Client Details',
       fn: async () => {
         const data = await clientAPI.getById(clientId);
-        await setCache(queryKeys.clients.detail(clientId), data, 60 * 12);
         queryClient.setQueryData(queryKeys.clients.detail(clientId), data);
         return data;
       },
@@ -284,7 +268,6 @@ export const prefetchClientData = async (clientId, onProgress) => {
       name: 'Client Meetings',
       fn: async () => {
         const data = await meetingAPI.getByClient(clientId, true);
-        await setCache(queryKeys.meetings.list(clientId), data, 60 * 6);
         queryClient.setQueryData(queryKeys.meetings.list(clientId), data);
         return data;
       },
@@ -293,7 +276,6 @@ export const prefetchClientData = async (clientId, onProgress) => {
       name: 'Client Action Items',
       fn: async () => {
         const data = await openPointsAPI.getByClient(clientId);
-        await setCache(queryKeys.actionItems.byClient(clientId), data, 60 * 6);
         queryClient.setQueryData(queryKeys.actionItems.byClient(clientId), data);
         return data;
       },
@@ -302,7 +284,6 @@ export const prefetchClientData = async (clientId, onProgress) => {
       name: 'Client Workflows',
       fn: async () => {
         const data = await workflowAPI.getByClient(clientId);
-        await setCache(queryKeys.workflows.list(clientId), data, 60 * 12);
         queryClient.setQueryData(queryKeys.workflows.list(clientId), data);
         return data;
       },
@@ -311,7 +292,6 @@ export const prefetchClientData = async (clientId, onProgress) => {
       name: 'Client Secrets',
       fn: async () => {
         const data = await secretsAPI.getByClient(clientId);
-        await setCache(queryKeys.secrets.list(clientId), data, 60 * 12);
         queryClient.setQueryData(queryKeys.secrets.list(clientId), data);
         return data;
       },

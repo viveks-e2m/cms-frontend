@@ -1,6 +1,7 @@
 import axios from 'axios';
 import { API_CONFIG } from '../constants/api';
-import { handleApiError, logError } from './errorHandler';
+import { logError } from './errorHandler';
+import { getCachedUser, setCachedUser, clearAllUserCache } from './userCache';
 
 // Get the dynamic URL
 const dynamicBaseUrl = API_CONFIG.DYNAMIC_BASE_URL();
@@ -137,11 +138,12 @@ api.interceptors.response.use(
           console.error('Token refresh failed:', refreshError);
           processQueue(refreshError, null);
           
-          // Clear tokens and redirect to login
-          localStorage.removeItem('authToken');
-          localStorage.removeItem('refreshToken');
-          localStorage.removeItem('user');
-          window.location.href = '/login';
+      // Clear tokens, cache, and redirect to login
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('refreshToken');
+      localStorage.removeItem('user');
+      clearAllUserCache();
+      window.location.href = '/login';
           
           return Promise.reject(refreshError);
         } finally {
@@ -152,6 +154,7 @@ api.interceptors.response.use(
         console.log('No refresh token available, redirecting to login');
         localStorage.removeItem('authToken');
         localStorage.removeItem('user');
+        clearAllUserCache();
         window.location.href = '/login';
       }
     }
@@ -337,8 +340,18 @@ export const authAPI = {
     }
   },
   
-  getCurrentUser: async () => {
+  getCurrentUser: async (forceRefresh = false) => {
     try {
+      // Check cache first unless force refresh is requested
+      if (!forceRefresh) {
+        const cachedUser = getCachedUser();
+        if (cachedUser) {
+          console.log('Using cached user data');
+          return cachedUser;
+        }
+      }
+
+      // Fetch from API
       const response = await api.get('/auth/me');
       const { success, data, error } = response.data;
       
@@ -354,7 +367,7 @@ export const authAPI = {
         throw new Error(errorMessage);
       }
       
-      return {
+      const userData = {
         id: data.id,
         email: data.email,
         role: data.user_metadata?.role || 'user',
@@ -363,6 +376,12 @@ export const authAPI = {
         full_name: data.user_metadata?.full_name || data.full_name,
         ...data.user_metadata
       };
+
+      // Cache the user data
+      setCachedUser(userData);
+      console.log('User data cached');
+
+      return userData;
     } catch (error) {
       const errorMessage = extractAuthError(error, 'Failed to get user information. Please try again.');
       throw new Error(errorMessage);

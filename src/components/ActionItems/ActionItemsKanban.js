@@ -6,6 +6,7 @@ import {
   Delete as DeleteIcon,
   Save as SaveIcon,
   Cancel as CancelIcon,
+  Assignment as AssignmentIcon,
 } from "@mui/icons-material";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
@@ -62,11 +63,6 @@ const ActionItemsKanban = ({
   columns.forEach((column) => {
     column.count = groupedItems[column.id]?.length || 0;
   });
-
-  const getMeetingTitle = (meetingId) => {
-    const meeting = meetings.find((m) => m.id === meetingId);
-    return meeting?.meeting_name || meeting?.name || "Unknown Meeting";
-  };
 
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
@@ -445,8 +441,10 @@ const ActionItemsKanban = ({
 
   if (localActionItems.length === 0) {
     return (
-      <div className="kanban-empty">
-        <div className="empty-icon">📋</div>
+      <div className="no-action-items">
+        <div className="no-items-icon">
+          <AssignmentIcon />
+        </div>
         <h4>No Action Items Found</h4>
         <p>
           Action items will appear here when they are created from meetings.

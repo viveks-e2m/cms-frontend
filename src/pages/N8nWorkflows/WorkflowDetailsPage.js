@@ -29,15 +29,9 @@ import {
 import {
   ArrowBack as BackIcon,
   Refresh as RefreshIcon,
-  PlayArrow as PlayIcon,
   AccountTree as WorkflowIcon,
-  CheckCircle as SuccessIcon,
-  Error as ErrorIcon,
-  Schedule as PendingIcon,
-  AccessTime as TimeIcon,
   ExpandMore as ExpandMoreIcon,
   Info as InfoIcon,
-  Settings as SettingsIcon,
   Code as CodeIcon,
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
@@ -53,7 +47,6 @@ const WorkflowDetailsPage = () => {
   const { showSuccess, showError } = useNotificationContext();
 
   const [workflow, setWorkflow] = useState(null);
-  const [executions, setExecutions] = useState([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [selectedNode, setSelectedNode] = useState(null);
@@ -63,6 +56,7 @@ const WorkflowDetailsPage = () => {
     if (workflowId) {
       loadWorkflowDetails();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [workflowId]);
 
   const loadWorkflowDetails = async (forceRefresh = false) => {
@@ -84,8 +78,7 @@ const WorkflowDetailsPage = () => {
       setWorkflow(workflowDetailsData);
 
       // Get executions for this workflow
-      const executionsData = await n8nAPI.getWorkflowExecutions(workflowId);
-      setExecutions(executionsData || []);
+      await n8nAPI.getWorkflowExecutions(workflowId);
     } catch (error) {
       console.error("Error loading workflow details:", error);
 
@@ -122,48 +115,6 @@ const WorkflowDetailsPage = () => {
     } finally {
       setRefreshing(false);
     }
-  };
-
-  const getStatusIcon = (status) => {
-    switch (status?.toLowerCase()) {
-      case "success":
-        return <SuccessIcon color="success" />;
-      case "error":
-      case "failed":
-        return <ErrorIcon color="error" />;
-      case "running":
-      case "waiting":
-        return <PendingIcon color="warning" />;
-      default:
-        return <PendingIcon color="disabled" />;
-    }
-  };
-
-  const getStatusColor = (status) => {
-    switch (status?.toLowerCase()) {
-      case "success":
-        return "success";
-      case "error":
-      case "failed":
-        return "error";
-      case "running":
-      case "waiting":
-        return "warning";
-      default:
-        return "default";
-    }
-  };
-
-  const formatDuration = (startTime, endTime) => {
-    if (!startTime || !endTime) return "N/A";
-
-    const start = new Date(startTime);
-    const end = new Date(endTime);
-    const duration = end - start;
-
-    if (duration < 1000) return `${duration}ms`;
-    if (duration < 60000) return `${(duration / 1000).toFixed(1)}s`;
-    return `${(duration / 60000).toFixed(1)}m`;
   };
 
   const handleNodeClick = (node) => {

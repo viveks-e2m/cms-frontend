@@ -5,7 +5,7 @@ import DashboardLayout from "../Layout/DashboardLayout/DashboardLayout";
 import "./UserProfile.css";
 
 const UserProfile = () => {
-  const { user, role, permissions, loadUserData } = useAuth();
+  const { user, role, permissions } = useAuth();
   const [userPermissions, setUserPermissions] = useState(null);
   const [loading, setLoading] = useState(false);
 
@@ -13,6 +13,7 @@ const UserProfile = () => {
     if (user?.id) {
       loadUserPermissions();
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const loadUserPermissions = async () => {
@@ -25,11 +26,6 @@ const UserProfile = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const refreshUserData = async () => {
-    await loadUserData();
-    await loadUserPermissions();
   };
 
   if (!user) {

@@ -2,7 +2,6 @@ import React, { useState, useMemo } from "react";
 import {
   Person as PersonIcon,
   AccessTime as TimeIcon,
-  PlayArrow as PlayIcon,
   ExpandMore as ExpandMoreIcon,
   ExpandLess as ExpandLessIcon,
   Search as SearchIcon,
