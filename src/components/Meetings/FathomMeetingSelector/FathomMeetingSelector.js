@@ -3,6 +3,22 @@ import { fathomAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import "./FathomMeetingSelector.css";
 
+// Helper function to calculate duration
+const calculateDuration = (start, end) => {
+  const startTime = new Date(start);
+  const endTime = new Date(end);
+  const durationMs = endTime - startTime;
+  const minutes = Math.floor(durationMs / 60000);
+  
+  if (minutes < 60) {
+    return `${minutes}m`;
+  }
+  
+  const hours = Math.floor(minutes / 60);
+  const remainingMinutes = minutes % 60;
+  return `${hours}h ${remainingMinutes}m`;
+};
+
 const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
   const [loading, setLoading] = useState(false);
   const [meetings, setMeetings] = useState([]);
@@ -28,16 +44,30 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
       console.error("Error fetching Fathom meetings:", error);
       
       // Handle specific error cases
-      if (error.message.includes("API key not found")) {
+      if (error.message && error.message.includes("API key not found")) {
         showError(
-          "Fathom API key not configured. Please add your API key in Settings first."
+          "Fathom API key not configured. Please add your API key in your profile settings first."
         );
-      } else if (error.message.includes("Invalid or expired")) {
+      } else if (error.message && error.message.includes("Invalid or expired")) {
         showError(
-          "Invalid Fathom API key. Please update your API key in Settings."
+          "Invalid Fathom API key. Please update your API key in your profile settings."
         );
+      } else if (error.message && error.message.includes("Connection error")) {
+        showError(
+          "Connection error while fetching meetings from Fathom. Please check your internet connection and try again."
+        );
+      } else if (error.message && error.message.includes("Rate limit exceeded")) {
+        showError(
+          "Rate limit exceeded. Please wait a moment and try again."
+        );
+      } else if (error.message && error.message.includes("Access forbidden")) {
+        showError(
+          "Access forbidden. Please check your Fathom API key permissions."
+        );
+      } else if (error.message) {
+        showError(`Error fetching Fathom meetings: ${error.message}`);
       } else {
-        showError(error.message || "Failed to fetch Fathom meetings");
+        showError("Failed to fetch Fathom meetings. Please try again.");
       }
       
       setMeetings([]);
@@ -115,7 +145,7 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
           <div className="meetings-list">
             {meetings.map((meeting) => (
               <div
-                key={meeting.recording_id}
+                key={meeting.recording_id || meeting.id}
                 className="meeting-item"
                 onClick={() => handleSelectMeeting(meeting)}
               >
@@ -147,22 +177,6 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
       )}
     </div>
   );
-};
-
-// Helper function to calculate duration
-const calculateDuration = (start, end) => {
-  const startTime = new Date(start);
-  const endTime = new Date(end);
-  const durationMs = endTime - startTime;
-  const minutes = Math.floor(durationMs / 60000);
-  
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return `${hours}h ${remainingMinutes}m`;
 };
 
 export default FathomMeetingSelector;

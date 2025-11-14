@@ -1,5 +1,6 @@
 .fathom-meeting-selector {
   margin-bottom: 16px;
+  display: block;
 }
 
 .fetch-fathom-btn {
