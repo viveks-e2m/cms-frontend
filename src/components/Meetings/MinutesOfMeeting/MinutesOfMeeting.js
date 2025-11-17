@@ -37,8 +37,11 @@ const normalizeGeneratedMarkdown = (markdown) => {
     (_, title) => `${title.trim()}\n• `
   );
 
-  // Special-case "Meeting Overview" (common top-level heading)
-  formatted = formatted.replace(/(Meeting Overview)\s+/gi, "$1\n");
+  // Ensure bold headings followed by text get a blank line
+  formatted = formatted.replace(
+    /(\*\*[^\n*]+\*\*)\s*(?=\S)/g,
+    "$1\n\n"
+  );
 
   // Collapse excessive blank lines
   formatted = formatted.replace(/\n{3,}/g, "\n\n");
