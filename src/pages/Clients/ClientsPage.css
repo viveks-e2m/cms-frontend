@@ -2202,10 +2202,9 @@
 /* Notes Tab */
 .notes-tab {
   width: 100%;
-  height: calc(100vh - 300px);
-  min-height: 500px;
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
 .onboarding-section-wrapper {
