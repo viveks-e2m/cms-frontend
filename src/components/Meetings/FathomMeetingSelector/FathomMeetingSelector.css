@@ -96,10 +96,7 @@
   color: #374151;
 }
 
-.meetings-list {
-  overflow-y: auto;
-  max-height: 320px;
-}
+
 
 .meeting-item {
   padding: 16px;
