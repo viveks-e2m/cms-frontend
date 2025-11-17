@@ -63,6 +63,18 @@
   border-color: #003366;
 }
 
+.mom-actions .btn-secondary {
+  background: #f3f4f6;
+  color: #374151;
+  border-color: #d1d5db;
+}
+
+.mom-actions .btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb;
+  border-color: #9ca3af;
+  color: #001f3f;
+}
+
 .mom-actions .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;

@@ -448,6 +448,14 @@ export const momAPI = {
     const response = await api.delete(`/meetings/${meetingId}/mom`);
     return handleApiResponse(response);
   },
+
+  // Generate MoM from transcript
+  generateFromTranscript: async (meetingId) => {
+    const response = await api.post(`/meetings/${meetingId}/mom/generate`, null, {
+      timeout: 600000, // allow up to 10 minutes for webhook-based generation
+    });
+    return handleApiResponse(response);
+  },
 };
 
 // Auth/Profile API services

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
-import { Save as SaveIcon } from "@mui/icons-material";
+import { Save as SaveIcon, AutoAwesome as GenerateIcon } from "@mui/icons-material";
 import { momAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
@@ -11,6 +11,7 @@ import "./MinutesOfMeeting.css";
 const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [generating, setGenerating] = useState(false);
   const { showSuccess, showError } = useNotificationContext();
 
   // Create BlockNote editor following official docs
@@ -109,6 +110,76 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
     }
   };
 
+  const handleGenerate = async () => {
+    if (!meetingId || !editor) return;
+
+    try {
+      setGenerating(true);
+      const result = await momAPI.generateFromTranscript(meetingId);
+      
+      // The API response structure is: { success: true, data: { generated_content: [...], ... } }
+      const responseData = result?.data || result;
+      
+      if (responseData) {
+        let generatedBlocks = null;
+
+        if (
+          Array.isArray(responseData.generated_content) &&
+          responseData.generated_content.length > 0
+        ) {
+          generatedBlocks = responseData.generated_content;
+        } else if (responseData.raw_text || responseData.generated_markdown) {
+          const markdown = responseData.raw_text || responseData.generated_markdown;
+          try {
+            const parsedBlocks = editor.tryParseMarkdownToBlocks(markdown);
+            if (parsedBlocks && parsedBlocks.length > 0) {
+              generatedBlocks = parsedBlocks;
+            } else if (markdown?.trim()) {
+              generatedBlocks = [
+                {
+                  type: "paragraph",
+                  content: markdown.trim(),
+                },
+              ];
+            }
+          } catch (parseErr) {
+            console.error("Failed to parse markdown into BlockNote format:", parseErr);
+            showError("Unable to parse generated Markdown content.");
+          }
+        }
+
+        if (generatedBlocks && generatedBlocks.length > 0) {
+          await editor.replaceBlocks(editor.document, generatedBlocks);
+          showSuccess("MoM generated successfully from transcript");
+
+          // Auto-save the generated content
+          await momAPI.save(meetingId, {
+            content: JSON.stringify(generatedBlocks),
+          });
+
+          if (onContentUpdate) {
+            onContentUpdate();
+          }
+        } else {
+          showError(
+            responseData?.error?.message ||
+              "Generated content is empty or invalid. Please verify the transcript."
+          );
+        }
+      } else {
+        showError(
+          responseData?.error?.message ||
+            "Failed to generate MoM. Please check if transcript is available."
+        );
+      }
+    } catch (error) {
+      showError(error?.message || "Failed to generate MoM from transcript");
+      console.error("Error generating MoM:", error);
+    } finally {
+      setGenerating(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="mom-loading">
@@ -121,14 +192,25 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
     <div className="minutes-of-meeting">
       <div className="mom-header">
         <h3>Minutes of Meeting</h3>
-        <button
-          className="btn btn-primary"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          <SaveIcon />
-          {saving ? "Saving..." : "Save"}
-        </button>
+        <div className="mom-actions">
+          <button
+            className="btn btn-secondary"
+            onClick={handleGenerate}
+            disabled={generating || saving}
+            title="Generate MoM from transcript"
+          >
+            <GenerateIcon />
+            {generating ? "Generating..." : "Generate from Transcript"}
+          </button>
+          <button
+            className="btn btn-primary"
+            onClick={handleSave}
+            disabled={saving || generating}
+          >
+            <SaveIcon />
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </div>
       </div>
 
       <div 
