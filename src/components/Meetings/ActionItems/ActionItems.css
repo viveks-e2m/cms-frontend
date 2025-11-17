@@ -145,6 +145,24 @@
   border-radius: var(--border-radius);
 }
 
+.action-items .permission-message {
+  margin: 1.5rem 0;
+  padding: 1.25rem;
+  border-radius: var(--border-radius);
+  border: 1px solid var(--neutral-light);
+  background: var(--primary-white);
+  color: var(--text-secondary);
+  text-align: center;
+  font-size: 0.95rem;
+  line-height: 1.4;
+}
+
+.action-items .permission-message strong {
+  display: block;
+  margin-bottom: 0.25rem;
+  color: var(--primary-navy);
+}
+
 /* Responsive Design for Meeting Context */
 @media (max-width: 768px) {
   .action-items-header {
