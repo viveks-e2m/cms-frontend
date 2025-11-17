@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { fathomAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import "./FathomMeetingSelector.css";
@@ -6,28 +6,28 @@ import "./FathomMeetingSelector.css";
 const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
   const [loading, setLoading] = useState(false);
   const [meetings, setMeetings] = useState([]);
-  const [showList, setShowList] = useState(false);
-  const { showError, showInfo } = useNotificationContext();
+  const [hasFetched, setHasFetched] = useState(false);
+  const [errorMessage, setErrorMessage] = useState(null);
+  const { showError } = useNotificationContext();
 
-  const fetchMeetings = async () => {
+  const fetchMeetings = useCallback(async () => {
+    if (disabled) return;
+
     try {
       setLoading(true);
-      showInfo("Fetching your recent Fathom meetings...");
-      
+      setErrorMessage(null);
       const data = await fathomAPI.getMeetings(10);
-      
+
       if (data.meetings && data.meetings.length > 0) {
         setMeetings(data.meetings);
-        setShowList(true);
       } else {
-        showInfo("No recent meetings found in your Fathom account");
         setMeetings([]);
-        setShowList(false);
       }
     } catch (error) {
       console.error("Error fetching Fathom meetings:", error);
-      
-      // Handle specific error cases
+      setMeetings([]);
+      setErrorMessage("Failed to fetch Fathom meetings. Please try again.");
+
       if (error.message && error.message.includes("API key not found")) {
         showError(
           "Fathom API key not configured. Please add your API key in your profile settings first."
@@ -41,9 +41,7 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
           "Connection error while fetching meetings from Fathom. Please check your internet connection and try again."
         );
       } else if (error.message && error.message.includes("Rate limit exceeded")) {
-        showError(
-          "Rate limit exceeded. Please wait a moment and try again."
-        );
+        showError("Rate limit exceeded. Please wait a moment and try again.");
       } else if (error.message && error.message.includes("Access forbidden")) {
         showError(
           "Access forbidden. Please check your Fathom API key permissions."
@@ -53,13 +51,15 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
       } else {
         showError("Failed to fetch Fathom meetings. Please try again.");
       }
-      
-      setMeetings([]);
-      setShowList(false);
     } finally {
       setLoading(false);
+      setHasFetched(true);
     }
-  };
+  }, [disabled, showError]);
+
+  useEffect(() => {
+    fetchMeetings();
+  }, [fetchMeetings]);
 
   const handleSelectMeeting = (meeting) => {
     onSelectMeeting({
@@ -67,7 +67,6 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
       recording_url: meeting.share_url || meeting.url,
       fathom_recording_id: meeting.recording_id,
     });
-    setShowList(false);
   };
 
   const formatDate = (dateString) => {
@@ -84,48 +83,41 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
 
   return (
     <div className="fathom-meeting-selector">
-      <button
-        type="button"
-        className="fetch-fathom-btn"
-        onClick={fetchMeetings}
-        disabled={disabled || loading}
-      >
-        {loading ? (
-          <>
-            <span className="spinner"></span>
-            Fetching meetings...
-          </>
-        ) : (
-          <>
-            <svg
-              width="16"
-              height="16"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-            >
-              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
-              <polyline points="7 10 12 15 17 10" />
-              <line x1="12" y1="15" x2="12" y2="3" />
-            </svg>
-            Import from Fathom
-          </>
-        )}
-      </button>
+      <div className="meetings-list-container">
+        <div className="meetings-list-header">
+          <h4>Select a meeting</h4>
+          <button
+            type="button"
+            className="refresh-meetings-btn"
+            onClick={fetchMeetings}
+            disabled={loading || disabled}
+          >
+            {loading ? "Refreshing..." : "Refresh"}
+          </button>
+        </div>
 
-      {showList && meetings.length > 0 && (
-        <div className="meetings-list-container">
-          <div className="meetings-list-header">
-            <h4>Select a meeting</h4>
-            <button
-              type="button"
-              className="close-list-btn"
-              onClick={() => setShowList(false)}
-            >
-              ×
-            </button>
+        {loading && (
+          <div className="meetings-loading-state">
+            <span className="spinner"></span>
+            <span>Loading recent meetings...</span>
           </div>
+        )}
+
+        {!loading && hasFetched && errorMessage && (
+          <div className="meetings-empty-state error">
+            <p>{errorMessage}</p>
+            <p className="hint">Check your Fathom integration and try again.</p>
+          </div>
+        )}
+
+        {!loading && hasFetched && !errorMessage && meetings.length === 0 && (
+          <div className="meetings-empty-state">
+            <p>No recent meetings found.</p>
+            <p className="hint">Once you have meetings in Fathom, they will appear here.</p>
+          </div>
+        )}
+
+        {meetings.length > 0 && (
           <div className="meetings-list">
             {meetings.map((meeting) => {
               const meetingTitle =
@@ -146,8 +138,8 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
               );
             })}
           </div>
-        </div>
-      )}
+        )}
+      </div>
     </div>
   );
 };

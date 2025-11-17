@@ -3,35 +3,6 @@
   display: block;
 }
 
-.fetch-fathom-btn {
-  display: inline-flex;
-  align-items: center;
-  gap: 8px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  color: #001f3f;
-  background: white;
-  border: 1px solid #001f3f;
-  border-radius: 6px;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-
-.fetch-fathom-btn:hover:not(:disabled) {
-  background: #001f3f;
-  color: white;
-}
-
-.fetch-fathom-btn:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.fetch-fathom-btn svg {
-  flex-shrink: 0;
-}
-
 .spinner {
   width: 16px;
   height: 16px;
@@ -59,11 +30,6 @@
   flex-direction: column;
 }
 
-.meetings-list {
-  max-height: 320px;
-  overflow-y: auto;
-}
-
 .meetings-list-header {
   display: flex;
   align-items: center;
@@ -80,28 +46,55 @@
   color: #1a1a1a;
 }
 
-.close-list-btn {
-  background: none;
+.refresh-meetings-btn {
   border: none;
-  font-size: 24px;
-  color: #6b7280;
+  background: #eef2ff;
+  color: #4338ca;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 6px 12px;
+  border-radius: 6px;
   cursor: pointer;
-  padding: 0;
-  width: 28px;
-  height: 28px;
+  transition: background 0.2s, color 0.2s;
+}
+
+.refresh-meetings-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.refresh-meetings-btn:not(:disabled):hover {
+  background: #e0e7ff;
+}
+
+.meetings-loading-state,
+.meetings-empty-state {
   display: flex;
   align-items: center;
   justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
+  gap: 10px;
+  padding: 24px;
+  color: #475467;
+  font-size: 14px;
+  text-align: center;
 }
 
-.close-list-btn:hover {
-  background: #e5e7eb;
-  color: #374151;
+.meetings-empty-state {
+  flex-direction: column;
 }
 
+.meetings-empty-state.error {
+  color: #b91c1c;
+}
 
+.meetings-empty-state.error .hint {
+  color: #f87171;
+}
+
+.meetings-empty-state .hint {
+  font-size: 12px;
+  color: #94a3b8;
+}
 
 .meeting-item {
   display: flex;
