@@ -214,6 +214,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       website = "https://" + website;
     }
 
+    // Ensure interns is always an array (never undefined or null)
+    const internsArray = Array.isArray(formData.interns) 
+      ? formData.interns.filter(id => id) // Filter out any falsy values
+      : [];
+
     const clientData = {
       name: formData.name.trim(),
       website: website,
@@ -223,12 +228,15 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       plan_details: formData.plan_details || null,
       communication_tool: formData.communication_tool.trim() || null,
       ai_executor: formData.ai_executor || null,
-      interns: Array.isArray(formData.interns) ? formData.interns : [],
+      interns: internsArray, // Always include interns field, even if empty array
       assessment_start_date: formData.assessment_start_date || null,
       assessment_end_date: formData.assessment_end_date || null,
       document_link: formData.document_link.trim() || null,
       task_audit_sheet_link: formData.task_audit_sheet_link.trim() || null,
     };
+
+    // Debug log to verify interns are being sent
+    console.log("Creating client with interns:", internsArray);
 
     if (client) {
       // Update existing client using mutation hook
