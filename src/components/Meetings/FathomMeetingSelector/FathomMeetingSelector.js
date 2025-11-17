@@ -3,22 +3,6 @@ import { fathomAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import "./FathomMeetingSelector.css";
 
-// Helper function to calculate duration
-const calculateDuration = (start, end) => {
-  const startTime = new Date(start);
-  const endTime = new Date(end);
-  const durationMs = endTime - startTime;
-  const minutes = Math.floor(durationMs / 60000);
-  
-  if (minutes < 60) {
-    return `${minutes}m`;
-  }
-  
-  const hours = Math.floor(minutes / 60);
-  const remainingMinutes = minutes % 60;
-  return `${hours}h ${remainingMinutes}m`;
-};
-
 const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
   const [loading, setLoading] = useState(false);
   const [meetings, setMeetings] = useState([]);
@@ -143,35 +127,24 @@ const FathomMeetingSelector = ({ onSelectMeeting, disabled = false }) => {
             </button>
           </div>
           <div className="meetings-list">
-            {meetings.map((meeting) => (
-              <div
-                key={meeting.recording_id || meeting.id}
-                className="meeting-item"
-                onClick={() => handleSelectMeeting(meeting)}
-              >
-                <div className="meeting-item-header">
-                  <h5 className="meeting-title">
-                    {meeting.title || meeting.meeting_title || "Untitled Meeting"}
-                  </h5>
-                  <span className="meeting-language">
-                    {meeting.transcript_language?.toUpperCase() || "EN"}
-                  </span>
+            {meetings.map((meeting) => {
+              const meetingTitle =
+                meeting.title || meeting.meeting_title || "Untitled Meeting";
+              const recordingDate = formatDate(
+                meeting.recording_start_time || meeting.created_at
+              );
+
+              return (
+                <div
+                  key={meeting.recording_id || meeting.id}
+                  className="meeting-item"
+                  onClick={() => handleSelectMeeting(meeting)}
+                >
+                  <h5 className="meeting-title">{meetingTitle}</h5>
+                  <span className="meeting-date">{recordingDate}</span>
                 </div>
-                <div className="meeting-item-meta">
-                  <span className="meeting-date">
-                    {formatDate(meeting.recording_start_time || meeting.created_at)}
-                  </span>
-                  {meeting.recording_end_time && meeting.recording_start_time && (
-                    <span className="meeting-duration">
-                      {calculateDuration(
-                        meeting.recording_start_time,
-                        meeting.recording_end_time
-                      )}
-                    </span>
-                  )}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       )}
