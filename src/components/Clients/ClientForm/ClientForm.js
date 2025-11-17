@@ -332,7 +332,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="client-form">
+        <form onSubmit={handleSubmit} className="client-form client-form-scoped">
           <div className="form-group">
             <label htmlFor="name" className="form-label">
               <PersonIcon className="label-icon" />
