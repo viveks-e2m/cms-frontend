@@ -184,7 +184,7 @@ const ClientsPage = () => {
       meetings: meetingsSummary || [],
       // workflows: workflowsData || [],
       secrets: secretsData || [],
-      actionItems: actionItemsData?.items || [],
+      actionItems: actionItemsData?.items || actionItemsData || [], // Handle both paginated and non-paginated responses
     };
   }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
 
