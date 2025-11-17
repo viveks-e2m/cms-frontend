@@ -37,6 +37,8 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     assessment_end_date: "",
     document_link: "",
     task_audit_sheet_link: "",
+    last_renewal_date: "",
+    next_renewal_date: "",
   });
   const [errors, setErrors] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -100,6 +102,12 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
             : "",
           document_link: client.document_link || "",
           task_audit_sheet_link: client.task_audit_sheet_link || "",
+          last_renewal_date: client.last_renewal_date
+            ? client.last_renewal_date.split("T")[0]
+            : "",
+          next_renewal_date: client.next_renewal_date
+            ? client.next_renewal_date.split("T")[0]
+            : "",
         });
       } else {
         // Adding new client - account_manager will default to current user on backend
@@ -117,6 +125,8 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           assessment_end_date: "",
           document_link: "",
           task_audit_sheet_link: "",
+          last_renewal_date: "",
+          next_renewal_date: "",
         });
       }
       setErrors({});
@@ -233,6 +243,8 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       assessment_end_date: formData.assessment_end_date || null,
       document_link: formData.document_link.trim() || null,
       task_audit_sheet_link: formData.task_audit_sheet_link.trim() || null,
+      last_renewal_date: formData.last_renewal_date || null,
+      next_renewal_date: formData.next_renewal_date || null,
     };
 
     // Debug log to verify interns are being sent
@@ -727,6 +739,43 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               </span>
             )}
             <div className="form-help">Link to task audit sheet</div>
+          </div>
+
+          <div className="form-row">
+            <div className="form-group">
+              <label htmlFor="last_renewal_date" className="form-label">
+                <DateIcon className="label-icon" />
+                Last Renewal Date
+              </label>
+              <input
+                id="last_renewal_date"
+                type="date"
+                className="form-input"
+                value={formData.last_renewal_date}
+                onChange={(e) =>
+                  handleInputChange("last_renewal_date", e.target.value)
+                }
+                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              />
+              <div className="form-help">Date when the contract was last renewed</div>
+            </div>
+            <div className="form-group">
+              <label htmlFor="next_renewal_date" className="form-label">
+                <DateIcon className="label-icon" />
+                Next Renewal Date
+              </label>
+              <input
+                id="next_renewal_date"
+                type="date"
+                className="form-input"
+                value={formData.next_renewal_date}
+                onChange={(e) =>
+                  handleInputChange("next_renewal_date", e.target.value)
+                }
+                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              />
+              <div className="form-help">Date when the contract is scheduled for renewal</div>
+            </div>
           </div>
 
           <div className="form-actions">

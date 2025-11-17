@@ -802,6 +802,45 @@ const ClientsPage = () => {
                                 </div>
                               </div>
                             )}
+
+                            {(selectedClient.last_renewal_date || selectedClient.next_renewal_date) && (
+                              <>
+                                {selectedClient.last_renewal_date && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <DateIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Last Renewal Date</label>
+                                      <span>
+                                        {new Date(selectedClient.last_renewal_date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {selectedClient.next_renewal_date && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <DateIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Next Renewal Date</label>
+                                      <span>
+                                        {new Date(selectedClient.next_renewal_date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
+                            )}
                           </div>
                         </div>
 
