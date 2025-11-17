@@ -8,6 +8,44 @@ import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./MinutesOfMeeting.css";
 
+const normalizeGeneratedMarkdown = (markdown) => {
+  if (!markdown) return markdown;
+
+  let formatted = markdown;
+
+  // Convert escaped newline/tab sequences into actual whitespace
+  formatted = formatted
+    .replace(/\\r\\n/g, "\n")
+    .replace(/\\n/g, "\n")
+    .replace(/\\t/g, "\t");
+
+  // Put content on a new line after headings with colon labels (e.g. "Attendees:")
+  formatted = formatted.replace(
+    /(^\s*[A-Za-z][^:\n]{2,80}:)\s*(?=\S)/gm,
+    "$1\n"
+  );
+
+  // Convert "•" bullets into markdown list items
+  formatted = formatted.replace(/^\s*•\s+/gm, "- ");
+
+  // Ensure there's a blank line before bullet lists when they follow text
+  formatted = formatted.replace(/([^\n])\n(-\s+)/g, "$1\n\n$2");
+
+  // Ensure any inline bullet sections start on a new line
+  formatted = formatted.replace(
+    /(^\s*[A-Za-z][^•\n]{2,120})\s+•\s+/gm,
+    (_, title) => `${title.trim()}\n• `
+  );
+
+  // Special-case "Meeting Overview" (common top-level heading)
+  formatted = formatted.replace(/(Meeting Overview)\s+/gi, "$1\n");
+
+  // Collapse excessive blank lines
+  formatted = formatted.replace(/\n{3,}/g, "\n\n");
+
+  return formatted;
+};
+
 const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -129,16 +167,19 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
         ) {
           generatedBlocks = responseData.generated_content;
         } else if (responseData.raw_text || responseData.generated_markdown) {
-          const markdown = responseData.raw_text || responseData.generated_markdown;
+          const markdown =
+            responseData.raw_text || responseData.generated_markdown;
+          const normalizedMarkdown = normalizeGeneratedMarkdown(markdown);
           try {
-            const parsedBlocks = editor.tryParseMarkdownToBlocks(markdown);
+            const parsedBlocks =
+              editor.tryParseMarkdownToBlocks(normalizedMarkdown);
             if (parsedBlocks && parsedBlocks.length > 0) {
               generatedBlocks = parsedBlocks;
-            } else if (markdown?.trim()) {
+            } else if (normalizedMarkdown?.trim()) {
               generatedBlocks = [
                 {
                   type: "paragraph",
-                  content: markdown.trim(),
+                  content: normalizedMarkdown.trim(),
                 },
               ];
             }
