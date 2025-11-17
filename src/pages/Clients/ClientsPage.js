@@ -53,6 +53,7 @@ import {
   Assignment as PlanIcon,
   Chat as CommunicationIcon,
   SmartToy as AIExecutorIcon,
+  School as InternIcon,
   DateRange as DateIcon,
   Link as LinkIcon,
   Assessment as AuditIcon,
@@ -719,6 +720,24 @@ const ClientsPage = () => {
                                   <span>
                                     {getUserName(selectedClient.ai_executor) || "Not assigned"}
                                   </span>
+                                </div>
+                              </div>
+                            )}
+
+                            {Array.isArray(selectedClient.interns) && selectedClient.interns.length > 0 && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <InternIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Interns</label>
+                                  <div className="assignment-chip-list">
+                                    {selectedClient.interns.map((internId) => (
+                                      <span key={internId} className="assignment-chip">
+                                        {getUserName(internId) || `User ${internId.slice(0, 8)}...`}
+                                      </span>
+                                    ))}
+                                  </div>
                                 </div>
                               </div>
                             )}

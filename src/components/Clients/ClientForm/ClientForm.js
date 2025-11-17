@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import { useCreateClient, useUpdateClient } from "../../../hooks/useMutations";
@@ -13,9 +13,12 @@ import {
   Assignment as PlanIcon,
   Chat as CommunicationIcon,
   SmartToy as AIExecutorIcon,
+  School as InternIcon,
   DateRange as DateIcon,
   Link as LinkIcon,
   Assessment as AuditIcon,
+  Cancel as CancelIcon,
+  KeyboardArrowDown as KeyboardArrowDownIcon,
 } from "@mui/icons-material";
 import "./ClientForm.css";
 
@@ -29,6 +32,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     plan_details: "",
     communication_tool: "",
     ai_executor: "",
+    interns: [],
     assessment_start_date: "",
     assessment_end_date: "",
     document_link: "",
@@ -40,17 +44,39 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     account_manager: [],
     adoption_specialist: [],
     ai_executor: [],
+    ai_intern: [],
   });
+  const [internsDropdownOpen, setInternsDropdownOpen] = useState(false);
+  const multiSelectRef = useRef(null);
   const { showError } = useNotificationContext();
   
   // Use mutation hooks for proper cache invalidation
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
 
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (multiSelectRef.current && !multiSelectRef.current.contains(event.target)) {
+        setInternsDropdownOpen(false);
+      }
+    };
+
+    if (internsDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [internsDropdownOpen]);
+
   useEffect(() => {
     if (isOpen) {
       // Load users for dropdowns
       loadUsers();
+      // Close dropdown when modal opens/closes
+      setInternsDropdownOpen(false);
 
       if (client) {
         // Editing existing client
@@ -63,6 +89,9 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           plan_details: client.plan_details || "",
           communication_tool: client.communication_tool || "",
           ai_executor: client.ai_executor || "",
+          interns: Array.isArray(client.interns)
+            ? client.interns.filter(Boolean)
+            : [],
           assessment_start_date: client.assessment_start_date
             ? client.assessment_start_date.split("T")[0]
             : "",
@@ -83,6 +112,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           plan_details: "",
           communication_tool: "",
           ai_executor: "",
+          interns: [],
           assessment_start_date: "",
           assessment_end_date: "",
           document_link: "",
@@ -105,6 +135,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
         account_manager: [],
         adoption_specialist: [],
         ai_executor: [],
+        ai_intern: [],
       };
       
       allUsers.forEach(user => {
@@ -192,6 +223,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       plan_details: formData.plan_details || null,
       communication_tool: formData.communication_tool.trim() || null,
       ai_executor: formData.ai_executor || null,
+      interns: Array.isArray(formData.interns) ? formData.interns : [],
       assessment_start_date: formData.assessment_start_date || null,
       assessment_end_date: formData.assessment_end_date || null,
       document_link: formData.document_link.trim() || null,
@@ -224,6 +256,25 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
         },
       });
     }
+  };
+
+  const handleInternsChange = (internId) => {
+    const currentInterns = formData.interns || [];
+    const isSelected = currentInterns.includes(internId);
+    
+    if (isSelected) {
+      // Remove intern
+      handleInputChange("interns", currentInterns.filter(id => id !== internId));
+    } else {
+      // Add intern
+      handleInputChange("interns", [...currentInterns, internId]);
+    }
+  };
+
+  const removeIntern = (internId, e) => {
+    e.stopPropagation();
+    const currentInterns = formData.interns || [];
+    handleInputChange("interns", currentInterns.filter(id => id !== internId));
   };
 
   const handleInputChange = (field, value) => {
@@ -469,6 +520,108 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               Assign an AI executor to this client
               {usersByRole.ai_executor.length === 0 && !loadingUsers && (
                 <span className="text-warning"> - No AI executors found</span>
+              )}
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="interns" className="form-label">
+              <InternIcon className="label-icon" />
+              Interns
+            </label>
+            <div className="multi-select-wrapper" ref={multiSelectRef}>
+              <div 
+                className={`multi-select-input ${internsDropdownOpen ? 'open' : ''} ${errors.interns ? 'error' : ''} ${loadingUsers || createClientMutation.isPending || updateClientMutation.isPending ? 'disabled' : ''}`}
+                onClick={() => {
+                  if (!loadingUsers && !createClientMutation.isPending && !updateClientMutation.isPending) {
+                    setInternsDropdownOpen(!internsDropdownOpen);
+                  }
+                }}
+              >
+                <div className="multi-select-value">
+                  {formData.interns?.length > 0 ? (
+                    <span className="multi-select-placeholder-selected">
+                      {formData.interns.length} {formData.interns.length === 1 ? 'intern' : 'interns'} selected
+                    </span>
+                  ) : (
+                    <span className="multi-select-placeholder">
+                      Select one or more interns to assign to this client
+                    </span>
+                  )}
+                </div>
+                <KeyboardArrowDownIcon className={`multi-select-arrow ${internsDropdownOpen ? 'open' : ''}`} />
+              </div>
+              
+              {internsDropdownOpen && (
+                <>
+                  <div 
+                    className="multi-select-backdrop"
+                    onClick={() => setInternsDropdownOpen(false)}
+                  />
+                  <div className="multi-select-dropdown">
+                    {usersByRole.ai_intern.length === 0 ? (
+                      <div className="multi-select-empty">
+                        {loadingUsers ? 'Loading interns...' : 'No interns found'}
+                      </div>
+                    ) : (
+                      usersByRole.ai_intern.map((user) => {
+                        const isSelected = formData.interns?.includes(user.id);
+                        return (
+                          <div
+                            key={user.id}
+                            className={`multi-select-option ${isSelected ? 'selected' : ''}`}
+                            onClick={() => handleInternsChange(user.id)}
+                          >
+                            <input
+                              type="checkbox"
+                              checked={isSelected}
+                              onChange={() => handleInternsChange(user.id)}
+                              className="multi-select-checkbox"
+                            />
+                            <span className="multi-select-option-label">
+                              {user.full_name || user.name || user.email}
+                              {user.roles?.display_name && (
+                                <span className="multi-select-option-role">
+                                  {' '}({user.roles.display_name})
+                                </span>
+                              )}
+                            </span>
+                          </div>
+                        );
+                      })
+                    )}
+                  </div>
+                </>
+              )}
+            </div>
+            
+            {formData.interns?.length > 0 && (
+              <div className="selected-chips-container">
+                {formData.interns.map((internId) => {
+                  const intern = usersByRole.ai_intern.find((user) => user.id === internId);
+                  const internName = intern?.full_name || intern?.name || intern?.email || `User ${internId.slice(0, 8)}...`;
+                  return (
+                    <div key={internId} className="selected-chip">
+                      <span className="chip-label">{internName}</span>
+                      <button
+                        type="button"
+                        className="chip-remove"
+                        onClick={(e) => removeIntern(internId, e)}
+                        disabled={createClientMutation.isPending || updateClientMutation.isPending}
+                        title="Remove intern"
+                      >
+                        <CancelIcon />
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+            
+            <div className="form-help">
+              Select one or more interns to assign to this client
+              {usersByRole.ai_intern.length === 0 && !loadingUsers && (
+                <span className="text-warning"> - No interns found</span>
               )}
             </div>
           </div>
