@@ -167,6 +167,38 @@ const ClientsPage = () => {
   const getAdoptionSpecialistId = (client) =>
     client?.adoption_specialist_id || client?.adoption_specialist || "";
 
+  // Helper to get account manager name - handles both string names and IDs
+  const getAccountManagerName = (client) => {
+    // If account_manager is a string (name), use it directly
+    if (client?.account_manager && typeof client.account_manager === 'string' && client.account_manager.trim()) {
+      // Check if it's a UUID (ID) or a name
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(client.account_manager.trim())) {
+        // It's a name, not an ID
+        return client.account_manager.trim();
+      }
+    }
+    // Otherwise, use the existing logic with account_manager_name or lookup by ID
+    const userId = getAccountManagerId(client);
+    return getUserName(userId, client?.account_manager_name);
+  };
+
+  // Helper to get adoption specialist name - handles both string names and IDs
+  const getAdoptionSpecialistName = (client) => {
+    // If adoption_specialist is a string (name), use it directly
+    if (client?.adoption_specialist && typeof client.adoption_specialist === 'string' && client.adoption_specialist.trim()) {
+      // Check if it's a UUID (ID) or a name
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(client.adoption_specialist.trim())) {
+        // It's a name, not an ID
+        return client.adoption_specialist.trim();
+      }
+    }
+    // Otherwise, use the existing logic with adoption_specialist_name or lookup by ID
+    const userId = getAdoptionSpecialistId(client);
+    return getUserName(userId, client?.adoption_specialist_name);
+  };
+
   // Handle URL parameters on mount and location change
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -266,36 +298,51 @@ const ClientsPage = () => {
   const usersFromClients = useMemo(() => {
     if (!clientsData || !Array.isArray(clientsData)) return { accountManagers: [], adoptionSpecialists: [] };
     
-    const accountManagerIds = new Set();
-    const adoptionSpecialistIds = new Set();
+    const accountManagerSet = new Map(); // Map to store id -> name pairs
+    const adoptionSpecialistSet = new Map();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     
     clientsData.forEach((client) => {
-      const accountManagerId = getAccountManagerId(client);
-      const adoptionSpecialistId = getAdoptionSpecialistId(client);
-
-      if (accountManagerId) {
-        accountManagerIds.add(accountManagerId);
+      // Handle account manager
+      const accountManagerValue = client?.account_manager;
+      if (accountManagerValue) {
+        if (typeof accountManagerValue === 'string' && accountManagerValue.trim()) {
+          if (uuidRegex.test(accountManagerValue.trim())) {
+            // It's an ID
+            const name = userMap[accountManagerValue.trim()] || accountManagerValue.trim();
+            accountManagerSet.set(accountManagerValue.trim(), name);
+          } else {
+            // It's a name
+            accountManagerSet.set(accountManagerValue.trim(), accountManagerValue.trim());
+          }
+        }
       }
-      if (adoptionSpecialistId) {
-        adoptionSpecialistIds.add(adoptionSpecialistId);
+      
+      // Handle adoption specialist
+      const adoptionSpecialistValue = client?.adoption_specialist;
+      if (adoptionSpecialistValue) {
+        if (typeof adoptionSpecialistValue === 'string' && adoptionSpecialistValue.trim()) {
+          if (uuidRegex.test(adoptionSpecialistValue.trim())) {
+            // It's an ID
+            const name = userMap[adoptionSpecialistValue.trim()] || adoptionSpecialistValue.trim();
+            adoptionSpecialistSet.set(adoptionSpecialistValue.trim(), name);
+          } else {
+            // It's a name
+            adoptionSpecialistSet.set(adoptionSpecialistValue.trim(), adoptionSpecialistValue.trim());
+          }
+        }
       }
     });
     
     return {
-      accountManagers: Array.from(accountManagerIds).map(id => {
-        const name = userMap[id];
-        return { 
-          id,
-          name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
-        };
-      }),
-      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => {
-        const name = userMap[id];
-        return { 
-          id,
-          name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
-        };
-      }),
+      accountManagers: Array.from(accountManagerSet.entries()).map(([id, name]) => ({
+        id,
+        name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
+      })),
+      adoptionSpecialists: Array.from(adoptionSpecialistSet.entries()).map(([id, name]) => ({
+        id,
+        name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
+      })),
     };
   }, [clientsData, userMap]);
 
@@ -531,13 +578,19 @@ const ClientsPage = () => {
       const matchesStatus =
         !statusFilter || getClientStatus(client) === statusFilter;
 
-      // Account Manager filter
+      // Account Manager filter - compare the actual value (name or ID)
       const matchesAccountManager =
-        !accountManagerFilter || getAccountManagerId(client) === accountManagerFilter;
+        !accountManagerFilter || 
+        (client?.account_manager && 
+         typeof client.account_manager === 'string' && 
+         client.account_manager.trim() === accountManagerFilter.trim());
 
-      // Adoption Specialist filter
+      // Adoption Specialist filter - compare the actual value (name or ID)
       const matchesAdoptionSpecialist =
-        !adoptionSpecialistFilter || getAdoptionSpecialistId(client) === adoptionSpecialistFilter;
+        !adoptionSpecialistFilter || 
+        (client?.adoption_specialist && 
+         typeof client.adoption_specialist === 'string' && 
+         client.adoption_specialist.trim() === adoptionSpecialistFilter.trim());
 
       return matchesSearch && matchesStatus && matchesAccountManager && matchesAdoptionSpecialist;
     })
@@ -770,10 +823,7 @@ const ClientsPage = () => {
                               <div className="info-item-content">
                                 <label>Account Manager</label>
                                 <span>
-                                  {getUserName(
-                                    selectedClient.account_manager,
-                                    selectedClient.account_manager_name
-                                  ) || "Not assigned"}
+                                  {getAccountManagerName(selectedClient) || "Not assigned"}
                                 </span>
                               </div>
                             </div>
@@ -785,10 +835,7 @@ const ClientsPage = () => {
                               <div className="info-item-content">
                                 <label>Adoption Specialist</label>
                                 <span>
-                                  {getUserName(
-                                    selectedClient.adoption_specialist,
-                                    selectedClient.adoption_specialist_name
-                                  ) || "Not assigned"}
+                                  {getAdoptionSpecialistName(selectedClient) || "Not assigned"}
                                 </span>
                               </div>
                             </div>
@@ -1205,7 +1252,13 @@ const ClientsPage = () => {
                   <div className="onboarding-tab">
                     <OnboardingInfo
                       clientId={selectedClient.id}
-                      existingOnboardingInfo={selectedClient.onboarding_info}
+                      existingOnboardingInfo={
+                        clientOverview?.onboarding_info !== undefined
+                          ? clientOverview.onboarding_info
+                          : (clientDetails?.onboarding_info !== undefined
+                              ? clientDetails.onboarding_info
+                              : selectedClient?.onboarding_info)
+                      }
                     />
                   </div>
                 )}
@@ -1233,8 +1286,39 @@ const ClientsPage = () => {
                   <div className="notes-tab">
                     <ClientNotes
                       clientId={selectedClient.id}
-                      onNotesUpdate={() => {
-                        queryClient.invalidateQueries({ queryKey: ['clients', 'notes', selectedClient.id] });
+                      // Use notes from overview if available (to avoid separate API call)
+                      // The overview endpoint already includes notes, so we pass it here
+                      initialNotes={
+                        clientOverview?.notes !== undefined 
+                          ? clientOverview.notes 
+                          : (clientDetails?.notes !== undefined 
+                              ? clientDetails.notes 
+                              : selectedClient?.client_notes)
+                      }
+                      onNotesUpdate={(updatedNotes) => {
+                        // Update the overview cache directly with the new notes to avoid refetching
+                        if (updatedNotes !== undefined) {
+                          // Update all overview queries for this client (different page sizes)
+                          queryClient.setQueriesData(
+                            { 
+                              queryKey: [...queryKeys.clients.all, 'overview', selectedClient.id],
+                              exact: false 
+                            },
+                            (oldData) => {
+                              if (!oldData) return oldData;
+                              return {
+                                ...oldData,
+                                notes: updatedNotes,
+                                client_notes: updatedNotes
+                              };
+                            }
+                          );
+                        }
+                        // Only invalidate the separate notes query (not the overview)
+                        queryClient.invalidateQueries({ 
+                          queryKey: ['clients', 'notes', selectedClient.id],
+                          refetchType: 'none' // Don't refetch, just mark as stale
+                        });
                       }}
                     />
                   </div>
@@ -1501,14 +1585,14 @@ const ClientsPage = () => {
                                   <div className="client-card-assignments">
                                     <div className="assignment-item-modern">
                                       <AccountManagerIcon className="assignment-icon-modern" />
-                                      <span className={`assignment-text ${!getUserName(getAccountManagerId(client)) ? 'unassigned' : ''}`}>
-                                        {getUserName(getAccountManagerId(client), client.account_manager_name) || "Unassigned"}
+                                      <span className={`assignment-text ${!getAccountManagerName(client) ? 'unassigned' : ''}`}>
+                                        {getAccountManagerName(client) || "Unassigned"}
                                       </span>
                                     </div>
                                     <div className="assignment-item-modern">
                                       <AdoptionSpecialistIcon className="assignment-icon-modern" />
-                                      <span className={`assignment-text ${!getUserName(getAdoptionSpecialistId(client)) ? 'unassigned' : ''}`}>
-                                        {getUserName(getAdoptionSpecialistId(client), client.adoption_specialist_name) || "Unassigned"}
+                                      <span className={`assignment-text ${!getAdoptionSpecialistName(client) ? 'unassigned' : ''}`}>
+                                        {getAdoptionSpecialistName(client) || "Unassigned"}
                                       </span>
                                     </div>
                                   </div>
@@ -1644,7 +1728,7 @@ const ClientsPage = () => {
                             <div className="client-assignment-content">
                               <AccountManagerIcon className="assignment-icon-small" />
                               <span>
-                                {getUserName(getAccountManagerId(client), client.account_manager_name) || "Unassigned"}
+                                {getAccountManagerName(client) || "Unassigned"}
                               </span>
                             </div>
                           </td>
@@ -1652,7 +1736,7 @@ const ClientsPage = () => {
                             <div className="client-assignment-content">
                               <AdoptionSpecialistIcon className="assignment-icon-small" />
                               <span>
-                                {getUserName(getAdoptionSpecialistId(client), client.adoption_specialist_name) || "Unassigned"}
+                                {getAdoptionSpecialistName(client) || "Unassigned"}
                               </span>
                             </div>
                           </td>
