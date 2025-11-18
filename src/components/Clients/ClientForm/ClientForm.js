@@ -81,13 +81,15 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       setInternsDropdownOpen(false);
 
       if (client) {
+        const accountManagerId = client.account_manager_id ?? client.account_manager ?? "";
+        const adoptionSpecialistId = client.adoption_specialist_id ?? client.adoption_specialist ?? "";
         // Editing existing client
         setFormData({
           name: client.name || "",
           website: client.website || "",
           status: client.status || "pre-boarding",
-          account_manager: client.account_manager || "",
-          adoption_specialist: client.adoption_specialist || "",
+          account_manager: accountManagerId,
+          adoption_specialist: adoptionSpecialistId,
           plan_details: client.plan_details || "",
           communication_tool: client.communication_tool || "",
           ai_executor: client.ai_executor || "",
@@ -619,7 +621,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               <div className="selected-chips-container">
                 {formData.interns.map((internId) => {
                   const intern = usersByRole.ai_intern.find((user) => user.id === internId);
-                  const internName = intern?.full_name || intern?.name || intern?.email || `User ${internId.slice(0, 8)}...`;
+                  const internName = intern?.full_name || intern?.name || intern?.email || `Unknown (${internId.slice(0, 8)}...)`;
                   return (
                     <div key={internId} className="selected-chip">
                       <span className="chip-label">{internName}</span>

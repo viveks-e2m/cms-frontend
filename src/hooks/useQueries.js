@@ -33,6 +33,24 @@ export const useClient = (clientId, options = {}) => {
   });
 };
 
+export const useClientOverview = (clientId, options = {}) => {
+  const {
+    enabled = true,
+    actionItemsPageSize = 20,
+  } = options;
+
+  return useQuery({
+    queryKey: queryKeys.clients.overview(clientId, actionItemsPageSize),
+    queryFn: () =>
+      clientAPI.getOverview(clientId, {
+        action_items_page_size: actionItemsPageSize,
+      }),
+    enabled: !!clientId && enabled,
+    staleTime: CACHE_TIMES.DETAILS,
+    gcTime: CACHE_TIMES.DETAILS_CACHE,
+  });
+};
+
 export const useRecentClients = (limit = 5) => {
   // Use the same query as useClients to share cache
   const queryKey = queryKeys.clients.list();
@@ -133,16 +151,6 @@ export const useMeetings = (clientId, options = {}) => {
   return useQuery({
     queryKey: queryKeys.meetings.list(clientId),
     queryFn: () => meetingAPI.getByClient(clientId),
-    enabled: !!clientId && (options.enabled !== false),
-    staleTime: CACHE_TIMES.LISTS,
-    gcTime: CACHE_TIMES.LISTS_CACHE,
-  });
-};
-
-export const useMeetingSummary = (clientId, options = {}) => {
-  return useQuery({
-    queryKey: [...queryKeys.meetings.list(clientId), 'summary'],
-    queryFn: () => meetingAPI.getSummaryByClient(clientId),
     enabled: !!clientId && (options.enabled !== false),
     staleTime: CACHE_TIMES.LISTS,
     gcTime: CACHE_TIMES.LISTS_CACHE,

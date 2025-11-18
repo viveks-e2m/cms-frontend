@@ -288,14 +288,15 @@ export const prefetchClientData = async (clientId, onProgress) => {
         return data;
       },
     },
-    {
-      name: 'Client Secrets',
-      fn: async () => {
-        const data = await secretsAPI.getByClient(clientId);
-        queryClient.setQueryData(queryKeys.secrets.list(clientId), data);
-        return data;
-      },
-    },
+    // Secrets tab is commented out, so we don't prefetch secrets data
+    // {
+    //   name: 'Client Secrets',
+    //   fn: async () => {
+    //     const data = await secretsAPI.getByClient(clientId);
+    //     queryClient.setQueryData(queryKeys.secrets.list(clientId), data);
+    //     return data;
+    //   },
+    // },
   ];
 
   return executeTasks(tasks, onProgress);

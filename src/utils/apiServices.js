@@ -54,6 +54,23 @@ export const clientAPI = {
     return handleApiResponse(response);
   },
 
+  // Get consolidated client overview (meetings, action items, notes)
+  getOverview: async (clientId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.action_items_page_size) {
+      queryParams.append("action_items_page_size", params.action_items_page_size);
+    }
+
+    const queryString = queryParams.toString()
+      ? `?${queryParams.toString()}`
+      : "";
+
+    const response = await api.get(`/clients/${clientId}/overview${queryString}`, {
+      timeout: API_CONFIG.LONG_TIMEOUT,
+    });
+    return handleApiResponse(response);
+  },
+
   // Update client
   update: async (clientId, clientData) => {
     const response = await api.put(`/clients/${clientId}`, clientData);
