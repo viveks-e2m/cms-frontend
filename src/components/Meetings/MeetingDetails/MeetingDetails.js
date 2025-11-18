@@ -9,7 +9,7 @@ import {
   Assignment as AssignmentIcon,
   Description as MomIcon,
 } from "@mui/icons-material";
-import { useMeeting } from "../../../hooks/useQueries";
+import { useMeeting, useMeetingTranscript } from "../../../hooks/useQueries";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
@@ -42,11 +42,30 @@ const MeetingDetails = ({
   // Use prop meeting if available, otherwise use query data
   const meeting = propMeeting || meetingData;
 
+  const transcriptEnabled = Boolean(
+    meetingId &&
+    meeting &&
+    activeTab === "transcript" &&
+    meeting.has_transcript !== false
+  );
+
+  const {
+    data: transcriptData,
+    isLoading: loadingTranscript,
+    error: transcriptError,
+  } = useMeetingTranscript(meetingId, { enabled: transcriptEnabled });
+
   React.useEffect(() => {
     if (error) {
       showError("Failed to load meeting details");
     }
   }, [error, showError]);
+
+  React.useEffect(() => {
+    if (transcriptError) {
+      showError("Failed to load meeting transcript");
+    }
+  }, [transcriptError, showError]);
 
   if (loading) {
     return (
@@ -175,10 +194,22 @@ const MeetingDetails = ({
 
         {activeTab === "transcript" && (
           <div className="meeting-transcript-tab">
-            <TranscriptDisplay
-              transcript={meeting.transcript}
-              rawTranscript={meeting.raw_transcript}
-            />
+            {meeting.has_transcript === false ? (
+              <div className="meeting-details-error">
+                <p>Transcript is not available for this meeting.</p>
+              </div>
+            ) : loadingTranscript ? (
+              <LoadingSpinner message="Loading transcript..." />
+            ) : (
+              <TranscriptDisplay
+                transcript={
+                  transcriptData?.transcript ?? meeting.transcript ?? ""
+                }
+                rawTranscript={
+                  transcriptData?.raw_transcript ?? meeting.raw_transcript ?? ""
+                }
+              />
+            )}
           </div>
         )}
 

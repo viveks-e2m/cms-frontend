@@ -157,6 +157,14 @@ export const meetingAPI = {
     return handleApiResponse(response);
   },
 
+  // Get meeting transcript (heavy payload)
+  getTranscript: async (meetingId) => {
+    const response = await api.get(`/meetings/${meetingId}/transcript`, {
+      timeout: API_CONFIG.LONG_TIMEOUT,
+    });
+    return handleApiResponse(response);
+  },
+
   // Update meeting
   update: async (meetingId, meetingData) => {
     const response = await api.put(`/meetings/${meetingId}`, meetingData, {

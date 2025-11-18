@@ -159,6 +159,17 @@ export const useMeeting = (meetingId, options = {}) => {
   });
 };
 
+export const useMeetingTranscript = (meetingId, options = {}) => {
+  return useQuery({
+    queryKey: queryKeys.meetings.transcript(meetingId),
+    queryFn: () => meetingAPI.getTranscript(meetingId),
+    enabled: !!meetingId && (options.enabled !== false),
+    staleTime: CACHE_TIMES.DETAILS,
+    gcTime: CACHE_TIMES.DETAILS_CACHE,
+    ...options,
+  });
+};
+
 export const useMeetingStats = () => {
   const queryKey = queryKeys.meetings.statistics();
   return useQuery({
