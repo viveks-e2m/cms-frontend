@@ -10,6 +10,7 @@ import {
 } from "../../../hooks/useQueries";
 import { useQueryClient } from "@tanstack/react-query";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import { useAuth } from "../../../hooks/useAuth";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import { ActionItemsList, ActionItemForm } from "../../ActionItems";
 import { PermissionGuard } from "../../PermissionGuard";
@@ -22,6 +23,11 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const queryClient = useQueryClient();
 
   const { showError, showInfo } = useNotificationContext();
+  const { user, hasPermission } = useAuth();
+
+  const canViewAllActionItems = hasPermission(PERMISSIONS.READ_ALL_TASKS);
+  const canViewAssignedActionItems = hasPermission(PERMISSIONS.READ_ASSIGNED_TASKS);
+  const hasActionItemAccess = canViewAllActionItems || canViewAssignedActionItems;
 
   // Use cached queries
   const {
@@ -52,6 +58,26 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
       client_id: meeting?.client_id,
     }));
   }, [actionItemsData, meeting]);
+
+  const visibleActionItems = useMemo(() => {
+    if (!Array.isArray(actionItems) || actionItems.length === 0) {
+      return [];
+    }
+
+    if (canViewAllActionItems) {
+      return actionItems;
+    }
+
+    if (canViewAssignedActionItems) {
+      const currentUserId = user?.id;
+      if (!currentUserId) {
+        return [];
+      }
+      return actionItems.filter((item) => item.assignee === currentUserId);
+    }
+
+    return [];
+  }, [actionItems, canViewAllActionItems, canViewAssignedActionItems, user?.id]);
 
   const meetings = useMemo(() => {
     return meeting ? [meeting] : [];
@@ -133,13 +159,23 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
     );
   }
 
+  if (!hasActionItemAccess) {
+    return (
+      <div className="action-items">
+        <div className="permission-message">
+          <strong>Access restricted.</strong> You don't have permission to view action items for this meeting.
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="action-items">
       <div className="action-items-header">
         <div className="header-info">
           <h3>Action Items</h3>
           <span className="items-count">
-            {actionItems.length} {actionItems.length === 1 ? "item" : "items"}
+            {visibleActionItems.length} {visibleActionItems.length === 1 ? "item" : "items"}
           </span>
         </div>
 
@@ -193,7 +229,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
 
       {/* Use the professional ActionItemsList component */}
       <ActionItemsList
-        actionItems={actionItems}
+        actionItems={visibleActionItems}
         onRefresh={handleRefresh}
         meetings={meetings}
         clients={clientsData || []}

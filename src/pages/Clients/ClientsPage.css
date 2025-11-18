@@ -2202,10 +2202,9 @@
 /* Notes Tab */
 .notes-tab {
   width: 100%;
-  height: calc(100vh - 300px);
-  min-height: 500px;
   display: flex;
   flex-direction: column;
+  gap: 1.5rem;
 }
 
 .onboarding-section-wrapper {
@@ -2575,6 +2574,21 @@
   font-weight: 500;
   line-height: 1.4;
   word-break: break-word;
+}
+
+.assignment-chip-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.assignment-chip {
+  background: #EEF2FF;
+  color: #4F46E5;
+  border-radius: 999px;
+  padding: 0.2rem 0.75rem;
+  font-size: 0.75rem;
+  font-weight: 600;
 }
 
 .client-info-item .website-link {

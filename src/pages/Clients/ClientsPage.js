@@ -53,6 +53,7 @@ import {
   Assignment as PlanIcon,
   Chat as CommunicationIcon,
   SmartToy as AIExecutorIcon,
+  School as InternIcon,
   DateRange as DateIcon,
   Link as LinkIcon,
   Assessment as AuditIcon,
@@ -183,7 +184,7 @@ const ClientsPage = () => {
       meetings: meetingsSummary || [],
       // workflows: workflowsData || [],
       secrets: secretsData || [],
-      actionItems: actionItemsData?.items || [],
+      actionItems: actionItemsData?.items || actionItemsData || [], // Handle both paginated and non-paginated responses
     };
   }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
 
@@ -723,6 +724,24 @@ const ClientsPage = () => {
                               </div>
                             )}
 
+                            {Array.isArray(selectedClient.interns) && selectedClient.interns.length > 0 && (
+                              <div className="client-info-item">
+                                <div className="info-item-icon-wrapper">
+                                  <InternIcon className="info-icon" />
+                                </div>
+                                <div className="info-item-content">
+                                  <label>Interns</label>
+                                  <div className="assignment-chip-list">
+                                    {selectedClient.interns.map((internId) => (
+                                      <span key={internId} className="assignment-chip">
+                                        {getUserName(internId) || `User ${internId.slice(0, 8)}...`}
+                                      </span>
+                                    ))}
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+
                             {(selectedClient.assessment_start_date || selectedClient.assessment_end_date) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
@@ -782,6 +801,45 @@ const ClientsPage = () => {
                                   </span>
                                 </div>
                               </div>
+                            )}
+
+                            {(selectedClient.last_renewal_date || selectedClient.next_renewal_date) && (
+                              <>
+                                {selectedClient.last_renewal_date && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <DateIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Last Renewal Date</label>
+                                      <span>
+                                        {new Date(selectedClient.last_renewal_date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                                {selectedClient.next_renewal_date && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <DateIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Next Renewal Date</label>
+                                      <span>
+                                        {new Date(selectedClient.next_renewal_date).toLocaleDateString('en-US', { 
+                                          month: 'short', 
+                                          day: 'numeric', 
+                                          year: 'numeric' 
+                                        })}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+                              </>
                             )}
                           </div>
                         </div>

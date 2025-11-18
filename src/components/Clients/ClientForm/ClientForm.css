@@ -82,27 +82,33 @@
   height: 18px !important;
 }
 
-/* Form Styles */
+/* Form Styles - Scoped to client form only */
 .client-form {
   padding: 2rem;
 }
 
-.form-group {
+.client-form-scoped .form-group {
   margin-bottom: 1.5rem;
 }
 
-.form-row {
+.client-form-scoped .form-row {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 1rem;
   margin-bottom: 1.5rem;
+  align-items: start;
 }
 
-.form-row .form-group {
+.client-form-scoped .form-row .form-group {
   margin-bottom: 0;
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  min-width: 0;
+  flex: 1 1 0;
 }
 
-.form-label {
+.client-form-scoped .form-label {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -112,14 +118,14 @@
   margin-bottom: 0.5rem;
 }
 
-.label-icon {
+.client-form-scoped .label-icon {
   width: 16px !important;
   height: 16px !important;
   color: #6b7280;
 }
 
-.form-input,
-.form-select {
+.client-form-scoped .form-input,
+.client-form-scoped .form-select {
   width: 100%;
   padding: 0.875rem 1rem;
   border: 2px solid #e5e7eb;
@@ -130,20 +136,325 @@
   box-sizing: border-box;
 }
 
-.form-input:focus,
-.form-select:focus {
+/* Ensure all date inputs have consistent height and styling - scoped to client form */
+.client-form-scoped .form-input[type="date"],
+.client-form-scoped input[type="date"].form-input,
+.client-form-scoped .form-row .form-group input[type="date"],
+.client-form-scoped .form-row .form-group .form-input[type="date"] {
+  min-height: 48px !important;
+  height: 48px !important;
+  line-height: 1.5 !important;
+  padding: 0.875rem 1rem !important;
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  font-size: 0.875rem !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  background: #ffffff !important;
+  margin: 0 !important;
+  display: block !important;
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  -moz-appearance: textfield !important;
+}
+
+/* Ensure date inputs in form-row are identical - override any browser defaults */
+.client-form-scoped .form-row .form-group input[type="date"],
+.client-form-scoped .form-row .form-group .form-input[type="date"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  width: 100% !important;
+  max-width: 100% !important;
+  min-height: 48px !important;
+  height: 48px !important;
+  padding: 0.875rem 1rem !important;
+  box-sizing: border-box !important;
+  border: 2px solid #e5e7eb !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  line-height: 1.5 !important;
+  margin: 0 !important;
+  display: block !important;
+}
+
+/* Multi-Select Component Styles - Scoped to client form */
+.client-form-scoped .multi-select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.client-form-scoped .multi-select-input {
+  width: 100%;
+  min-height: 48px;
+  padding: 0.75rem 1rem;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  background: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s ease;
+  box-sizing: border-box;
+}
+
+.client-form-scoped .multi-select-input:hover {
+  border-color: #d1d5db;
+  background: #f9fafb;
+}
+
+.client-form-scoped .multi-select-input.open {
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.client-form-scoped .multi-select-input.error {
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+}
+
+.client-form-scoped .multi-select-input.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  background: #f9fafb;
+}
+
+.client-form-scoped .multi-select-input.disabled:hover {
+  border-color: #e5e7eb;
+  background: #f9fafb;
+}
+
+.client-form-scoped .multi-select-value {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-height: 20px;
+}
+
+.client-form-scoped .multi-select-placeholder {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.client-form-scoped .multi-select-placeholder-selected {
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+
+.client-form-scoped .multi-select-arrow {
+  width: 20px !important;
+  height: 20px !important;
+  color: #6b7280;
+  transition: transform 0.2s ease;
+  flex-shrink: 0;
+}
+
+.client-form-scoped .multi-select-arrow.open {
+  transform: rotate(180deg);
+}
+
+.client-form-scoped .multi-select-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 998;
+  background: transparent;
+}
+
+.client-form-scoped .multi-select-dropdown {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: #ffffff;
+  border: 2px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.15);
+  max-height: 280px;
+  overflow-y: auto;
+  z-index: 999;
+  animation: dropdownSlideIn 0.2s ease-out;
+}
+
+@keyframes dropdownSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.client-form-scoped .multi-select-empty {
+  padding: 1.5rem;
+  text-align: center;
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.client-form-scoped .multi-select-option {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.client-form-scoped .multi-select-option:last-child {
+  border-bottom: none;
+}
+
+.client-form-scoped .multi-select-option:hover {
+  background: #f9fafb;
+}
+
+.client-form-scoped .multi-select-option.selected {
+  background: #eff6ff;
+}
+
+.client-form-scoped .multi-select-checkbox {
+  width: 18px;
+  height: 18px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.client-form-scoped .multi-select-option-label {
+  flex: 1;
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  line-height: 1.5;
+}
+
+.client-form-scoped .multi-select-option-role {
+  color: #6b7280;
+  font-weight: 400;
+}
+
+/* Selected Chips Container - Scoped to client form */
+.client-form-scoped .selected-chips-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.625rem;
+  margin-top: 0.875rem;
+  padding: 0.5rem;
+  background: #f9fafb;
+  border-radius: 8px;
+  min-height: 44px;
+  align-items: flex-start;
+}
+
+.client-form-scoped .selected-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: #ffffff;
+  border-radius: 20px;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.2);
+  transition: all 0.2s ease;
+  animation: chipSlideIn 0.2s ease-out;
+}
+
+@keyframes chipSlideIn {
+  from {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.client-form-scoped .selected-chip:hover {
+  box-shadow: 0 4px 8px rgba(102, 126, 234, 0.3);
+  transform: translateY(-1px);
+}
+
+.client-form-scoped .chip-label {
+  line-height: 1.4;
+  white-space: nowrap;
+}
+
+.client-form-scoped .chip-remove {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: none;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 50%;
+  color: #ffffff;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  flex-shrink: 0;
+}
+
+.client-form-scoped .chip-remove:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.3);
+  transform: scale(1.1);
+}
+
+.client-form-scoped .chip-remove:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.client-form-scoped .chip-remove svg {
+  width: 12px !important;
+  height: 12px !important;
+}
+
+/* Custom Scrollbar for Dropdown - Scoped to client form */
+.client-form-scoped .multi-select-dropdown::-webkit-scrollbar {
+  width: 8px;
+}
+
+.client-form-scoped .multi-select-dropdown::-webkit-scrollbar-track {
+  background: #f3f4f6;
+  border-radius: 4px;
+}
+
+.client-form-scoped .multi-select-dropdown::-webkit-scrollbar-thumb {
+  background: #d1d5db;
+  border-radius: 4px;
+}
+
+.client-form-scoped .multi-select-dropdown::-webkit-scrollbar-thumb:hover {
+  background: #9ca3af;
+}
+
+.client-form-scoped .form-input:focus,
+.client-form-scoped .form-select:focus {
   outline: none;
   border-color: #3b82f6;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-.form-input.error,
-.form-select.error {
+.client-form-scoped .form-input.error,
+.client-form-scoped .form-select.error {
   border-color: #ef4444;
   box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
 }
 
-.error-message {
+.client-form-scoped .error-message {
   display: block;
   color: #ef4444;
   font-size: 0.8125rem;
@@ -151,15 +462,15 @@
   font-weight: 500;
 }
 
-.form-help {
+.client-form-scoped .form-help {
   color: #6b7280;
   font-size: 0.8125rem;
   margin-top: 0.5rem;
   line-height: 1.4;
 }
 
-/* Form Actions */
-.form-actions {
+/* Form Actions - Scoped to client form */
+.client-form-scoped .form-actions {
   display: flex;
   gap: 1rem;
   justify-content: flex-end;
@@ -167,7 +478,7 @@
   border-top: 1px solid #e5e7eb;
 }
 
-.btn {
+.client-form-scoped .btn {
   display: flex;
   align-items: center;
   gap: 0.5rem;
@@ -182,42 +493,42 @@
   white-space: nowrap;
 }
 
-.btn:disabled {
+.client-form-scoped .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.btn-primary {
+.client-form-scoped .btn-primary {
   background: #3b82f6;
   color: #ffffff;
   border-color: #3b82f6;
 }
 
-.btn-primary:hover:not(:disabled) {
+.client-form-scoped .btn-primary:hover:not(:disabled) {
   background: #2563eb;
   border-color: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
 }
 
-.btn-secondary {
+.client-form-scoped .btn-secondary {
   background: #f3f4f6;
   color: #374151;
   border-color: #d1d5db;
 }
 
-.btn-secondary:hover:not(:disabled) {
+.client-form-scoped .btn-secondary:hover:not(:disabled) {
   background: #e5e7eb;
   border-color: #9ca3af;
 }
 
-.btn svg {
+.client-form-scoped .btn svg {
   width: 16px !important;
   height: 16px !important;
 }
 
-/* Loading Spinner */
-.btn-spinner {
+/* Loading Spinner - Scoped to client form */
+.client-form-scoped .btn-spinner {
   width: 16px;
   height: 16px;
   border: 2px solid transparent;
@@ -246,11 +557,11 @@
     padding: 1.5rem;
   }
   
-  .form-actions {
+  .client-form-scoped .form-actions {
     flex-direction: column-reverse;
   }
   
-  .btn {
+  .client-form-scoped .btn {
     justify-content: center;
   }
 }
@@ -275,6 +586,20 @@
   
   .modal-icon {
     margin-top: 0;
+  }
+
+  .client-form-scoped .multi-select-dropdown {
+    max-height: 200px;
+  }
+
+  .client-form-scoped .selected-chips-container {
+    padding: 0.375rem;
+    gap: 0.5rem;
+  }
+
+  .client-form-scoped .selected-chip {
+    padding: 0.375rem 0.625rem;
+    font-size: 0.75rem;
   }
 }
 

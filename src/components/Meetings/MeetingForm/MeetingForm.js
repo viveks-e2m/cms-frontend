@@ -15,6 +15,7 @@ import {
 } from "@mui/icons-material";
 import { meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import FathomMeetingSelector from "../FathomMeetingSelector/FathomMeetingSelector";
 import "./MeetingForm.css";
 
 const MeetingForm = ({
@@ -86,6 +87,15 @@ const MeetingForm = ({
       error: null,
       attempted: false,
     });
+  };
+
+  const handleFathomMeetingSelect = (meetingData) => {
+    setFormData((prev) => ({
+      ...prev,
+      meeting_name: meetingData.meeting_name,
+      recording_url: meetingData.recording_url,
+    }));
+    showSuccess("Meeting details imported from Fathom");
   };
 
   const handleSubmit = async (e) => {
@@ -287,6 +297,16 @@ const MeetingForm = ({
                 </div>
               </div>
             </div>
+
+            {/* Fathom Meeting Selector - Only show for Fathom source */}
+            {formData.source === "fathom" && !meeting && (
+              <div className="form-group">
+                <FathomMeetingSelector
+                  onSelectMeeting={handleFathomMeetingSelect}
+                  disabled={loading}
+                />
+              </div>
+            )}
 
             {/* Meeting Name - Optional */}
             <div className="form-group">
