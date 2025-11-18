@@ -448,4 +448,36 @@ export const momAPI = {
     const response = await api.delete(`/meetings/${meetingId}/mom`);
     return handleApiResponse(response);
   },
+
+  // Generate MoM from transcript
+  generateFromTranscript: async (meetingId) => {
+    const response = await api.post(`/meetings/${meetingId}/mom/generate`, null, {
+      timeout: 600000, // allow up to 10 minutes for webhook-based generation
+    });
+    return handleApiResponse(response);
+  },
+};
+
+// Auth/Profile API services
+export const authAPI = {
+  // Get user profile
+  getProfile: async () => {
+    const response = await api.get("/auth/profile");
+    return handleApiResponse(response);
+  },
+
+  // Update user profile
+  updateProfile: async (profileData) => {
+    const response = await api.put("/auth/profile", profileData);
+    return handleApiResponse(response);
+  },
+};
+
+// Fathom API services
+export const fathomAPI = {
+  // Fetch recent meetings from Fathom
+  getMeetings: async (limit = 10) => {
+    const response = await api.get(`/fathom/meetings?limit=${limit}`);
+    return handleApiResponse(response);
+  },
 };

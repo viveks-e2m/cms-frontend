@@ -13,8 +13,9 @@ import {
   Error as ErrorIcon,
   Refresh as RefreshIcon,
 } from "@mui/icons-material";
-import { meetingAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import { useCreateMeeting, useUpdateMeeting } from "../../../hooks/useMutations";
+import FathomMeetingSelector from "../FathomMeetingSelector/FathomMeetingSelector";
 import "./MeetingForm.css";
 
 const MeetingForm = ({
@@ -40,6 +41,8 @@ const MeetingForm = ({
     attempted: false,
   });
   const { showError, showSuccess, showInfo } = useNotificationContext();
+  const createMeetingMutation = useCreateMeeting({ suppressNotifications: true });
+  const updateMeetingMutation = useUpdateMeeting({ suppressNotifications: true });
 
   useEffect(() => {
     if (meeting) {
@@ -88,49 +91,64 @@ const MeetingForm = ({
     });
   };
 
+  const handleFathomMeetingSelect = (meetingData) => {
+    setFormData((prev) => ({
+      ...prev,
+      meeting_name: meetingData.meeting_name,
+      recording_url: meetingData.recording_url,
+    }));
+    showSuccess("Meeting details imported from Fathom");
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    // Validate required fields
+    if (!formData.recording_url?.trim()) {
+      showError("Recording URL is required");
+      return;
+    }
+
+    const meetingData = {
+      recording_url: formData.recording_url.trim() || null,
+      transcript: formData.transcript.trim() || null,
+      summary: formData.summary.trim() || null,
+      meeting_name: formData.meeting_name.trim() || null,
+      source: formData.source,
+    };
+
+    // Remove null values
+    Object.keys(meetingData).forEach((key) => {
+      if (meetingData[key] === null || meetingData[key] === "") {
+        delete meetingData[key];
+      }
+    });
+
+    // Show different loading message for Fathom
+    if (formData.source === "fathom" && !meeting) {
+      setFathomStatus((prev) => ({ ...prev, fetching: true, error: null }));
+      showInfo(
+        "Creating meeting and fetching data from Fathom... This may take up to 5 minutes."
+      );
+    }
+
+    setLoading(true);
+
     try {
-      setLoading(true);
-
-      // Show different loading message for Fathom
-      if (formData.source === "fathom") {
-        setFathomStatus((prev) => ({ ...prev, fetching: true, error: null }));
-        showInfo(
-          "Creating meeting and fetching data from Fathom... This may take up to 5 minutes."
-        );
-      }
-
-      const meetingData = {
-        recording_url: formData.recording_url.trim() || null,
-        transcript: formData.transcript.trim() || null,
-        summary: formData.summary.trim() || null,
-        meeting_name: formData.meeting_name.trim() || null,
-        source: formData.source,
-      };
-
-      // Validate required fields
-      if (!meetingData.recording_url) {
-        showError("Recording URL is required");
-        return;
-      }
-
-      // Remove null values
-      Object.keys(meetingData).forEach((key) => {
-        if (meetingData[key] === null || meetingData[key] === "") {
-          delete meetingData[key];
-        }
-      });
-
       let result;
       if (meeting) {
         // Update existing meeting
-        result = await meetingAPI.update(meeting.id, meetingData);
+        result = await updateMeetingMutation.mutateAsync({
+          meetingId: meeting.id,
+          meetingData,
+        });
         showSuccess("Meeting updated successfully");
       } else {
         // Create new meeting
-        result = await meetingAPI.create(clientId, meetingData);
+        result = await createMeetingMutation.mutateAsync({
+          clientId,
+          meetingData,
+        });
 
         // Check if Fathom data was fetched successfully
         if (formData.source === "fathom") {
@@ -188,7 +206,7 @@ const MeetingForm = ({
         error?.message ||
         "Unknown error";
 
-      if (formData.source === "fathom") {
+      if (formData.source === "fathom" && !meeting) {
         setFathomStatus((prev) => ({
           ...prev,
           fetching: false,
@@ -287,6 +305,16 @@ const MeetingForm = ({
                 </div>
               </div>
             </div>
+
+            {/* Fathom Meeting Selector - Only show for Fathom source */}
+            {formData.source === "fathom" && !meeting && (
+              <div className="form-group">
+                <FathomMeetingSelector
+                  onSelectMeeting={handleFathomMeetingSelect}
+                  disabled={loading}
+                />
+              </div>
+            )}
 
             {/* Meeting Name - Optional */}
             <div className="form-group">

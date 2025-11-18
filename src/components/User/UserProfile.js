@@ -1,20 +1,36 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../../hooks/useAuth";
 import { rbacAPI } from "../../utils/rbacAPI";
+import { authAPI } from "../../utils/apiServices";
+import { useNotificationContext } from "../../contexts/NotificationContext";
 import DashboardLayout from "../Layout/DashboardLayout/DashboardLayout";
 import "./UserProfile.css";
 
 const UserProfile = () => {
   const { user, role, permissions } = useAuth();
+  const { showSuccess, showError } = useNotificationContext();
   const [userPermissions, setUserPermissions] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [fathomApiKey, setFathomApiKey] = useState("");
+  const [showApiKey, setShowApiKey] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       loadUserPermissions();
+      loadUserProfile();
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
+
+  const loadUserProfile = async () => {
+    try {
+      const profile = await authAPI.getProfile();
+      setFathomApiKey(profile.fathom_api_key || "");
+    } catch (error) {
+      console.error("Error loading user profile:", error);
+    }
+  };
 
   const loadUserPermissions = async () => {
     try {
@@ -25,6 +41,21 @@ const UserProfile = () => {
       console.error("Error loading user permissions:", error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      await authAPI.updateProfile({
+        fathom_api_key: fathomApiKey || null,
+      });
+      showSuccess("Profile updated successfully");
+    } catch (error) {
+      console.error("Error saving profile:", error);
+      showError(error.message || "Failed to save profile");
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -95,6 +126,83 @@ const UserProfile = () => {
               </div>
             </div>
           )}
+
+          {/* Fathom API Key Section */}
+          <div className="profile-section">
+            <h3>Fathom Integration</h3>
+            <p className="section-description">
+              Connect your Fathom account to quickly import meetings
+            </p>
+            
+            <div className="form-group">
+              <label htmlFor="fathom-api-key">
+                Fathom API Key
+                <span className="optional-badge">Optional</span>
+              </label>
+              <div className="api-key-input-wrapper">
+                <input
+                  id="fathom-api-key"
+                  type={showApiKey ? "text" : "password"}
+                  className="form-input"
+                  value={fathomApiKey}
+                  onChange={(e) => setFathomApiKey(e.target.value)}
+                  placeholder="Enter your Fathom API key"
+                />
+                <button
+                  type="button"
+                  className="toggle-visibility-btn"
+                  onClick={() => setShowApiKey(!showApiKey)}
+                  title={showApiKey ? "Hide API key" : "Show API key"}
+                >
+                  {showApiKey ? (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24" />
+                      <line x1="1" y1="1" x2="23" y2="23" />
+                    </svg>
+                  ) : (
+                    <svg
+                      width="20"
+                      height="20"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                    >
+                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z" />
+                      <circle cx="12" cy="12" r="3" />
+                    </svg>
+                  )}
+                </button>
+              </div>
+              <p className="field-hint">
+                Get your API key from{" "}
+                <a
+                  href="https://app.fathom.video/settings/integrations"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="external-link"
+                >
+                  Fathom Settings → Integrations
+                </a>
+              </p>
+            </div>
+            <div className="profile-actions">
+              <button
+                className="btn-primary"
+                onClick={handleSave}
+                disabled={saving}
+              >
+                {saving ? "Saving..." : "Save Changes"}
+              </button>
+            </div>
+          </div>
 
           <div className="profile-section">
             <h3>Permissions</h3>

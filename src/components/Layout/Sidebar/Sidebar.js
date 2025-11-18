@@ -67,8 +67,6 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
     },
   ];
 
-
-
   // Filter menu items based on user permissions and roles
   const visibleMenuItems = menuItems.filter((item) => {
     // Show all items if role is not loaded (for debugging)
