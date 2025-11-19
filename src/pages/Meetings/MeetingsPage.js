@@ -660,7 +660,7 @@ const MeetingsPage = () => {
             <div>
               <h1>Meeting Explorer</h1>
               <p className="meeting-explorer__subtitle">
-                Review transcripts, summaries, and action-item context across your clients.
+                Review transcripts, summaries context across your clients.
               </p>
             </div>
             <button
