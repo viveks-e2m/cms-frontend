@@ -5,6 +5,8 @@ import "@blocknote/mantine/style.css";
 import { Save as SaveIcon, Notes as NotesIcon } from "@mui/icons-material";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./ClientNotes.css";
 
@@ -148,14 +150,16 @@ const ClientNotes = ({ clientId, initialNotes, onNotesUpdate }) => {
           <h3>Client Notes</h3>
         </div>
         
-        <button
-          className="btn btn-primary btn-xs"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          <SaveIcon />
-          {saving ? "Saving..." : "Save"}
-        </button>
+        <PermissionGuard permissions={[PERMISSIONS.UPDATE_CLIENT]}>
+          <button
+            className="btn btn-primary btn-xs"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            <SaveIcon />
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="client-notes-content">

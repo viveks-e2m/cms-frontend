@@ -50,6 +50,18 @@ const ActionItemsList = ({
     setLocalActionItems(actionItems);
   }, [actionItems]);
 
+  const invalidateClientActionItems = (clientId) => {
+    if (!clientId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["clients", "overview", clientId],
+      exact: false,
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["action-items", "byClient", clientId],
+      exact: false,
+    });
+  };
+
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
     if (item.client_name) {
@@ -98,6 +110,8 @@ const ActionItemsList = ({
 
   const updateItemStatus = async (itemId, newStatus) => {
     console.log("Updating item status:", itemId, "to:", newStatus);
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
     
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -131,6 +145,7 @@ const ActionItemsList = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -144,6 +159,8 @@ const ActionItemsList = ({
     if (!window.confirm("Are you sure you want to delete this action item?")) {
       return;
     }
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
 
     // Optimistic update - remove item from UI immediately
     const previousItems = localActionItems;
@@ -170,6 +187,7 @@ const ActionItemsList = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -208,6 +226,8 @@ const ActionItemsList = ({
       task_owner: editForm.task_owner || null,
       due_date: editForm.due_date || null,
     };
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
 
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -239,6 +259,7 @@ const ActionItemsList = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);

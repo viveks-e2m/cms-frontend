@@ -48,6 +48,18 @@ const ActionItemsKanban = ({
     setLocalActionItems(actionItems);
   }, [actionItems]);
 
+  const invalidateClientActionItems = (clientId) => {
+    if (!clientId) return;
+    queryClient.invalidateQueries({
+      queryKey: ["clients", "overview", clientId],
+      exact: false,
+    });
+    queryClient.invalidateQueries({
+      queryKey: ["action-items", "byClient", clientId],
+      exact: false,
+    });
+  };
+
   const columns = [
     { id: "open", title: getStatusDisplayName("open"), count: 0, color: "#3B82F6" },
     { id: "in_progress", title: getStatusDisplayName("in_progress"), count: 0, color: "#F59E0B" },
@@ -110,6 +122,9 @@ const ActionItemsKanban = ({
   };
 
   const updateItemStatus = async (itemId, newStatus) => {
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
+
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
     setLocalActionItems(prev => 
@@ -139,6 +154,7 @@ const ActionItemsKanban = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -151,6 +167,8 @@ const ActionItemsKanban = ({
     if (!window.confirm("Are you sure you want to delete this action item?")) {
       return;
     }
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
 
     // Optimistic update - remove item from UI immediately
     const previousItems = localActionItems;
@@ -177,6 +195,7 @@ const ActionItemsKanban = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -215,6 +234,8 @@ const ActionItemsKanban = ({
       task_owner: editForm.task_owner || null,
       due_date: editForm.due_date || null,
     };
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
 
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -246,6 +267,7 @@ const ActionItemsKanban = ({
           return oldData;
         }
       );
+      invalidateClientActionItems(targetClientId);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);

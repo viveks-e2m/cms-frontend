@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Add as AddIcon,
   Notes as NotesIcon,
@@ -20,11 +20,13 @@ const MeetingNotes = ({ meetingId, onNotesUpdate }) => {
   const [isAddingNote, setIsAddingNote] = useState(false);
   const [newNote, setNewNote] = useState({ note: '' });
   const { showError, showSuccess } = useNotificationContext();
+  const lastLoadedMeetingIdRef = useRef(null);
 
   useEffect(() => {
-    if (meetingId) {
-      loadNotes();
-    }
+    if (!meetingId) return;
+    if (lastLoadedMeetingIdRef.current === meetingId) return;
+    lastLoadedMeetingIdRef.current = meetingId;
+    loadNotes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId]);
 

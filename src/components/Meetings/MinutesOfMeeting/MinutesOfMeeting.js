@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useCreateBlockNote } from "@blocknote/react";
 import { BlockNoteView } from "@blocknote/mantine";
 import "@blocknote/mantine/style.css";
@@ -54,6 +54,7 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
   const [saving, setSaving] = useState(false);
   const [generating, setGenerating] = useState(false);
   const { showSuccess, showError } = useNotificationContext();
+  const lastLoadedMeetingIdRef = useRef(null);
 
   // Create BlockNote editor following official docs
   const editor = useCreateBlockNote({
@@ -94,9 +95,10 @@ const MinutesOfMeeting = ({ meetingId, onContentUpdate }) => {
   });
 
   useEffect(() => {
-    if (meetingId && editor) {
-      loadMinutes();
-    }
+    if (!meetingId || !editor) return;
+    if (lastLoadedMeetingIdRef.current === meetingId) return;
+    lastLoadedMeetingIdRef.current = meetingId;
+    loadMinutes();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, editor]);
 
