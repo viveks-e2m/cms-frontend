@@ -457,6 +457,67 @@ const ClientsPage = () => {
   };
 
   // Client form handlers
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const extractIdValue = (...candidates) => {
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      if (typeof candidate === "string") {
+        const trimmed = candidate.trim();
+        if (trimmed && UUID_REGEX.test(trimmed)) {
+          return trimmed;
+        }
+      } else if (typeof candidate === "object") {
+        if (candidate.id && UUID_REGEX.test(candidate.id)) {
+          return candidate.id;
+        }
+        if (candidate.value && UUID_REGEX.test(candidate.value)) {
+          return candidate.value;
+        }
+      }
+    }
+    return "";
+  };
+
+  const normalizeClientForForm = (client) => {
+    if (!client) return null;
+    const normalized = { ...client };
+
+    normalized.account_manager =
+      extractIdValue(
+        client.account_manager_id,
+        client.account_manager,
+        client.account_manager_user,
+        client.account_manager_details
+      ) || client.account_manager || "";
+
+    normalized.adoption_specialist =
+      extractIdValue(
+        client.adoption_specialist_id,
+        client.adoption_specialist,
+        client.adoption_specialist_user,
+        client.adoption_specialist_details
+      ) || client.adoption_specialist || "";
+
+    normalized.ai_executor =
+      extractIdValue(
+        client.ai_executor_id,
+        client.ai_executor,
+        client.ai_executor_user,
+        client.ai_executor_details
+      ) || client.ai_executor || "";
+
+    if (typeof client.plan_details === "object" && client.plan_details !== null) {
+      normalized.plan_details =
+        client.plan_details.value ||
+        client.plan_details.id ||
+        client.plan_details.name ||
+        "";
+    }
+
+    return normalized;
+  };
+
   const handleAddClient = () => {
     console.log("Add client button clicked"); // Debug log
     setEditingClient(null);
@@ -464,9 +525,54 @@ const ClientsPage = () => {
     console.log("showClientForm set to true"); // Debug log
   };
 
+  const buildClientDataFromCache = (client) => {
+    if (!client?.id) return null;
+    const clientId = client.id;
+
+    // Try to find client from list data first
+    const listClient = (clientsData || []).find((c) => c.id === clientId) || client;
+
+    // Attempt to get overview data from query cache (same key used by useClientOverview)
+    const cachedOverview = queryClient.getQueryData(
+      queryKeys.clients.overview(clientId, clientActionItemsPageSize)
+    );
+
+    if (cachedOverview && typeof cachedOverview === "object") {
+      return { ...listClient, ...cachedOverview };
+    }
+
+    // Fallback to current clientOverview (if we're already viewing this client)
+    if (clientOverview && clientOverview.id === clientId) {
+      return { ...listClient, ...clientOverview };
+    }
+
+    return listClient || null;
+  };
+
+  const hasSufficientClientFields = (data) => {
+    if (!data) return false;
+    return Boolean(
+      data.name &&
+      data.website &&
+      data.status !== undefined &&
+      data.status !== null
+    );
+  };
+
   const handleEditClient = async (client) => {
     if (!client?.id) return;
     try {
+      // Prefer cached overview data when available to avoid extra network call
+      const cachedClient = normalizeClientForForm(
+        buildClientDataFromCache(client)
+      );
+      if (hasSufficientClientFields(cachedClient)) {
+        setEditingClient(cachedClient);
+        setShowClientForm(true);
+        return;
+      }
+
+      // Fallback to API if required fields are missing
       setIsLoadingClientForEdit(true);
       const fullClient = await clientAPI.getById(client.id);
       setEditingClient(fullClient);

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import { useCreateClient, useUpdateClient } from "../../../hooks/useMutations";
@@ -21,6 +21,21 @@ import {
   KeyboardArrowDown as KeyboardArrowDownIcon,
 } from "@mui/icons-material";
 import "./ClientForm.css";
+
+const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+const normalizeUserValue = (value) => {
+  if (!value) return "";
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+    if (!trimmed) return "";
+    return trimmed;
+  }
+  if (typeof value === "object") {
+    return value?.id || value?.value || value?.name || "";
+  }
+  return "";
+};
 
 const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   const [formData, setFormData] = useState({
@@ -56,6 +71,26 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   const createClientMutation = useCreateClient();
   const updateClientMutation = useUpdateClient();
 
+  const resolveUserIdForRole = useCallback(
+    (value, roleKey) => {
+      if (!value) return "";
+      const normalized = value.trim();
+      if (!normalized) return "";
+      if (UUID_REGEX.test(normalized)) {
+        return normalized;
+      }
+      const candidates = usersByRole[roleKey] || [];
+      const lower = normalized.toLowerCase();
+      const match = candidates.find((user) =>
+        [user.full_name, user.name, user.email].some(
+          (field) => field && field.trim().toLowerCase() === lower
+        )
+      );
+      return match?.id || "";
+    },
+    [usersByRole]
+  );
+
   // Close dropdown when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -81,8 +116,8 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       setInternsDropdownOpen(false);
 
       if (client) {
-        const accountManagerId = client.account_manager_id ?? client.account_manager ?? "";
-        const adoptionSpecialistId = client.adoption_specialist_id ?? client.adoption_specialist ?? "";
+        const accountManagerId = normalizeUserValue(client.account_manager_id ?? client.account_manager);
+        const adoptionSpecialistId = normalizeUserValue(client.adoption_specialist_id ?? client.adoption_specialist);
         // Editing existing client
         setFormData({
           name: client.name || "",
@@ -92,7 +127,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           adoption_specialist: adoptionSpecialistId,
           plan_details: client.plan_details || "",
           communication_tool: client.communication_tool || "",
-          ai_executor: client.ai_executor || "",
+          ai_executor: normalizeUserValue(client.ai_executor) || "",
           interns: Array.isArray(client.interns)
             ? client.interns.filter(Boolean)
             : [],
@@ -135,6 +170,31 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [client, isOpen]);
+
+  useEffect(() => {
+    if (!isOpen || !client) return;
+    setFormData((prev) => {
+      let changed = false;
+      const updated = { ...prev };
+
+      const ensureFieldId = (field, roleKey) => {
+        const currentValue = prev[field];
+        if (!currentValue) return;
+        if (UUID_REGEX.test(currentValue.trim())) return;
+        const resolved = resolveUserIdForRole(currentValue, roleKey);
+        if (resolved && resolved !== currentValue) {
+          updated[field] = resolved;
+          changed = true;
+        }
+      };
+
+      ensureFieldId("account_manager", "account_manager");
+      ensureFieldId("adoption_specialist", "adoption_specialist");
+      ensureFieldId("ai_executor", "ai_executor");
+
+      return changed ? updated : prev;
+    });
+  }, [usersByRole, isOpen, client, resolveUserIdForRole]);
 
   const loadUsers = async () => {
     try {
@@ -231,15 +291,19 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
       ? formData.interns.filter(id => id) // Filter out any falsy values
       : [];
 
+    const accountManagerId = resolveUserIdForRole(formData.account_manager || "", "account_manager");
+    const adoptionSpecialistId = resolveUserIdForRole(formData.adoption_specialist || "", "adoption_specialist");
+    const aiExecutorId = resolveUserIdForRole(formData.ai_executor || "", "ai_executor");
+
     const clientData = {
       name: formData.name.trim(),
       website: website,
       status: formData.status,
-      account_manager: formData.account_manager || "",
-      adoption_specialist: formData.adoption_specialist || "",
+      account_manager: accountManagerId || "",
+      adoption_specialist: adoptionSpecialistId || "",
       plan_details: formData.plan_details || null,
       communication_tool: formData.communication_tool.trim() || null,
-      ai_executor: formData.ai_executor || null,
+      ai_executor: aiExecutorId || null,
       interns: internsArray, // Always include interns field, even if empty array
       assessment_start_date: formData.assessment_start_date || null,
       assessment_end_date: formData.assessment_end_date || null,
