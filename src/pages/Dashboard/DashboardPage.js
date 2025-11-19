@@ -131,6 +131,14 @@ const DashboardPage = () => {
     navigate(`/clients?clientId=${clientId}`);
   };
 
+  const handleMeetingStatClick = (range) => {
+    if (range && range !== "all") {
+      navigate(`/meetings?range=${range}`);
+    } else {
+      navigate("/meetings");
+    }
+  };
+
   if (loading) {
     return (
       <DashboardLayout>
@@ -232,7 +240,10 @@ const DashboardPage = () => {
           {/* Meetings Card - Enhanced with breakdown */}
           <PermissionGuard permissions={[PERMISSIONS.READ_MEETING]}>
             <div className="metric-card-enhanced metric-card-meetings">
-              <div className="metric-card-header-compact">
+              <div
+                className="metric-card-header-compact metric-card-header-clickable"
+                onClick={() => handleMeetingStatClick("all")}
+              >
                 <div className="metric-icon-wrapper-compact metric-icon-meetings">
                   <VideoCallIcon className="metric-icon" />
                 </div>
@@ -242,19 +253,31 @@ const DashboardPage = () => {
                 </div>
               </div>
               <div className="metric-breakdown">
-                <div className="breakdown-item">
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("this_month")}
+                >
                   <span className="breakdown-label">This Month</span>
                   <span className="breakdown-value breakdown-info">{dashboardData.meetingStats.this_month}</span>
                 </div>
-                <div className="breakdown-item">
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("last_month")}
+                >
                   <span className="breakdown-label">Last Month</span>
                   <span className="breakdown-value breakdown-secondary">{dashboardData.meetingStats.last_month}</span>
                 </div>
-                <div className="breakdown-item">
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("this_week")}
+                >
                   <span className="breakdown-label">This Week</span>
                   <span className="breakdown-value breakdown-success">{dashboardData.meetingStats.this_week}</span>
                 </div>
-                <div className="breakdown-item">
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("last_week")}
+                >
                   <span className="breakdown-label">Last Week</span>
                   <span className="breakdown-value breakdown-warning">{dashboardData.meetingStats.last_week}</span>
                 </div>

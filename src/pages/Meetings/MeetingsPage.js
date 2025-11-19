@@ -1,6 +1,7 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState, useCallback } from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
+import { useSearchParams } from "react-router-dom";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
@@ -161,13 +162,47 @@ const getSectionOrder = (summary = "", transcriptText = "", searchTerm = "") => 
   }
 };
 
+const VALID_TIME_RANGES = new Set(["this_week", "last_week", "this_month", "last_month"]);
+
+const TIME_RANGE_OPTIONS = [
+  { value: "all", label: "All time" },
+  { value: "this_week", label: "This week" },
+  { value: "last_week", label: "Last week" },
+  { value: "this_month", label: "This month" },
+  { value: "last_month", label: "Last month" },
+];
+
 const MeetingsPage = () => {
   const [searchValue, setSearchValue] = useState("");
   const [selectedClient, setSelectedClient] = useState("all");
   const [offset, setOffset] = useState(0);
   const [activeMeetingId, setActiveMeetingId] = useState(null);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [timeRange, setTimeRange] = useState(() => {
+    const param = searchParams.get("range");
+    return param && VALID_TIME_RANGES.has(param) ? param : "all";
+  });
 
   const debouncedSearch = useDebounce(searchValue, 400);
+
+  useEffect(() => {
+    const param = searchParams.get("range");
+    const normalized = param && VALID_TIME_RANGES.has(param) ? param : "all";
+    setTimeRange((prev) => (prev === normalized ? prev : normalized));
+  }, [searchParams]);
+
+  const updateRangeSearchParam = useCallback(
+    (value) => {
+      const nextParams = new URLSearchParams(searchParams);
+      if (value === "all") {
+        nextParams.delete("range");
+      } else {
+        nextParams.set("range", value);
+      }
+      setSearchParams(nextParams, { replace: true });
+    },
+    [searchParams, setSearchParams]
+  );
 
   // Markdown components with search highlighting for list items
   const compactMarkdownComponents = useMemo(() => {
@@ -277,8 +312,11 @@ const MeetingsPage = () => {
     if (selectedClient !== "all") {
       filters.client_id = selectedClient;
     }
+    if (timeRange && timeRange !== "all") {
+      filters.time_range = timeRange;
+    }
     return filters;
-  }, [debouncedSearch, offset, selectedClient]);
+  }, [debouncedSearch, offset, selectedClient, timeRange]);
 
   const {
     data,
@@ -335,6 +373,13 @@ const MeetingsPage = () => {
     setOffset(0);
   };
 
+  const handleTimeRangeChange = (event) => {
+    const value = event.target.value;
+    setTimeRange(value);
+    setOffset(0);
+    updateRangeSearchParam(value);
+  };
+
   const handleMeetingSelection = (meetingId) => {
     setActiveMeetingId(meetingId);
   };
@@ -366,7 +411,7 @@ const MeetingsPage = () => {
         <div className="meeting-explorer__list-empty">
           <DescriptionIcon />
           <h3>No meetings found</h3>
-          <p>Try adjusting the search or client filters.</p>
+              <p>Try adjusting the search, client, or time filters.</p>
         </div>
       );
     }
@@ -613,7 +658,6 @@ const MeetingsPage = () => {
         <div className="page-container meeting-explorer">
           <header className="meeting-explorer__header">
             <div>
-              <p className="meeting-explorer__kicker">Meetings</p>
               <h1>Meeting Explorer</h1>
               <p className="meeting-explorer__subtitle">
                 Review transcripts, summaries, and action-item context across your clients.
@@ -648,6 +692,19 @@ const MeetingsPage = () => {
                 {clientOptions.map((client) => (
                   <option key={client.id} value={client.id}>
                     {client.name}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div className="meeting-explorer__client-filter">
+              <select
+                id="time-range-select"
+                value={timeRange}
+                onChange={handleTimeRangeChange}
+              >
+                {TIME_RANGE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
                   </option>
                 ))}
               </select>

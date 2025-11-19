@@ -142,6 +142,7 @@ export const meetingAPI = {
     const queryParams = new URLSearchParams();
     if (filters.search) queryParams.append("search", filters.search);
     if (filters.client_id) queryParams.append("client_id", filters.client_id);
+    if (filters.time_range) queryParams.append("time_range", filters.time_range);
     if (typeof filters.limit === "number") queryParams.append("limit", filters.limit);
     if (typeof filters.offset === "number") queryParams.append("offset", filters.offset);
     if (filters.lightweight === false) queryParams.append("lightweight", "false");
