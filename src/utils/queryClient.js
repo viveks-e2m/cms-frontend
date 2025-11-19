@@ -43,6 +43,7 @@ export const queryKeys = {
     all: ['meetings'],
     lists: () => [...queryKeys.meetings.all, 'list'],
     list: (clientId) => [...queryKeys.meetings.lists(), clientId],
+    search: (filters) => [...queryKeys.meetings.lists(), 'search', filters],
     details: () => [...queryKeys.meetings.all, 'detail'],
     detail: (id) => [...queryKeys.meetings.details(), id],
     transcript: (id) => [...queryKeys.meetings.details(), 'transcript', id],

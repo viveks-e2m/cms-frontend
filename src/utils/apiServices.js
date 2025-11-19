@@ -137,6 +137,25 @@ export const clientAPI = {
 
 // Meeting API services
 export const meetingAPI = {
+  // Search meetings across clients
+  searchAll: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
+    if (filters.search) queryParams.append("search", filters.search);
+    if (filters.client_id) queryParams.append("client_id", filters.client_id);
+    if (typeof filters.limit === "number") queryParams.append("limit", filters.limit);
+    if (typeof filters.offset === "number") queryParams.append("offset", filters.offset);
+    if (filters.lightweight === false) queryParams.append("lightweight", "false");
+
+    const queryString = queryParams.toString();
+    const response = await api.get(
+      `/meetings${queryString ? `?${queryString}` : ""}`,
+      {
+        timeout: API_CONFIG.DEFAULT_TIMEOUT,
+      }
+    );
+    return handleApiResponse(response);
+  },
+
   // Create meeting for client
   create: async (clientId, meetingData) => {
     const response = await api.post(

@@ -157,6 +157,17 @@ export const useMeetings = (clientId, options = {}) => {
   });
 };
 
+export const useMeetingsDirectory = (filters = {}, options = {}) => {
+  return useQuery({
+    queryKey: queryKeys.meetings.search(filters),
+    queryFn: () => meetingAPI.searchAll(filters),
+    keepPreviousData: true,
+    staleTime: CACHE_TIMES.LISTS,
+    gcTime: CACHE_TIMES.LISTS_CACHE,
+    ...options,
+  });
+};
+
 export const useMeeting = (meetingId, options = {}) => {
   return useQuery({
     queryKey: queryKeys.meetings.detail(meetingId),

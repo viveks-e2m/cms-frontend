@@ -13,6 +13,7 @@ import {
   AccountTree as WorkflowIcon,
   Assignment as ActionItemsIcon,
   AdminPanelSettings as AdminIcon,
+  VideoCall as VideoCallIcon,
 } from "@mui/icons-material";
 import "./Sidebar.css";
 
@@ -47,6 +48,14 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       description: "All action items across meetings",
       permissions: [PERMISSIONS.READ_TASK],
       // roles: ["admin", "account_manager", "ai_intern"],
+    },
+    {
+      id: "meetings",
+      icon: <VideoCallIcon />,
+      label: "Meetings",
+      path: "/meetings",
+      description: "Search and review meeting history",
+      permissions: [PERMISSIONS.READ_MEETING, PERMISSIONS.READ_ALL_MEETINGS],
     },
     {
       id: "n8n-workflows",
