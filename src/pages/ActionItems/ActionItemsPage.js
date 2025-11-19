@@ -32,10 +32,19 @@ const ActionItemsPage = () => {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [clientFilter, setClientFilter] = useState("all");
-  const [taskOwnerFilter, setTaskOwnerFilter] = useState("all");
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  
+  // Pending filters (what user selects in the popup, not yet applied)
+  const [pendingStatusFilter, setPendingStatusFilter] = useState("all");
+  const [pendingClientFilter, setPendingClientFilter] = useState("all");
+  const [pendingTaskOwnerFilter, setPendingTaskOwnerFilter] = useState("all");
+  const [pendingAssigneeFilter, setPendingAssigneeFilter] = useState("all");
+  
+  // Applied filters (what gets sent to the API)
+  const [appliedStatusFilter, setAppliedStatusFilter] = useState("all");
+  const [appliedClientFilter, setAppliedClientFilter] = useState("all");
+  const [appliedTaskOwnerFilter, setAppliedTaskOwnerFilter] = useState("all");
+  const [appliedAssigneeFilter, setAppliedAssigneeFilter] = useState("all");
+  
   const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
   const [showActionItemForm, setShowActionItemForm] = useState(false);
   const [showFilterPopup, setShowFilterPopup] = useState(false);
@@ -44,15 +53,15 @@ const ActionItemsPage = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
 
-  // Prepare filters for query
+  // Prepare filters for query (only use applied filters that backend supports)
+  // Note: task_owner and assignee are filtered client-side since backend doesn't support them
   const currentFilters = useMemo(() => ({
-    status: statusFilter !== "all" ? statusFilter : undefined,
-    client_id: clientFilter !== "all" ? clientFilter : undefined,
-    task_owner: taskOwnerFilter !== "all" ? taskOwnerFilter : undefined,
-    assignee: assigneeFilter !== "all" ? assigneeFilter : undefined,
+    status: appliedStatusFilter !== "all" ? appliedStatusFilter : undefined,
+    client_id: appliedClientFilter !== "all" ? appliedClientFilter : undefined,
+    // task_owner and assignee are NOT sent to backend - filtered client-side instead
     page: currentPage,
     page_size: pageSize,
-  }), [statusFilter, clientFilter, taskOwnerFilter, assigneeFilter, currentPage, pageSize]);
+  }), [appliedStatusFilter, appliedClientFilter, currentPage, pageSize]);
 
   // Use cached queries
   const {
@@ -97,7 +106,8 @@ const ActionItemsPage = () => {
 
     // Apply status filter from URL
     if (statusParam) {
-      setStatusFilter(statusParam);
+      setPendingStatusFilter(statusParam);
+      setAppliedStatusFilter(statusParam);
     }
   }, [location.search]);
 
@@ -131,6 +141,8 @@ const ActionItemsPage = () => {
   const handleRefresh = async () => {
     try {
       await refetchActionItems();
+      // Only invalidate clients/users if they might have changed
+      // For manual refresh, we'll refresh everything
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       showSuccess("Action items refreshed successfully");
@@ -138,14 +150,39 @@ const ActionItemsPage = () => {
       showError("Failed to refresh action items");
     }
   };
+  
+  // Lightweight refresh - only refetches action items (for use after edits)
+  const handleActionItemsRefresh = async () => {
+    try {
+      await refetchActionItems();
+      // Don't invalidate clients/users - they haven't changed
+    } catch (error) {
+      // Silent fail for background refresh
+      console.error("Failed to refresh action items:", error);
+    }
+  };
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setStatusFilter("all");
-    setClientFilter("all");
-    setTaskOwnerFilter("all");
-    setAssigneeFilter("all");
+    setPendingStatusFilter("all");
+    setPendingClientFilter("all");
+    setPendingTaskOwnerFilter("all");
+    setPendingAssigneeFilter("all");
+    setAppliedStatusFilter("all");
+    setAppliedClientFilter("all");
+    setAppliedTaskOwnerFilter("all");
+    setAppliedAssigneeFilter("all");
     setCurrentPage(1); // Reset to first page when clearing filters
+  };
+  
+  const handleApplyFilters = () => {
+    // Apply pending filters to the actual filters used for API calls
+    setAppliedStatusFilter(pendingStatusFilter);
+    setAppliedClientFilter(pendingClientFilter);
+    setAppliedTaskOwnerFilter(pendingTaskOwnerFilter);
+    setAppliedAssigneeFilter(pendingAssigneeFilter);
+    setCurrentPage(1); // Reset to first page when applying filters
+    setShowFilterPopup(false);
   };
 
   const handlePageChange = (newPage) => {
@@ -158,36 +195,41 @@ const ActionItemsPage = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
-  // Count active filters
+  // Count active filters (based on applied filters)
   const activeFilterCount = [
-    statusFilter !== "all" ? statusFilter : null,
-    clientFilter !== "all" ? clientFilter : null,
-    taskOwnerFilter !== "all" ? taskOwnerFilter : null,
-    assigneeFilter !== "all" ? assigneeFilter : null,
+    appliedStatusFilter !== "all" ? appliedStatusFilter : null,
+    appliedClientFilter !== "all" ? appliedClientFilter : null,
+    appliedTaskOwnerFilter !== "all" ? appliedTaskOwnerFilter : null,
+    appliedAssigneeFilter !== "all" ? appliedAssigneeFilter : null,
   ].filter(Boolean).length;
 
   const handleStatusFilterChange = (newStatus) => {
-    setStatusFilter(newStatus);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingStatusFilter(newStatus);
   };
 
   const handleClientFilterChange = (newClientId) => {
-    setClientFilter(newClientId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingClientFilter(newClientId);
   };
 
   const handleTaskOwnerFilterChange = (newTaskOwnerId) => {
-    setTaskOwnerFilter(newTaskOwnerId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingTaskOwnerFilter(newTaskOwnerId);
   };
 
   const handleAssigneeFilterChange = (newAssigneeId) => {
-    setAssigneeFilter(newAssigneeId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingAssigneeFilter(newAssigneeId);
   };
 
   const handleAddActionItem = () => {
     setShowActionItemForm(true);
+  };
+  
+  // Sync pending filters with applied filters when popup opens
+  const handleFilterPopupOpen = () => {
+    setPendingStatusFilter(appliedStatusFilter);
+    setPendingClientFilter(appliedClientFilter);
+    setPendingTaskOwnerFilter(appliedTaskOwnerFilter);
+    setPendingAssigneeFilter(appliedAssigneeFilter);
+    setShowFilterPopup(true);
   };
 
   const handleActionItemFormSave = () => {
@@ -206,11 +248,11 @@ const ActionItemsPage = () => {
 
     // Task Owner filter (client-side for now)
     const matchesTaskOwner =
-      taskOwnerFilter === "all" || item.task_owner === taskOwnerFilter;
+      appliedTaskOwnerFilter === "all" || item.task_owner === appliedTaskOwnerFilter;
 
     // Assignee filter (client-side for now)
     const matchesAssignee =
-      assigneeFilter === "all" || item.assignee === assigneeFilter;
+      appliedAssigneeFilter === "all" || item.assignee === appliedAssigneeFilter;
 
     // Apply search filter and additional client-side filters
     return matchesSearch && matchesTaskOwner && matchesAssignee;
@@ -252,7 +294,7 @@ const ActionItemsPage = () => {
               </div>
               <button
                 className={`filter-btn ${activeFilterCount > 0 ? "active" : ""}`}
-                onClick={() => setShowFilterPopup(!showFilterPopup)}
+                onClick={handleFilterPopupOpen}
               >
                 <FilterIcon />
                 Filters
@@ -327,7 +369,7 @@ const ActionItemsPage = () => {
                     <label>Status</label>
                     <select
                       className="filter-popup-select"
-                      value={statusFilter}
+                      value={pendingStatusFilter}
                       onChange={(e) => handleStatusFilterChange(e.target.value)}
                     >
                       <option value="all">All Status</option>
@@ -342,7 +384,7 @@ const ActionItemsPage = () => {
                     <label>Client</label>
                     <select
                       className="filter-popup-select"
-                      value={clientFilter}
+                      value={pendingClientFilter}
                       onChange={(e) => handleClientFilterChange(e.target.value)}
                     >
                       <option value="all">All Clients</option>
@@ -357,34 +399,39 @@ const ActionItemsPage = () => {
                     <label>Task Owner</label>
                     <select
                       className="filter-popup-select"
-                      value={taskOwnerFilter}
+                      value={pendingTaskOwnerFilter}
                       onChange={(e) => handleTaskOwnerFilterChange(e.target.value)}
                     >
                       <option value="all">All Task Owners</option>
-                      {(usersData || [])
-                        .filter((user) => actionItems.some((item) => item.task_owner === user.id))
-                        .map((user) => (
+                      <optgroup label="Users">
+                        {(usersData || []).map((user) => (
                           <option key={user.id} value={user.id}>
                             {user.full_name || user.name || user.email}
                           </option>
                         ))}
+                      </optgroup>
+                      <optgroup label="Clients">
+                        {(clientsData || []).map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
                   <div className="filter-field">
                     <label>Assignee</label>
                     <select
                       className="filter-popup-select"
-                      value={assigneeFilter}
+                      value={pendingAssigneeFilter}
                       onChange={(e) => handleAssigneeFilterChange(e.target.value)}
                     >
                       <option value="all">All Assignees</option>
-                      {(usersData || [])
-                        .filter((user) => actionItems.some((item) => item.assignee === user.id))
-                        .map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.full_name || user.name || user.email}
-                          </option>
-                        ))}
+                      {(usersData || []).map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.full_name || user.name || user.email}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -398,7 +445,7 @@ const ActionItemsPage = () => {
                   </button>
                   <button
                     className="btn btn-primary"
-                    onClick={() => setShowFilterPopup(false)}
+                    onClick={handleApplyFilters}
                   >
                     Apply Filters
                   </button>

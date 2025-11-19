@@ -297,12 +297,13 @@ export const openPointsAPI = {
   },
 
   // Get recent open points with pagination support
+  // Note: Backend only supports status and client_id filters
+  // task_owner and assignee should be filtered client-side
   getRecentOptimized: async (params = {}) => {
     const queryParams = new URLSearchParams();
     if (params.status && params.status !== "all") queryParams.append("status", params.status);
     if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
-    if (params.task_owner && params.task_owner !== "all") queryParams.append("task_owner", params.task_owner);
-    if (params.assignee && params.assignee !== "all") queryParams.append("assignee", params.assignee);
+    // task_owner and assignee are NOT sent - backend doesn't support them
     if (params.page) queryParams.append("page", params.page);
     if (params.page_size) queryParams.append("page_size", params.page_size);
 

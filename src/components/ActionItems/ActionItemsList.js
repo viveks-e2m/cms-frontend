@@ -6,12 +6,14 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
 } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
 import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
+import { queryKeys } from "../../utils/queryClient";
 
 import "./ActionItemsList.css";
 
@@ -25,6 +27,7 @@ const ActionItemsList = ({
 }) => {
   console.log("ActionItemsList received users:", users);
   const { hasPermission } = useAuth();
+  const queryClient = useQueryClient();
   
   // Check if user has any action permissions to determine if Actions column should be shown
   const hasAnyActionPermission = hasPermission(PERMISSIONS.UPDATE_TASK) || hasPermission(PERMISSIONS.DELETE_TASK);
@@ -105,14 +108,29 @@ const ActionItemsList = ({
     );
 
     try {
-      const result = await openPointsAPI.updateStatus(itemId, {
+      const updatedItem = await openPointsAPI.updateStatus(itemId, {
         status: newStatus,
       });
-      console.log("Update result:", result);
+      console.log("Update result:", updatedItem);
       showSuccess(`Action item marked as ${getStatusDisplayName(newStatus)}`);
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly with the response (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          // Handle both list structure and direct array
+          if (oldData.items) {
+            return {
+              ...oldData,
+              items: oldData.items.map(item => 
+                item.id === itemId ? { ...item, ...updatedItem } : item
+              )
+            };
+          }
+          return oldData;
+        }
+      );
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -135,8 +153,23 @@ const ActionItemsList = ({
       await openPointsAPI.delete(itemId);
       showSuccess("Action item deleted successfully");
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly by removing the item (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          // Handle both list structure and direct array
+          if (oldData.items) {
+            const filteredItems = oldData.items.filter(item => item.id !== itemId);
+            return {
+              ...oldData,
+              items: filteredItems,
+              total: oldData.total ? oldData.total - 1 : filteredItems.length,
+            };
+          }
+          return oldData;
+        }
+      );
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -185,12 +218,27 @@ const ActionItemsList = ({
     );
 
     try {
-      await openPointsAPI.updateStatus(itemId, updateData);
+      const updatedItem = await openPointsAPI.updateStatus(itemId, updateData);
       showSuccess("Action item updated successfully");
       setEditingItem(null);
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly with the response (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          // Handle both list structure and direct array
+          if (oldData.items) {
+            return {
+              ...oldData,
+              items: oldData.items.map(item => 
+                item.id === itemId ? { ...item, ...updatedItem } : item
+              )
+            };
+          }
+          return oldData;
+        }
+      );
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
