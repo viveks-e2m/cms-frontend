@@ -698,12 +698,6 @@ const ActionItemsPage = () => {
                   clients={clientsData || []}
                   users={usersData || []}
                 />
-                {/* Kanban view doesn't use global pagination - each column has its own pagination */}
-                {kanbanData && (
-                  <div className="kanban-pagination-info">
-                    Total: {paginationData.total.toLocaleString()} items 
-                  </div>
-                )}
               </>
             )}
           </div>
