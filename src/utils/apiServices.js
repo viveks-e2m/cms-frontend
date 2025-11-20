@@ -321,6 +321,10 @@ export const openPointsAPI = {
   // task_owner and assignee should be filtered client-side
   getRecentOptimized: async (params = {}) => {
     const queryParams = new URLSearchParams();
+    // Add view parameter (list or kanban)
+    if (params.view) {
+      queryParams.append("view", params.view);
+    }
     if (params.status && params.status !== "all") queryParams.append("status", params.status);
     if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
     // task_owner and assignee are NOT sent - backend doesn't support them

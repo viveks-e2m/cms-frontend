@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useMemo } from "react";
 import {
   Person as PersonIcon,
   CalendarToday as CalendarIcon,
@@ -21,7 +21,9 @@ import "./ActionItemsKanban.css";
 
 const ActionItemsKanban = ({
   actionItems,
+  kanbanData, // New prop: kanban view data with per-status structure
   onRefresh,
+  onLoadMore, // New prop: function to load more items for a column
   meetings,
   clients,
   users = [],
@@ -40,6 +42,13 @@ const ActionItemsKanban = ({
   
   // Local state for optimistic updates
   const [localActionItems, setLocalActionItems] = useState(actionItems);
+
+  // Loading state for each column
+  const [loadingColumns, setLoadingColumns] = useState({
+    open: false,
+    in_progress: false,
+    completed: false,
+  });
 
   const { showSuccess, showError } = useNotificationContext();
 
@@ -66,18 +75,73 @@ const ActionItemsKanban = ({
     { id: "completed", title: getStatusDisplayName("completed"), count: 0, color: "#10B981" },
   ];
 
-  // Group items by status using local state for optimistic updates
-  const groupedItems = localActionItems.reduce((acc, item) => {
-    const status = item.status || "open";
-    if (!acc[status]) acc[status] = [];
-    acc[status].push(item);
-    return acc;
-  }, {});
+  // Use kanbanData if available (new API structure), otherwise fall back to grouping
+  const groupedItems = useMemo(() => {
+    if (kanbanData && kanbanData.columns) {
+      // Use kanban data structure with per-status items
+      const grouped = {};
+      Object.entries(kanbanData.columns).forEach(([status, column]) => {
+        grouped[status] = column.items || [];
+      });
+      return grouped;
+    }
+    
+    // Fallback: Group items by status using local state for optimistic updates
+    return localActionItems.reduce((acc, item) => {
+      const status = item.status || "open";
+      if (!acc[status]) acc[status] = [];
+      acc[status].push(item);
+      return acc;
+    }, {});
+  }, [kanbanData, localActionItems]);
 
-  // Update column counts
+  // Update column counts and has_more status
+  // If kanbanData is available, use filtered items count (after client-side filters)
+  // Otherwise, use total from API or visible items count
   columns.forEach((column) => {
-    column.count = groupedItems[column.id]?.length || 0;
+    if (kanbanData && kanbanData.columns && kanbanData.columns[column.id]) {
+      // Use filtered items count (after client-side filters applied)
+      // This shows the actual number of items visible in this column
+      const filteredItems = kanbanData.columns[column.id].items || [];
+      column.count = filteredItems.length;
+      
+      // Store has_more status for Load More button
+      const pagination = kanbanData.columns[column.id].pagination || {};
+      const totalFromAPI = pagination.total || 0;
+      const currentPage = pagination.page || 1;
+      const totalPages = pagination.total_pages || 1;
+      column.has_more = pagination.has_more || (currentPage < totalPages);
+      column.total = totalFromAPI;
+    } else {
+      // Fallback: use visible items count
+      column.count = groupedItems[column.id]?.length || 0;
+      column.has_more = false;
+      column.total = column.count;
+    }
   });
+
+  // Handle Load More for a specific column
+  const handleLoadMore = async (status) => {
+    if (!onLoadMore || loadingColumns[status]) {
+      return;
+    }
+
+    setLoadingColumns((prev) => ({
+      ...prev,
+      [status]: true,
+    }));
+
+    try {
+      await onLoadMore(status);
+    } catch (error) {
+      console.error(`Error loading more for ${status}:`, error);
+    } finally {
+      setLoadingColumns((prev) => ({
+        ...prev,
+        [status]: false,
+      }));
+    }
+  };
 
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
@@ -509,7 +573,18 @@ const ActionItemsKanban = ({
     </div>
   );
 
-  if (localActionItems.length === 0) {
+  // Check if there are any items to display
+  const hasItems = useMemo(() => {
+    if (kanbanData && kanbanData.columns) {
+      // Check if any column has items
+      return Object.values(kanbanData.columns).some(column => 
+        column.items && column.items.length > 0
+      );
+    }
+    return localActionItems.length > 0;
+  }, [kanbanData, localActionItems]);
+
+  if (!hasItems) {
     return (
       <div className="no-action-items">
         <div className="no-items-icon">
@@ -525,35 +600,74 @@ const ActionItemsKanban = ({
 
   return (
     <div className="kanban-board">
-      {columns.map((column) => (
-        <div
-          key={column.id}
-          className="kanban-column"
-          onDragOver={handleDragOver}
-          onDragEnter={handleDragEnter}
-          onDragLeave={handleDragLeave}
-          onDrop={(e) => handleDrop(e, column.id)}
-        >
+      {columns.map((column) => {
+        // Always show all columns, even if they're empty after filtering
+        // If kanbanData doesn't have this column, use empty array
+        const columnItems = kanbanData && kanbanData.columns && kanbanData.columns[column.id]
+          ? groupedItems[column.id] || []
+          : groupedItems[column.id] || [];
+        
+        return (
           <div
-            className="column-header"
-            style={{ borderTopColor: column.color }}
+            key={column.id}
+            className="kanban-column"
+            onDragOver={handleDragOver}
+            onDragEnter={handleDragEnter}
+            onDragLeave={handleDragLeave}
+            onDrop={(e) => handleDrop(e, column.id)}
           >
-            <div className="column-title">
-              <span className="column-name">{column.title}</span>
-              <span
-                className="column-count"
-                style={{ backgroundColor: column.color }}
-              >
-                {column.count}
-              </span>
+            <div
+              className="column-header"
+              style={{ borderTopColor: column.color }}
+            >
+              <div className="column-title">
+                <span className="column-name">{column.title}</span>
+                <span
+                  className="column-count"
+                  style={{ backgroundColor: column.color }}
+                >
+                  {column.count}
+                </span>
+              </div>
+            </div>
+
+            <div className="column-content">
+              {columnItems.map(renderKanbanCard)}
+              
+              {/* Load More button */}
+              {kanbanData && kanbanData.columns && kanbanData.columns[column.id] && (
+                (() => {
+                  const columnData = kanbanData.columns[column.id];
+                  const pagination = columnData.pagination || {};
+                  const hasMore = pagination.has_more || false;
+                  const total = pagination.total || 0;
+                  const currentItems = columnData.items || [];
+                  const remaining = total - currentItems.length;
+                  
+                  if (hasMore && remaining > 0) {
+                    return (
+                      <div className="kanban-load-more">
+                        <button
+                          className="load-more-button"
+                          onClick={() => handleLoadMore(column.id)}
+                          disabled={loadingColumns[column.id]}
+                        >
+                          {loadingColumns[column.id] ? (
+                            <>Loading...</>
+                          ) : (
+                            <>Load More ({remaining} remaining)</>
+                          )}
+                        </button>
+                      </div>
+                    );
+                  }
+                  return null;
+                })()
+              )}
             </div>
           </div>
-
-          <div className="column-content">
-            {(groupedItems[column.id] || []).map(renderKanbanCard)}
-          </div>
-        </div>
-      ))}
+        );
+      })}
     </div>
   );
 };
