@@ -111,11 +111,17 @@ const DashboardPage = () => {
   };
 
   // Navigation handlers
+  const formatStatusForClientsPage = (value) => {
+    if (!value || typeof value !== "string") return "";
+    return value.replace(/_/g, "-").toLowerCase();
+  };
+
   const handleClientStatClick = (status) => {
     if (status === 'total') {
       navigate('/clients');
     } else {
-      navigate(`/clients?status=${status}`);
+      const formattedStatus = formatStatusForClientsPage(status);
+      navigate(`/clients?status=${formattedStatus}`);
     }
   };
 
