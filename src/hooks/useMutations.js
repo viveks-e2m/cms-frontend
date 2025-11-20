@@ -169,9 +169,10 @@ export const useRemoveUserFromClient = () => {
 };
 
 // Meeting mutations
-export const useCreateMeeting = () => {
+export const useCreateMeeting = (options = {}) => {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotificationContext();
+  const { suppressNotifications = false } = options;
 
   return useMutation({
     mutationFn: ({ clientId, meetingData }) => meetingAPI.create(clientId, meetingData),
@@ -179,17 +180,22 @@ export const useCreateMeeting = () => {
       queryClient.invalidateQueries({ queryKey: queryKeys.meetings.list(variables.clientId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.meetings.statistics() });
       queryClient.invalidateQueries({ queryKey: queryKeys.clients.all });
-      showSuccess('Meeting created successfully');
+      if (!suppressNotifications) {
+        showSuccess('Meeting created successfully');
+      }
     },
     onError: (error) => {
-      showError(error.message || 'Failed to create meeting');
+      if (!suppressNotifications) {
+        showError(error.message || 'Failed to create meeting');
+      }
     },
   });
 };
 
-export const useUpdateMeeting = () => {
+export const useUpdateMeeting = (options = {}) => {
   const queryClient = useQueryClient();
   const { showSuccess, showError } = useNotificationContext();
+  const { suppressNotifications = false } = options;
 
   return useMutation({
     mutationFn: ({ meetingId, meetingData }) => meetingAPI.update(meetingId, meetingData),
@@ -212,10 +218,14 @@ export const useUpdateMeeting = () => {
         queryKey: queryKeys.meetings.statistics(),
         refetchType: 'active' 
       });
-      showSuccess('Meeting updated successfully');
+      if (!suppressNotifications) {
+        showSuccess('Meeting updated successfully');
+      }
     },
     onError: (error) => {
-      showError(error.message || 'Failed to update meeting');
+      if (!suppressNotifications) {
+        showError(error.message || 'Failed to update meeting');
+      }
     },
   });
 };
