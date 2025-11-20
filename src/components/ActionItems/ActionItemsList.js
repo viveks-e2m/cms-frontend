@@ -6,12 +6,18 @@ import {
   Save as SaveIcon,
   Cancel as CancelIcon,
 } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
 import { openPointsAPI } from "../../utils/apiServices";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../PermissionGuard";
 import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
 import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
+import { queryKeys } from "../../utils/queryClient";
+import {
+  applyKanbanItemDeletion,
+  applyKanbanItemUpdate,
+} from "../../utils/actionItemsCacheUtils";
 
 import "./ActionItemsList.css";
 
@@ -25,6 +31,7 @@ const ActionItemsList = ({
 }) => {
   console.log("ActionItemsList received users:", users);
   const { hasPermission } = useAuth();
+  const queryClient = useQueryClient();
   
   // Check if user has any action permissions to determine if Actions column should be shown
   const hasAnyActionPermission = hasPermission(PERMISSIONS.UPDATE_TASK) || hasPermission(PERMISSIONS.DELETE_TASK);
@@ -46,6 +53,67 @@ const ActionItemsList = ({
   useEffect(() => {
     setLocalActionItems(actionItems);
   }, [actionItems]);
+
+  const applyCollectionUpdate = (data, updateFn, options = {}) => {
+    if (!data) return data;
+    const { totalDelta = 0 } = options;
+
+    if (Array.isArray(data)) {
+      return updateFn(data);
+    }
+
+    if (Array.isArray(data.items)) {
+      const updatedItems = updateFn(data.items);
+      return {
+        ...data,
+        items: updatedItems,
+        total:
+          typeof data.total === "number"
+            ? data.total + totalDelta
+            : data.total,
+      };
+    }
+
+    return data;
+  };
+
+  const updateMeetingActionItemsCache = (meetingId, updateFn, options) => {
+    if (!meetingId) return;
+    queryClient.setQueriesData(
+      { queryKey: ["action-items", "meeting", meetingId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+    queryClient.setQueriesData(
+      { queryKey: ["meetings", "action-items", meetingId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+  };
+
+  const updateClientActionItemsCache = (clientId, updateFn, options) => {
+    if (!clientId) return;
+
+    // Update dedicated action item queries scoped to client
+    queryClient.setQueriesData(
+      { queryKey: ["action-items", "byClient", clientId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+
+    // Update client overview queries (any page size)
+    queryClient.setQueriesData(
+      { queryKey: ["clients", "overview", clientId], exact: false },
+      (oldData) => {
+        if (!oldData || !oldData.action_items) return oldData;
+        return {
+          ...oldData,
+          action_items: applyCollectionUpdate(
+            oldData.action_items,
+            updateFn,
+            options
+          ),
+        };
+      }
+    );
+  };
 
   const getClientName = (item) => {
     // First, try to use the client_name from the backend response
@@ -95,6 +163,10 @@ const ActionItemsList = ({
 
   const updateItemStatus = async (itemId, newStatus) => {
     console.log("Updating item status:", itemId, "to:", newStatus);
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
+    const previousStatus = targetItem?.status;
     
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -105,14 +177,34 @@ const ActionItemsList = ({
     );
 
     try {
-      const result = await openPointsAPI.updateStatus(itemId, {
+      const updatedItem = await openPointsAPI.updateStatus(itemId, {
         status: newStatus,
       });
-      console.log("Update result:", result);
+      console.log("Update result:", updatedItem);
       showSuccess(`Action item marked as ${getStatusDisplayName(newStatus)}`);
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly with the response (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          if (oldData.items) {
+            return {
+              ...oldData,
+              items: oldData.items.map(item =>
+                item.id === itemId ? { ...item, ...updatedItem } : item
+              ),
+            };
+          }
+          return applyKanbanItemUpdate(oldData, { ...targetItem, ...updatedItem }, previousStatus);
+        }
+      );
+      const applyUpdatedItem = (items) =>
+        items.map((item) =>
+          item.id === itemId ? { ...item, ...updatedItem } : item
+        );
+      updateClientActionItemsCache(targetClientId, applyUpdatedItem);
+      updateMeetingActionItemsCache(targetMeetingId, applyUpdatedItem);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -126,6 +218,9 @@ const ActionItemsList = ({
     if (!window.confirm("Are you sure you want to delete this action item?")) {
       return;
     }
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
 
     // Optimistic update - remove item from UI immediately
     const previousItems = localActionItems;
@@ -135,8 +230,29 @@ const ActionItemsList = ({
       await openPointsAPI.delete(itemId);
       showSuccess("Action item deleted successfully");
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly by removing the item (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          if (oldData.items) {
+            const filteredItems = oldData.items.filter(item => item.id !== itemId);
+            return {
+              ...oldData,
+              items: filteredItems,
+              total: oldData.total ? oldData.total - 1 : filteredItems.length,
+            };
+          }
+          return applyKanbanItemDeletion(oldData, itemId, targetItem?.status);
+        }
+      );
+      const removeItem = (items) => items.filter((item) => item.id !== itemId);
+      updateClientActionItemsCache(targetClientId, removeItem, {
+        totalDelta: -1,
+      });
+      updateMeetingActionItemsCache(targetMeetingId, removeItem, {
+        totalDelta: -1,
+      });
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -175,6 +291,10 @@ const ActionItemsList = ({
       task_owner: editForm.task_owner || null,
       due_date: editForm.due_date || null,
     };
+    const targetItem = localActionItems.find((item) => item.id === itemId);
+    const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
+    const previousStatus = targetItem?.status;
 
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -185,12 +305,36 @@ const ActionItemsList = ({
     );
 
     try {
-      await openPointsAPI.updateStatus(itemId, updateData);
+      const updatedItem = await openPointsAPI.updateStatus(itemId, updateData);
       showSuccess("Action item updated successfully");
       setEditingItem(null);
       
-      // Sync with server in background
-      if (onRefresh) onRefresh();
+      // Update React Query cache directly with the response (avoids refetch)
+      queryClient.setQueriesData(
+        { queryKey: queryKeys.actionItems.all },
+        (oldData) => {
+          if (!oldData) return oldData;
+          if (oldData.items) {
+            return {
+              ...oldData,
+              items: oldData.items.map(item =>
+                item.id === itemId ? { ...item, ...updatedItem } : item
+              ),
+            };
+          }
+          return applyKanbanItemUpdate(
+            oldData,
+            { ...targetItem, ...updatedItem, ...updateData },
+            previousStatus
+          );
+        }
+      );
+      const applyUpdatedItem = (items) =>
+        items.map((item) =>
+          item.id === itemId ? { ...item, ...updatedItem, ...updateData } : item
+        );
+      updateClientActionItemsCache(targetClientId, applyUpdatedItem);
+      updateMeetingActionItemsCache(targetMeetingId, applyUpdatedItem);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);

@@ -27,6 +27,12 @@ export const queryKeys = {
     workflows: (clientId) => [...queryKeys.clients.all, 'workflows', clientId],
     secrets: (clientId) => [...queryKeys.clients.all, 'secrets', clientId],
     notes: (clientId) => [...queryKeys.clients.all, 'notes', clientId],
+    overview: (clientId, actionItemsPageSize = 20) => [
+      ...queryKeys.clients.all,
+      'overview',
+      clientId,
+      actionItemsPageSize,
+    ],
   },
   users: {
     all: ['users'],
@@ -37,8 +43,10 @@ export const queryKeys = {
     all: ['meetings'],
     lists: () => [...queryKeys.meetings.all, 'list'],
     list: (clientId) => [...queryKeys.meetings.lists(), clientId],
+    search: (filters) => [...queryKeys.meetings.lists(), 'search', filters],
     details: () => [...queryKeys.meetings.all, 'detail'],
     detail: (id) => [...queryKeys.meetings.details(), id],
+    transcript: (id) => [...queryKeys.meetings.details(), 'transcript', id],
     statistics: () => [...queryKeys.meetings.all, 'statistics'],
     notes: (meetingId) => [...queryKeys.meetings.all, 'notes', meetingId],
     actionItems: (meetingId) => [...queryKeys.meetings.all, 'action-items', meetingId],

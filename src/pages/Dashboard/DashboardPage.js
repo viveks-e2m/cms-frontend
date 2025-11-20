@@ -98,7 +98,10 @@ const DashboardPage = () => {
       },
       meetingStats: {
         total_meetings: meetings.total_meetings || 0,
-        recent_meetings: meetings.recent_meetings || 0,
+        this_month: meetings.this_month || 0,
+        last_month: meetings.last_month || 0,
+        this_week: meetings.this_week || 0,
+        last_week: meetings.last_week || 0,
       },
     };
   }, [recentClientsData, clientStats, meetingStats, openPointsStats]);
@@ -126,6 +129,14 @@ const DashboardPage = () => {
 
   const handleClientClick = (clientId) => {
     navigate(`/clients?clientId=${clientId}`);
+  };
+
+  const handleMeetingStatClick = (range) => {
+    if (range && range !== "all") {
+      navigate(`/meetings?range=${range}`);
+    } else {
+      navigate("/meetings");
+    }
   };
 
   if (loading) {
@@ -226,10 +237,13 @@ const DashboardPage = () => {
             </div>
           </PermissionGuard>
 
-          {/* Meetings Card - Compact */}
+          {/* Meetings Card - Enhanced with breakdown */}
           <PermissionGuard permissions={[PERMISSIONS.READ_MEETING]}>
             <div className="metric-card-enhanced metric-card-meetings">
-              <div className="metric-card-header-compact">
+              <div
+                className="metric-card-header-compact metric-card-header-clickable"
+                onClick={() => handleMeetingStatClick("all")}
+              >
                 <div className="metric-icon-wrapper-compact metric-icon-meetings">
                   <VideoCallIcon className="metric-icon" />
                 </div>
@@ -238,10 +252,34 @@ const DashboardPage = () => {
                   <div className="metric-value-compact">{dashboardData.meetingStats.total_meetings}</div>
                 </div>
               </div>
-              <div className="metric-secondary-compact">
-                <div className="secondary-item">
-                  <span className="secondary-label">Recent</span>
-                  <span className="secondary-value">{dashboardData.meetingStats.recent_meetings}</span>
+              <div className="metric-breakdown">
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("this_month")}
+                >
+                  <span className="breakdown-label">This Month</span>
+                  <span className="breakdown-value breakdown-info">{dashboardData.meetingStats.this_month}</span>
+                </div>
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("last_month")}
+                >
+                  <span className="breakdown-label">Last Month</span>
+                  <span className="breakdown-value breakdown-secondary">{dashboardData.meetingStats.last_month}</span>
+                </div>
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("this_week")}
+                >
+                  <span className="breakdown-label">This Week</span>
+                  <span className="breakdown-value breakdown-success">{dashboardData.meetingStats.this_week}</span>
+                </div>
+                <div
+                  className="breakdown-item breakdown-item-clickable"
+                  onClick={() => handleMeetingStatClick("last_week")}
+                >
+                  <span className="breakdown-label">Last Week</span>
+                  <span className="breakdown-value breakdown-warning">{dashboardData.meetingStats.last_week}</span>
                 </div>
               </div>
             </div>

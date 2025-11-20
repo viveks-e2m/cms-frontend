@@ -109,19 +109,23 @@
 }
 
 .client-form-scoped .form-label {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  color: #374151;
-  font-size: 0.875rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  color: #374151 !important;
+  font-size: 0.875rem !important;
+  font-weight: 600 !important;
+  margin-bottom: 0.5rem !important;
 }
 
 .client-form-scoped .label-icon {
   width: 16px !important;
   height: 16px !important;
-  color: #6b7280;
+  color: #6b7280 !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  flex-shrink: 0;
 }
 
 .client-form-scoped .form-input,

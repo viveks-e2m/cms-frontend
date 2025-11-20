@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
@@ -20,6 +20,20 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const { showError, showSuccess } = useNotificationContext();
+
+  // Update state when existingOnboardingInfo prop changes (e.g., when overview loads)
+  useEffect(() => {
+    if (existingOnboardingInfo !== undefined) {
+      setOnboardingData(existingOnboardingInfo);
+      // Clear error if we now have valid data
+      if (existingOnboardingInfo && 
+          existingOnboardingInfo !== null && 
+          Object.keys(existingOnboardingInfo).length > 0 &&
+          existingOnboardingInfo.webhook_status !== "empty_response") {
+        setError(null);
+      }
+    }
+  }, [existingOnboardingInfo]);
 
   const fetchOnboardingInfo = async () => {
     try {
@@ -61,8 +75,8 @@ const OnboardingInfo = ({ clientId, existingOnboardingInfo }) => {
   // Also check if onboardingData contains error metadata instead of real data
   const needsOnboardingInfo =
     !onboardingData || 
-    Object.keys(onboardingData).length === 0 ||
-    onboardingData.webhook_status === "empty_response";
+    (typeof onboardingData === 'object' && Object.keys(onboardingData).length === 0) ||
+    (onboardingData && onboardingData.webhook_status === "empty_response");
 
   if (loading) {
     return (

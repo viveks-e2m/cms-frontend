@@ -23,6 +23,7 @@ import { useNotificationContext } from "../../contexts/NotificationContext";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import { getStatusOptions } from "../../utils/statusUtils";
+import { openPointsAPI } from "../../utils/apiServices";
 
 import "./ActionItemsPage.css";
 
@@ -32,10 +33,19 @@ const ActionItemsPage = () => {
   const queryClient = useQueryClient();
 
   const [searchTerm, setSearchTerm] = useState("");
-  const [statusFilter, setStatusFilter] = useState("all");
-  const [clientFilter, setClientFilter] = useState("all");
-  const [taskOwnerFilter, setTaskOwnerFilter] = useState("all");
-  const [assigneeFilter, setAssigneeFilter] = useState("all");
+  
+  // Pending filters (what user selects in the popup, not yet applied)
+  const [pendingStatusFilter, setPendingStatusFilter] = useState("all");
+  const [pendingClientFilter, setPendingClientFilter] = useState("all");
+  const [pendingTaskOwnerFilter, setPendingTaskOwnerFilter] = useState("all");
+  const [pendingAssigneeFilter, setPendingAssigneeFilter] = useState("all");
+  
+  // Applied filters (what gets sent to the API)
+  const [appliedStatusFilter, setAppliedStatusFilter] = useState("all");
+  const [appliedClientFilter, setAppliedClientFilter] = useState("all");
+  const [appliedTaskOwnerFilter, setAppliedTaskOwnerFilter] = useState("all");
+  const [appliedAssigneeFilter, setAppliedAssigneeFilter] = useState("all");
+  
   const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
   const [showActionItemForm, setShowActionItemForm] = useState(false);
   const [showFilterPopup, setShowFilterPopup] = useState(false);
@@ -43,16 +53,34 @@ const ActionItemsPage = () => {
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
+  
+  // Per-column page state for Kanban view
+  const [columnPages, setColumnPages] = useState({
+    open: 1,
+    in_progress: 1,
+    completed: 1,
+  });
 
-  // Prepare filters for query
-  const currentFilters = useMemo(() => ({
-    status: statusFilter !== "all" ? statusFilter : undefined,
-    client_id: clientFilter !== "all" ? clientFilter : undefined,
-    task_owner: taskOwnerFilter !== "all" ? taskOwnerFilter : undefined,
-    assignee: assigneeFilter !== "all" ? assigneeFilter : undefined,
-    page: currentPage,
-    page_size: pageSize,
-  }), [statusFilter, clientFilter, taskOwnerFilter, assigneeFilter, currentPage, pageSize]);
+  // Prepare filters for query (only use applied filters that backend supports)
+  // Note: task_owner and assignee are filtered client-side since backend doesn't support them
+  const currentFilters = useMemo(() => {
+    const filters = {
+      view: viewMode, // Add view parameter: "list" or "kanban"
+      client_id: appliedClientFilter !== "all" ? appliedClientFilter : undefined,
+      page: currentPage,
+      page_size: pageSize,
+    };
+    
+    // For list view, include status filter; for kanban, always use "all" to get all statuses
+    if (viewMode === "list") {
+      filters.status = appliedStatusFilter !== "all" ? appliedStatusFilter : undefined;
+    } else {
+      // Kanban view always fetches all statuses
+      filters.status = "all";
+    }
+    
+    return filters;
+  }, [viewMode, appliedStatusFilter, appliedClientFilter, currentPage, pageSize]);
 
   // Use cached queries
   const {
@@ -97,15 +125,22 @@ const ActionItemsPage = () => {
 
     // Apply status filter from URL
     if (statusParam) {
-      setStatusFilter(statusParam);
+      setPendingStatusFilter(statusParam);
+      setAppliedStatusFilter(statusParam);
     }
   }, [location.search]);
 
+  // Reset column pages when filters change or view mode changes
+  useEffect(() => {
+    setColumnPages({ open: 1, in_progress: 1, completed: 1 });
+    setAdditionalColumnItems({ open: [], in_progress: [], completed: [] });
+  }, [appliedClientFilter, appliedStatusFilter, viewMode, pageSize]);
+
 
   // Process action items with client names and pagination data
+  // Handle both list view (flat items) and kanban view (grouped by status)
   const actionItems = useMemo(() => {
     const clients = clientsData || [];
-    const items = actionItemsData?.items || [];
     
     // Create client lookup map
     const clientMap = clients.reduce((map, client) => {
@@ -113,24 +148,155 @@ const ActionItemsPage = () => {
       return map;
     }, {});
 
+    // Handle kanban view response structure
+    if (viewMode === "kanban" && actionItemsData?.columns) {
+      // For kanban, flatten all items from all columns
+      const allItems = [];
+      Object.values(actionItemsData.columns).forEach((column) => {
+        if (column.items && Array.isArray(column.items)) {
+          allItems.push(...column.items);
+        }
+      });
+      
+      // Add client names to action items
+      return allItems.map((item) => ({
+        ...item,
+        client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
+      }));
+    }
+    
+    // Handle list view response structure (flat items array)
+    const items = actionItemsData?.items || [];
+    
     // Add client names to action items (only if not already provided by backend)
     return items.map((item) => ({
       ...item,
       client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
     }));
-  }, [actionItemsData, clientsData]);
+  }, [actionItemsData, clientsData, viewMode]);
 
-  // Extract pagination metadata
-  const paginationData = useMemo(() => ({
-    total: actionItemsData?.total || 0,
-    page: actionItemsData?.page || 1,
-    page_size: actionItemsData?.page_size || pageSize,
-    total_pages: actionItemsData?.total_pages || 1,
-  }), [actionItemsData, pageSize]);
+  // Extract pagination metadata (different structure for list vs kanban)
+  const paginationData = useMemo(() => {
+    if (viewMode === "kanban" && actionItemsData?.columns) {
+      // For kanban, use summary totals or aggregate from columns
+      const summary = actionItemsData.summary || {};
+      const total = summary.total_items || 0;
+      
+      // Get pagination from first column (all columns share same page/page_size in kanban)
+      const firstColumn = Object.values(actionItemsData.columns)[0];
+      const columnPagination = firstColumn?.pagination || {};
+      
+      return {
+        total: total,
+        page: columnPagination.page || 1,
+        page_size: columnPagination.page_size || pageSize,
+        total_pages: Math.max(...Object.values(actionItemsData.columns).map(c => c.pagination?.total_pages || 1)),
+      };
+    }
+    
+    // List view pagination
+    return {
+      total: actionItemsData?.total || 0,
+      page: actionItemsData?.page || 1,
+      page_size: actionItemsData?.page_size || pageSize,
+      total_pages: actionItemsData?.total_pages || 1,
+    };
+  }, [actionItemsData, pageSize, viewMode]);
+
+  // State to store additional loaded items per column (for Load More functionality)
+  const [additionalColumnItems, setAdditionalColumnItems] = useState({
+    open: [],
+    in_progress: [],
+    completed: [],
+  });
+
+  // Kanban-specific data: per-status items and counts
+  // Apply client-side filters (task_owner, assignee, search) to kanban data
+  // Note: Status filter is ignored in Kanban view - all columns are always shown
+  const kanbanData = useMemo(() => {
+    if (viewMode !== "kanban" || !actionItemsData?.columns) {
+      return null;
+    }
+    
+    const clients = clientsData || [];
+    const clientMap = clients.reduce((map, client) => {
+      map[client.id] = client.name;
+      return map;
+    }, {});
+    
+    // Process each column and apply client-side filters
+    // Always show all three columns regardless of status filter
+    const columns = {};
+    Object.entries(actionItemsData.columns).forEach(([status, column]) => {
+      // Get base items from API response
+      let baseItems = (column.items || []).map((item) => ({
+        ...item,
+        client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
+      }));
+      
+      // Merge with additional loaded items for this column
+      const additionalItems = (additionalColumnItems[status] || []).map((item) => ({
+        ...item,
+        client_name: item.client_name || clientMap[item.client_id] || "Unknown Client",
+      }));
+      
+      // Combine base items and additional loaded items
+      let allItems = [...baseItems, ...additionalItems];
+      
+      // Apply client-side filters (search, task_owner, assignee)
+      // Note: Status filter is NOT applied here - we want all columns visible
+      allItems = allItems.filter((item) => {
+        // Search filter
+        const matchesSearch =
+          !searchTerm || // If no search term, show all
+          item.message?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          item.client_name?.toLowerCase().includes(searchTerm.toLowerCase());
+        
+        // Task Owner filter (client-side)
+        const matchesTaskOwner =
+          appliedTaskOwnerFilter === "all" || item.task_owner === appliedTaskOwnerFilter;
+        
+        // Assignee filter (client-side)
+        const matchesAssignee =
+          appliedAssigneeFilter === "all" || item.assignee === appliedAssigneeFilter;
+        
+        // Status filter: if applied, only show items matching that status in their respective column
+        // This way all columns are visible, but only the matching column has items
+        const matchesStatus =
+          appliedStatusFilter === "all" || item.status === appliedStatusFilter;
+        
+        return matchesSearch && matchesTaskOwner && matchesAssignee && matchesStatus;
+      });
+      
+      columns[status] = {
+        items: allItems,
+        pagination: {
+          ...column.pagination,
+          // Note: total count remains from API (shows all items, not just filtered)
+          // This is intentional - we want to show the real total even after client-side filtering
+        },
+      };
+    });
+    
+    // Recalculate summary based on filtered items
+    const filteredSummary = {
+      total_items: Object.values(columns).reduce((sum, col) => sum + col.items.length, 0),
+      open_count: columns.open?.items.length || 0,
+      in_progress_count: columns.in_progress?.items.length || 0,
+      completed_count: columns.completed?.items.length || 0,
+    };
+    
+    return {
+      columns,
+      summary: filteredSummary,
+    };
+  }, [actionItemsData, clientsData, viewMode, searchTerm, appliedStatusFilter, appliedTaskOwnerFilter, appliedAssigneeFilter, additionalColumnItems]);
 
   const handleRefresh = async () => {
     try {
       await refetchActionItems();
+      // Only invalidate clients/users if they might have changed
+      // For manual refresh, we'll refresh everything
       queryClient.invalidateQueries({ queryKey: ['clients'] });
       queryClient.invalidateQueries({ queryKey: ['users'] });
       showSuccess("Action items refreshed successfully");
@@ -138,14 +304,45 @@ const ActionItemsPage = () => {
       showError("Failed to refresh action items");
     }
   };
+  
+  // Lightweight refresh - only refetches action items (for use after edits)
+  const handleActionItemsRefresh = async () => {
+    try {
+      await refetchActionItems();
+      // Don't invalidate clients/users - they haven't changed
+    } catch (error) {
+      // Silent fail for background refresh
+      console.error("Failed to refresh action items:", error);
+    }
+  };
 
   const handleClearFilters = () => {
     setSearchTerm("");
-    setStatusFilter("all");
-    setClientFilter("all");
-    setTaskOwnerFilter("all");
-    setAssigneeFilter("all");
+    setPendingStatusFilter("all");
+    setPendingClientFilter("all");
+    setPendingTaskOwnerFilter("all");
+    setPendingAssigneeFilter("all");
+    setAppliedStatusFilter("all");
+    setAppliedClientFilter("all");
+    setAppliedTaskOwnerFilter("all");
+    setAppliedAssigneeFilter("all");
     setCurrentPage(1); // Reset to first page when clearing filters
+    // Reset column pages and additional items when clearing filters
+    setColumnPages({ open: 1, in_progress: 1, completed: 1 });
+    setAdditionalColumnItems({ open: [], in_progress: [], completed: [] });
+  };
+  
+  const handleApplyFilters = () => {
+    // Apply pending filters to the actual filters used for API calls
+    setAppliedStatusFilter(pendingStatusFilter);
+    setAppliedClientFilter(pendingClientFilter);
+    setAppliedTaskOwnerFilter(pendingTaskOwnerFilter);
+    setAppliedAssigneeFilter(pendingAssigneeFilter);
+    setCurrentPage(1); // Reset to first page when applying filters
+    // Reset column pages and additional items when applying new filters
+    setColumnPages({ open: 1, in_progress: 1, completed: 1 });
+    setAdditionalColumnItems({ open: [], in_progress: [], completed: [] });
+    setShowFilterPopup(false);
   };
 
   const handlePageChange = (newPage) => {
@@ -158,36 +355,80 @@ const ActionItemsPage = () => {
     setCurrentPage(1); // Reset to first page when changing page size
   };
 
-  // Count active filters
+  // Handle loading more items for a specific Kanban column
+  const handleLoadMoreColumn = async (status) => {
+    try {
+      const nextPage = columnPages[status] + 1;
+      
+      // Prepare filters for the load more request
+      // Use list view with specific status to fetch only that status's items
+      const loadMoreFilters = {
+        view: "list", // Use list view to get items for specific status
+        status: status, // Fetch only this specific status
+        client_id: appliedClientFilter !== "all" ? appliedClientFilter : undefined,
+        page: nextPage,
+        page_size: pageSize,
+      };
+
+      // Fetch next page for this column
+      const response = await openPointsAPI.getRecentOptimized(loadMoreFilters);
+      
+      if (response && response.items) {
+        const newItems = response.items || [];
+        
+        // Append new items to existing items for this column
+        setAdditionalColumnItems((prev) => ({
+          ...prev,
+          [status]: [...(prev[status] || []), ...newItems],
+        }));
+        
+        // Update page number for this column
+        setColumnPages((prev) => ({
+          ...prev,
+          [status]: nextPage,
+        }));
+      }
+    } catch (error) {
+      console.error(`Error loading more items for ${status}:`, error);
+      showError(`Failed to load more items for ${status}`);
+    }
+  };
+
+  // Count active filters (based on applied filters)
   const activeFilterCount = [
-    statusFilter !== "all" ? statusFilter : null,
-    clientFilter !== "all" ? clientFilter : null,
-    taskOwnerFilter !== "all" ? taskOwnerFilter : null,
-    assigneeFilter !== "all" ? assigneeFilter : null,
+    appliedStatusFilter !== "all" ? appliedStatusFilter : null,
+    appliedClientFilter !== "all" ? appliedClientFilter : null,
+    appliedTaskOwnerFilter !== "all" ? appliedTaskOwnerFilter : null,
+    appliedAssigneeFilter !== "all" ? appliedAssigneeFilter : null,
   ].filter(Boolean).length;
 
   const handleStatusFilterChange = (newStatus) => {
-    setStatusFilter(newStatus);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingStatusFilter(newStatus);
   };
 
   const handleClientFilterChange = (newClientId) => {
-    setClientFilter(newClientId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingClientFilter(newClientId);
   };
 
   const handleTaskOwnerFilterChange = (newTaskOwnerId) => {
-    setTaskOwnerFilter(newTaskOwnerId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingTaskOwnerFilter(newTaskOwnerId);
   };
 
   const handleAssigneeFilterChange = (newAssigneeId) => {
-    setAssigneeFilter(newAssigneeId);
-    setCurrentPage(1); // Reset to first page when filter changes
+    setPendingAssigneeFilter(newAssigneeId);
   };
 
   const handleAddActionItem = () => {
     setShowActionItemForm(true);
+  };
+  
+  // Sync pending filters with applied filters when popup opens
+  const handleFilterPopupOpen = () => {
+    setPendingStatusFilter(appliedStatusFilter);
+    setPendingClientFilter(appliedClientFilter);
+    setPendingTaskOwnerFilter(appliedTaskOwnerFilter);
+    setPendingAssigneeFilter(appliedAssigneeFilter);
+    setShowFilterPopup(true);
   };
 
   const handleActionItemFormSave = () => {
@@ -206,11 +447,11 @@ const ActionItemsPage = () => {
 
     // Task Owner filter (client-side for now)
     const matchesTaskOwner =
-      taskOwnerFilter === "all" || item.task_owner === taskOwnerFilter;
+      appliedTaskOwnerFilter === "all" || item.task_owner === appliedTaskOwnerFilter;
 
     // Assignee filter (client-side for now)
     const matchesAssignee =
-      assigneeFilter === "all" || item.assignee === assigneeFilter;
+      appliedAssigneeFilter === "all" || item.assignee === appliedAssigneeFilter;
 
     // Apply search filter and additional client-side filters
     return matchesSearch && matchesTaskOwner && matchesAssignee;
@@ -252,7 +493,7 @@ const ActionItemsPage = () => {
               </div>
               <button
                 className={`filter-btn ${activeFilterCount > 0 ? "active" : ""}`}
-                onClick={() => setShowFilterPopup(!showFilterPopup)}
+                onClick={handleFilterPopupOpen}
               >
                 <FilterIcon />
                 Filters
@@ -327,7 +568,7 @@ const ActionItemsPage = () => {
                     <label>Status</label>
                     <select
                       className="filter-popup-select"
-                      value={statusFilter}
+                      value={pendingStatusFilter}
                       onChange={(e) => handleStatusFilterChange(e.target.value)}
                     >
                       <option value="all">All Status</option>
@@ -342,7 +583,7 @@ const ActionItemsPage = () => {
                     <label>Client</label>
                     <select
                       className="filter-popup-select"
-                      value={clientFilter}
+                      value={pendingClientFilter}
                       onChange={(e) => handleClientFilterChange(e.target.value)}
                     >
                       <option value="all">All Clients</option>
@@ -357,34 +598,39 @@ const ActionItemsPage = () => {
                     <label>Task Owner</label>
                     <select
                       className="filter-popup-select"
-                      value={taskOwnerFilter}
+                      value={pendingTaskOwnerFilter}
                       onChange={(e) => handleTaskOwnerFilterChange(e.target.value)}
                     >
                       <option value="all">All Task Owners</option>
-                      {(usersData || [])
-                        .filter((user) => actionItems.some((item) => item.task_owner === user.id))
-                        .map((user) => (
+                      <optgroup label="Users">
+                        {(usersData || []).map((user) => (
                           <option key={user.id} value={user.id}>
                             {user.full_name || user.name || user.email}
                           </option>
                         ))}
+                      </optgroup>
+                      <optgroup label="Clients">
+                        {(clientsData || []).map((client) => (
+                          <option key={client.id} value={client.id}>
+                            {client.name}
+                          </option>
+                        ))}
+                      </optgroup>
                     </select>
                   </div>
                   <div className="filter-field">
                     <label>Assignee</label>
                     <select
                       className="filter-popup-select"
-                      value={assigneeFilter}
+                      value={pendingAssigneeFilter}
                       onChange={(e) => handleAssigneeFilterChange(e.target.value)}
                     >
                       <option value="all">All Assignees</option>
-                      {(usersData || [])
-                        .filter((user) => actionItems.some((item) => item.assignee === user.id))
-                        .map((user) => (
-                          <option key={user.id} value={user.id}>
-                            {user.full_name || user.name || user.email}
-                          </option>
-                        ))}
+                      {(usersData || []).map((user) => (
+                        <option key={user.id} value={user.id}>
+                          {user.full_name || user.name || user.email}
+                        </option>
+                      ))}
                     </select>
                   </div>
                 </div>
@@ -398,7 +644,7 @@ const ActionItemsPage = () => {
                   </button>
                   <button
                     className="btn btn-primary"
-                    onClick={() => setShowFilterPopup(false)}
+                    onClick={handleApplyFilters}
                   >
                     Apply Filters
                   </button>
@@ -429,7 +675,7 @@ const ActionItemsPage = () => {
               <>
                 <ActionItemsList
                   actionItems={filteredActionItems}
-                  onRefresh={handleRefresh}
+                  onRefresh={handleActionItemsRefresh}
                   clients={clientsData || []}
                   users={usersData || []}
                 />
@@ -447,18 +693,10 @@ const ActionItemsPage = () => {
               <>
                 <ActionItemsKanban
                   actionItems={filteredActionItems}
-                  onRefresh={handleRefresh}
+                  kanbanData={kanbanData}
+                  onLoadMore={handleLoadMoreColumn}
                   clients={clientsData || []}
                   users={usersData || []}
-                />
-                <Pagination
-                  currentPage={paginationData.page}
-                  totalPages={paginationData.total_pages}
-                  totalItems={paginationData.total}
-                  pageSize={paginationData.page_size}
-                  onPageChange={handlePageChange}
-                  onPageSizeChange={handlePageSizeChange}
-                  pageSizeOptions={[10, 20, 50, 100]}
                 />
               </>
             )}
