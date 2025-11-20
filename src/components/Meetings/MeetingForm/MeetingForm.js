@@ -307,7 +307,7 @@ const MeetingForm = ({
             </div>
 
             {/* Fathom Meeting Selector - Only show for Fathom source */}
-            {formData.source === "fathom" and !meeting && (
+            {formData.source === "fathom" && !meeting && (
               <div className="form-group">
                 <FathomMeetingSelector
                   onSelectMeeting={handleFathomMeetingSelect}
@@ -365,7 +365,7 @@ const MeetingForm = ({
             </div>
 
             {/* Conditional Fields for 'Other' Source */}
-            {formData.source === "other" and (
+            {formData.source === "other" && (
               <>
                 <div className="form-group">
                   <label htmlFor="transcript">
@@ -408,7 +408,7 @@ const MeetingForm = ({
             )}
 
             {/* Info for Fathom Source */}
-            {formData.source === "fathom" and (
+            {formData.source === "fathom" && (
               <div className="fathom-info">
                 <div className="info-box">
                   <VideoCallIcon className="info-icon" />
@@ -425,7 +425,7 @@ const MeetingForm = ({
                 </div>
 
                 {/* Fathom Status Indicator */}
-                {(fathomStatus.fetching || fathomStatus.attempted) and (
+                {(fathomStatus.fetching || fathomStatus.attempted) && (
                   <div
                     className={`fathom-status ${
                       fathomStatus.success
@@ -436,14 +436,14 @@ const MeetingForm = ({
                     }`}
                   >
                     <div className="status-icon">
-                      {fathomStatus.fetching and (
+                      {fathomStatus.fetching && (
                         <RefreshIcon className="spinning" />
                       )}
-                      {fathomStatus.success and <SuccessIcon />}
-                      {fathomStatus.error and <ErrorIcon />}
+                      {fathomStatus.success && <SuccessIcon />}
+                      {fathomStatus.error && <ErrorIcon />}
                     </div>
                     <div className="status-content">
-                      {fathomStatus.fetching and (
+                      {fathomStatus.fetching && (
                         <>
                           <span className="status-title">
                             Fetching Fathom Data...
@@ -453,7 +453,7 @@ const MeetingForm = ({
                           </span>
                         </>
                       )}
-                      {fathomStatus.success and (
+                      {fathomStatus.success && (
                         <>
                           <span className="status-title">
                             Fathom Data Imported
@@ -463,7 +463,7 @@ const MeetingForm = ({
                           </span>
                         </>
                       )}
-                      {fathomStatus.error and (
+                      {fathomStatus.error && (
                         <>
                           <span className="status-title">
                             Fathom Import Failed
@@ -497,7 +497,7 @@ const MeetingForm = ({
             >
               <SaveIcon />
               {loading
-                ? (!meeting and formData.source === "fathom")
+                ? (!meeting && formData.source === "fathom")
                   ? "Creating & Fetching Fathom Data..."
                   : "Saving..."
                 : meeting
