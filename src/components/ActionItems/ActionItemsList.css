@@ -74,6 +74,7 @@
 
 .action-item-row:hover {
   background: #f8fafc;
+  box-shadow: none;
 }
 
 .action-item-row:last-child {

@@ -427,7 +427,7 @@ const MeetingsPage = () => {
             onClick={() => handleMeetingSelection(meeting.id)}
           >
             <div className="meeting-explorer__row-header">
-              <div>
+              <div className="meeting-explorer__row-info">
                 <p className="meeting-explorer__row-title">
                   {highlightText(
                     meeting.meeting_name ||
@@ -437,7 +437,10 @@ const MeetingsPage = () => {
                   )}
                 </p>
                 <p className="meeting-explorer__row-client">
-                  <BusinessIcon /> {meeting.client_name || "Unknown client"}
+                  <BusinessIcon />
+                  <span className="meeting-explorer__row-client-name">
+                    {meeting.client_name || "Unknown client"}
+                  </span>
                 </p>
               </div>
               <span className="meeting-explorer__row-date">
@@ -636,7 +639,10 @@ const MeetingsPage = () => {
             target="_blank"
             rel="noopener noreferrer"
           >
-            <PlayIcon /> Open recording
+            <PlayIcon />
+            {activeMeeting.source?.toLowerCase() === "fathom"
+              ? "Open Fathom recording"
+              : "Open recording"}
           </a>
         )}
       </div>

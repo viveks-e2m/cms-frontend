@@ -675,7 +675,7 @@ const ActionItemsPage = () => {
               <>
                 <ActionItemsList
                   actionItems={filteredActionItems}
-                  onRefresh={handleRefresh}
+                  onRefresh={handleActionItemsRefresh}
                   clients={clientsData || []}
                   users={usersData || []}
                 />
@@ -694,7 +694,6 @@ const ActionItemsPage = () => {
                 <ActionItemsKanban
                   actionItems={filteredActionItems}
                   kanbanData={kanbanData}
-                  onRefresh={handleRefresh}
                   onLoadMore={handleLoadMoreColumn}
                   clients={clientsData || []}
                   users={usersData || []}
@@ -702,7 +701,7 @@ const ActionItemsPage = () => {
                 {/* Kanban view doesn't use global pagination - each column has its own pagination */}
                 {kanbanData && (
                   <div className="kanban-pagination-info">
-                    Total: {paginationData.total.toLocaleString()} items across all columns
+                    Total: {paginationData.total.toLocaleString()} items 
                   </div>
                 )}
               </>

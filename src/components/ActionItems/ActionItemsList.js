@@ -14,6 +14,10 @@ import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
 import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
 import { queryKeys } from "../../utils/queryClient";
+import {
+  applyKanbanItemDeletion,
+  applyKanbanItemUpdate,
+} from "../../utils/actionItemsCacheUtils";
 
 import "./ActionItemsList.css";
 
@@ -112,6 +116,7 @@ const ActionItemsList = ({
     console.log("Updating item status:", itemId, "to:", newStatus);
     const targetItem = localActionItems.find((item) => item.id === itemId);
     const targetClientId = targetItem?.client_id;
+    const previousStatus = targetItem?.status;
     
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -133,16 +138,15 @@ const ActionItemsList = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             return {
               ...oldData,
-              items: oldData.items.map(item => 
+              items: oldData.items.map(item =>
                 item.id === itemId ? { ...item, ...updatedItem } : item
-              )
+              ),
             };
           }
-          return oldData;
+          return applyKanbanItemUpdate(oldData, { ...targetItem, ...updatedItem }, previousStatus);
         }
       );
       invalidateClientActionItems(targetClientId);
@@ -175,7 +179,6 @@ const ActionItemsList = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             const filteredItems = oldData.items.filter(item => item.id !== itemId);
             return {
@@ -184,7 +187,7 @@ const ActionItemsList = ({
               total: oldData.total ? oldData.total - 1 : filteredItems.length,
             };
           }
-          return oldData;
+          return applyKanbanItemDeletion(oldData, itemId, targetItem?.status);
         }
       );
       invalidateClientActionItems(targetClientId);
@@ -228,6 +231,7 @@ const ActionItemsList = ({
     };
     const targetItem = localActionItems.find((item) => item.id === itemId);
     const targetClientId = targetItem?.client_id;
+    const previousStatus = targetItem?.status;
 
     // Optimistic update - update UI immediately
     const previousItems = localActionItems;
@@ -247,16 +251,19 @@ const ActionItemsList = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             return {
               ...oldData,
-              items: oldData.items.map(item => 
+              items: oldData.items.map(item =>
                 item.id === itemId ? { ...item, ...updatedItem } : item
-              )
+              ),
             };
           }
-          return oldData;
+          return applyKanbanItemUpdate(
+            oldData,
+            { ...targetItem, ...updatedItem, ...updateData },
+            previousStatus
+          );
         }
       );
       invalidateClientActionItems(targetClientId);

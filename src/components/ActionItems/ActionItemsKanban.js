@@ -16,13 +16,16 @@ import { useAuth } from "../../hooks/useAuth";
 import { PERMISSIONS } from "../../constants/permissions";
 import { getStatusDisplayName, getStatusOptions } from "../../utils/statusUtils";
 import { queryKeys } from "../../utils/queryClient";
+import {
+  applyKanbanItemDeletion,
+  applyKanbanItemUpdate,
+} from "../../utils/actionItemsCacheUtils";
 
 import "./ActionItemsKanban.css";
 
 const ActionItemsKanban = ({
   actionItems,
   kanbanData, // New prop: kanban view data with per-status structure
-  onRefresh,
   onLoadMore, // New prop: function to load more items for a column
   meetings,
   clients,
@@ -206,16 +209,15 @@ const ActionItemsKanban = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             return {
               ...oldData,
-              items: oldData.items.map(item => 
+              items: oldData.items.map(item =>
                 item.id === itemId ? { ...item, ...updatedItem } : item
-              )
+              ),
             };
           }
-          return oldData;
+          return applyKanbanItemUpdate(oldData, { ...targetItem, ...updatedItem }, targetItem?.status);
         }
       );
       invalidateClientActionItems(targetClientId);
@@ -247,7 +249,6 @@ const ActionItemsKanban = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             const filteredItems = oldData.items.filter(item => item.id !== itemId);
             return {
@@ -256,7 +257,7 @@ const ActionItemsKanban = ({
               total: oldData.total ? oldData.total - 1 : filteredItems.length,
             };
           }
-          return oldData;
+          return applyKanbanItemDeletion(oldData, itemId, targetItem?.status);
         }
       );
       invalidateClientActionItems(targetClientId);
@@ -319,16 +320,15 @@ const ActionItemsKanban = ({
         { queryKey: queryKeys.actionItems.all },
         (oldData) => {
           if (!oldData) return oldData;
-          // Handle both list structure and direct array
           if (oldData.items) {
             return {
               ...oldData,
-              items: oldData.items.map(item => 
+              items: oldData.items.map(item =>
                 item.id === itemId ? { ...item, ...updatedItem } : item
-              )
+              ),
             };
           }
-          return oldData;
+          return applyKanbanItemUpdate(oldData, { ...targetItem, ...updatedItem, ...updateData }, targetItem?.status);
         }
       );
       invalidateClientActionItems(targetClientId);
