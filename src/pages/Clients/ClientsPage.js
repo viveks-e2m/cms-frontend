@@ -199,6 +199,11 @@ const ClientsPage = () => {
     return getUserName(userId, client?.adoption_specialist_name);
   };
 
+  const normalizeStatusValue = (value) => {
+    if (!value || typeof value !== "string") return "";
+    return value.trim().toLowerCase().replace(/_/g, "-");
+  };
+
   // Handle URL parameters on mount and location change
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -207,7 +212,7 @@ const ClientsPage = () => {
 
     // Apply status filter from URL
     if (statusParam) {
-      setStatusFilter(statusParam);
+      setStatusFilter(normalizeStatusValue(statusParam));
     }
 
     // Auto-select client from URL
@@ -640,16 +645,14 @@ const ClientsPage = () => {
 
   // Enhanced filtering and sorting logic
   const getClientStatus = (client) => {
-    // Return the actual status from the client object
-    if (client.status) {
-      return client.status.toLowerCase();
-    }
+    // Return the normalized status from the client object
+    const normalizedStatus = normalizeStatusValue(client?.status);
     // Default to pre-boarding for new clients
-    return "pre-boarding";
+    return normalizedStatus || "pre-boarding";
   };
 
   const getStatusLabel = (status) => {
-    switch (status) {
+    switch (normalizeStatusValue(status)) {
       case "pre-boarding":
         return "Pre-boarding";
       case "onboarding":
@@ -705,7 +708,8 @@ const ClientsPage = () => {
 
       // Status filter
       const matchesStatus =
-        !statusFilter || getClientStatus(client) === statusFilter;
+        !statusFilter ||
+        getClientStatus(client) === normalizeStatusValue(statusFilter);
 
       // Account Manager filter - compare the actual value (name or ID)
       const matchesAccountManager =
