@@ -2,6 +2,7 @@
 .kanban-board {
   display: flex;
   gap: 1.5rem;
+  padding: 2rem;
   min-height: 600px;
   overflow-x: auto;
   /* background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #e8f2f7 100%); */
