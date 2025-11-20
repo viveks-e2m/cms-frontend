@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from "react";
+import React, { useState, useEffect, useMemo, useRef } from "react";
 import {
   Refresh as RefreshIcon,
   Add as AddIcon,
@@ -21,6 +21,7 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   const [generationStatus, setGenerationStatus] = useState(null);
   const [showActionItemForm, setShowActionItemForm] = useState(false);
   const queryClient = useQueryClient();
+  const generationCheckRef = useRef(null);
 
   const { showError, showInfo } = useNotificationContext();
   const { user, hasPermission } = useAuth();
@@ -90,9 +91,10 @@ const ActionItems = ({ meetingId, meeting, onRefresh }) => {
   }, [actionItemsError, showError]);
 
   useEffect(() => {
-    if (meetingId && meeting?.source === "fathom") {
-      checkGenerationStatus();
-    }
+    if (!meetingId || meeting?.source !== "fathom") return;
+    if (generationCheckRef.current === meetingId) return;
+    generationCheckRef.current = meetingId;
+    checkGenerationStatus();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [meetingId, meeting]);
 

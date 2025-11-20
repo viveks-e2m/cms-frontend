@@ -9,7 +9,8 @@ import {
   Assignment as AssignmentIcon,
   Description as MomIcon,
 } from "@mui/icons-material";
-import { useMeeting } from "../../../hooks/useQueries";
+import { useQueryClient } from "@tanstack/react-query";
+import { useMeeting, useMeetingTranscript } from "../../../hooks/useQueries";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import MeetingNotes from "../MeetingNotes/MeetingNotes";
@@ -19,6 +20,7 @@ import ActionItems from "../ActionItems/ActionItems";
 import MinutesOfMeeting from "../MinutesOfMeeting/MinutesOfMeeting";
 import { PermissionGuard } from "../../PermissionGuard";
 import { PERMISSIONS } from "../../../constants/permissions";
+import { queryKeys } from "../../../utils/queryClient";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -31,6 +33,7 @@ const MeetingDetails = ({
 }) => {
   const [activeTab, setActiveTab] = useState("details");
   const { showError } = useNotificationContext();
+  const queryClient = useQueryClient();
 
   // Use cached query for meeting details
   const {
@@ -42,11 +45,30 @@ const MeetingDetails = ({
   // Use prop meeting if available, otherwise use query data
   const meeting = propMeeting || meetingData;
 
+  const transcriptEnabled = Boolean(
+    meetingId &&
+    meeting &&
+    activeTab === "transcript" &&
+    meeting.has_transcript !== false
+  );
+
+  const {
+    data: transcriptData,
+    isLoading: loadingTranscript,
+    error: transcriptError,
+  } = useMeetingTranscript(meetingId, { enabled: transcriptEnabled });
+
   React.useEffect(() => {
     if (error) {
       showError("Failed to load meeting details");
     }
   }, [error, showError]);
+
+  React.useEffect(() => {
+    if (transcriptError) {
+      showError("Failed to load meeting transcript");
+    }
+  }, [transcriptError, showError]);
 
   if (loading) {
     return (
@@ -175,10 +197,22 @@ const MeetingDetails = ({
 
         {activeTab === "transcript" && (
           <div className="meeting-transcript-tab">
-            <TranscriptDisplay
-              transcript={meeting.transcript}
-              rawTranscript={meeting.raw_transcript}
-            />
+            {meeting.has_transcript === false ? (
+              <div className="meeting-details-error">
+                <p>Transcript is not available for this meeting.</p>
+              </div>
+            ) : loadingTranscript ? (
+              <LoadingSpinner message="Loading transcript..." />
+            ) : (
+              <TranscriptDisplay
+                transcript={
+                  transcriptData?.transcript ?? meeting.transcript ?? ""
+                }
+                rawTranscript={
+                  transcriptData?.raw_transcript ?? meeting.raw_transcript ?? ""
+                }
+              />
+            )}
           </div>
         )}
 
@@ -187,7 +221,16 @@ const MeetingDetails = ({
             meetingId={meetingId}
             meeting={meeting}
             onRefresh={() => {
-              // React Query will automatically refetch
+              if (meetingId) {
+                // Ensure meeting details cache picks up latest action-item edits
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.meetings.detail(meetingId),
+                });
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.meetings.actionItems(meetingId),
+                  exact: false,
+                });
+              }
             }}
           />
         )}

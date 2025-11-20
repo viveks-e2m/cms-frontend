@@ -6,9 +6,9 @@ import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
   useClients,
-  useMeetingSummary,
+  useClientOverview,
   // useWorkflows,
-  useSecrets,
+  // useSecrets, // Secrets tab is commented out
   useMeeting,
   useActionItemsByClient,
   useUsers,
@@ -18,6 +18,8 @@ import {
   useDeleteMeeting,
 } from "../../hooks/useMutations";
 import { useQueryClient } from "@tanstack/react-query";
+import { queryKeys } from "../../utils/queryClient";
+import { clientAPI } from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
 import Pagination from "../../components/UI/Pagination/Pagination";
 import {
@@ -27,7 +29,7 @@ import {
 } from "../../components/Meetings";
 import { ActionItemsList } from "../../components/ActionItems";
 import OnboardingInfo from "../../components/Clients/OnboardingInfo";
-import SecretsManager from "../../components/Clients/SecretsManager";
+// import SecretsManager from "../../components/Clients/SecretsManager"; // Secrets tab is commented out
 // import WorkflowManager from "../../components/Clients/WorkflowManager/WorkflowManager";
 import ClientForm from "../../components/Clients/ClientForm";
 import ClientNotes from "../../components/Clients/ClientNotes/ClientNotes";
@@ -92,6 +94,7 @@ const ClientsPage = () => {
   // Client form state
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  const [isLoadingClientForEdit, setIsLoadingClientForEdit] = useState(false);
 
   // Status group collapse state - inactive is collapsed by default
   const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive"]));
@@ -113,25 +116,31 @@ const ClientsPage = () => {
     isLoading: loadingUsers,
   } = useUsers();
 
-  // Load client details when selected
+  // Load consolidated client overview when selected
   const {
-    data: meetingsSummary,
-    isLoading: loadingMeetings,
-  } = useMeetingSummary(selectedClient?.id, { enabled: !!selectedClient });
+    data: clientOverview,
+    isLoading: loadingClientOverview,
+  } = useClientOverview(selectedClient?.id, { 
+    enabled: !!selectedClient,
+    actionItemsPageSize: clientActionItemsPageSize,
+  });
 
   // const {
   //   data: workflowsData,
   //   isLoading: loadingWorkflows,
   // } = useWorkflows(selectedClient?.id, { enabled: !!selectedClient });
 
-  const {
-    data: secretsData,
-    isLoading: loadingSecrets,
-  } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
+  // Secrets tab is commented out, so we don't fetch secrets data
+  // const {
+  //   data: secretsData,
+  //   isLoading: loadingSecrets,
+  // } = useSecrets(selectedClient?.id, { enabled: !!selectedClient });
+  const secretsData = [];
+  const loadingSecrets = false;
 
   // Fetch action items for the client with backend pagination
   const {
-    data: actionItemsData,
+    data: paginatedActionItemsData,
     isLoading: loadingActionItems,
   } = useActionItemsByClient(
     selectedClient?.id,
@@ -139,7 +148,7 @@ const ClientsPage = () => {
       page: clientActionItemsPage,
       page_size: clientActionItemsPageSize
     },
-    { enabled: !!selectedClient }
+    { enabled: !!selectedClient && clientActionItemsPage > 1 }
   );
 
   // Load full meeting details when selected
@@ -152,6 +161,49 @@ const ClientsPage = () => {
   const deleteClientMutation = useDeleteClient();
   const deleteMeetingMutation = useDeleteMeeting();
 
+  const getAccountManagerId = (client) =>
+    client?.account_manager_id || client?.account_manager || "";
+
+  const getAdoptionSpecialistId = (client) =>
+    client?.adoption_specialist_id || client?.adoption_specialist || "";
+
+  // Helper to get account manager name - handles both string names and IDs
+  const getAccountManagerName = (client) => {
+    // If account_manager is a string (name), use it directly
+    if (client?.account_manager && typeof client.account_manager === 'string' && client.account_manager.trim()) {
+      // Check if it's a UUID (ID) or a name
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(client.account_manager.trim())) {
+        // It's a name, not an ID
+        return client.account_manager.trim();
+      }
+    }
+    // Otherwise, use the existing logic with account_manager_name or lookup by ID
+    const userId = getAccountManagerId(client);
+    return getUserName(userId, client?.account_manager_name);
+  };
+
+  // Helper to get adoption specialist name - handles both string names and IDs
+  const getAdoptionSpecialistName = (client) => {
+    // If adoption_specialist is a string (name), use it directly
+    if (client?.adoption_specialist && typeof client.adoption_specialist === 'string' && client.adoption_specialist.trim()) {
+      // Check if it's a UUID (ID) or a name
+      const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+      if (!uuidRegex.test(client.adoption_specialist.trim())) {
+        // It's a name, not an ID
+        return client.adoption_specialist.trim();
+      }
+    }
+    // Otherwise, use the existing logic with adoption_specialist_name or lookup by ID
+    const userId = getAdoptionSpecialistId(client);
+    return getUserName(userId, client?.adoption_specialist_name);
+  };
+
+  const normalizeStatusValue = (value) => {
+    if (!value || typeof value !== "string") return "";
+    return value.trim().toLowerCase().replace(/_/g, "-");
+  };
+
   // Handle URL parameters on mount and location change
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
@@ -160,7 +212,7 @@ const ClientsPage = () => {
 
     // Apply status filter from URL
     if (statusParam) {
-      setStatusFilter(statusParam);
+      setStatusFilter(normalizeStatusValue(statusParam));
     }
 
     // Auto-select client from URL
@@ -173,23 +225,69 @@ const ClientsPage = () => {
     }
   }, [location.search, clientsData]);
 
-  // Combine client data with related data
+  const overviewMeetings = clientOverview?.meetings || [];
+  const overviewActionItems = clientOverview?.action_items;
+
+  const currentActionItemsData =
+    clientActionItemsPage === 1
+      ? overviewActionItems
+      : paginatedActionItemsData;
+
+  const currentActionItemsList =
+    currentActionItemsData?.items ?? currentActionItemsData ?? [];
+
+  const actionItemsPageMeta = currentActionItemsData?.items
+    ? {
+        total: currentActionItemsData?.total ?? 0,
+        page: currentActionItemsData?.page ?? clientActionItemsPage,
+        page_size:
+          currentActionItemsData?.page_size ?? clientActionItemsPageSize,
+        total_pages: currentActionItemsData?.total_pages ?? 1,
+      }
+    : {
+        total: currentActionItemsList.length,
+        page: clientActionItemsPage,
+        page_size: clientActionItemsPageSize,
+        total_pages: 1,
+      };
+
   const clientDetails = useMemo(() => {
     if (!selectedClient) return null;
-    const client = (clientsData || []).find((c) => c.id === selectedClient.id);
-    if (!client) return null;
+    const listClient = (clientsData || []).find(
+      (c) => c.id === selectedClient.id
+    );
+    if (!listClient && !clientOverview) return null;
+
+    const mergedClient = clientOverview
+      ? { ...listClient, ...clientOverview }
+      : listClient;
+
+    if (!mergedClient) return null;
 
     return {
-      ...client,
-      meetings: meetingsSummary || [],
+      ...mergedClient,
+      meetings: overviewMeetings,
       // workflows: workflowsData || [],
       secrets: secretsData || [],
-      actionItems: actionItemsData?.items || actionItemsData || [], // Handle both paginated and non-paginated responses
+      actionItems: currentActionItemsList,
     };
-  }, [selectedClient, clientsData, meetingsSummary, /* workflowsData, */ secretsData, actionItemsData]);
+  }, [
+    selectedClient,
+    clientsData,
+    clientOverview,
+    overviewMeetings,
+    /* workflowsData, */
+    secretsData,
+    currentActionItemsList,
+  ]);
 
   const loadingState = loadingClients || loadingUsers;
-  const detailsLoadingState = loadingMeetings || /* loadingWorkflows || */ loadingSecrets || loadingMeetingDetails || loadingActionItems;
+  const detailsLoadingState =
+    loadingClientOverview ||
+    /* loadingWorkflows || */
+    loadingSecrets ||
+    loadingMeetingDetails ||
+    (clientActionItemsPage > 1 ? loadingActionItems : false);
 
   // Create user ID to name mapping
   const userMap = useMemo(() => {
@@ -205,26 +303,50 @@ const ClientsPage = () => {
   const usersFromClients = useMemo(() => {
     if (!clientsData || !Array.isArray(clientsData)) return { accountManagers: [], adoptionSpecialists: [] };
     
-    const accountManagerIds = new Set();
-    const adoptionSpecialistIds = new Set();
+    const accountManagerSet = new Map(); // Map to store id -> name pairs
+    const adoptionSpecialistSet = new Map();
+    const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
     
     clientsData.forEach((client) => {
-      if (client.account_manager) {
-        accountManagerIds.add(client.account_manager);
+      // Handle account manager
+      const accountManagerValue = client?.account_manager;
+      if (accountManagerValue) {
+        if (typeof accountManagerValue === 'string' && accountManagerValue.trim()) {
+          if (uuidRegex.test(accountManagerValue.trim())) {
+            // It's an ID
+            const name = userMap[accountManagerValue.trim()] || accountManagerValue.trim();
+            accountManagerSet.set(accountManagerValue.trim(), name);
+          } else {
+            // It's a name
+            accountManagerSet.set(accountManagerValue.trim(), accountManagerValue.trim());
+          }
+        }
       }
-      if (client.adoption_specialist) {
-        adoptionSpecialistIds.add(client.adoption_specialist);
+      
+      // Handle adoption specialist
+      const adoptionSpecialistValue = client?.adoption_specialist;
+      if (adoptionSpecialistValue) {
+        if (typeof adoptionSpecialistValue === 'string' && adoptionSpecialistValue.trim()) {
+          if (uuidRegex.test(adoptionSpecialistValue.trim())) {
+            // It's an ID
+            const name = userMap[adoptionSpecialistValue.trim()] || adoptionSpecialistValue.trim();
+            adoptionSpecialistSet.set(adoptionSpecialistValue.trim(), name);
+          } else {
+            // It's a name
+            adoptionSpecialistSet.set(adoptionSpecialistValue.trim(), adoptionSpecialistValue.trim());
+          }
+        }
       }
     });
     
     return {
-      accountManagers: Array.from(accountManagerIds).map(id => ({ 
+      accountManagers: Array.from(accountManagerSet.entries()).map(([id, name]) => ({
         id,
-        name: userMap[id] || `User ${id.slice(0, 8)}...`
+        name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
       })),
-      adoptionSpecialists: Array.from(adoptionSpecialistIds).map(id => ({ 
+      adoptionSpecialists: Array.from(adoptionSpecialistSet.entries()).map(([id, name]) => ({
         id,
-        name: userMap[id] || `User ${id.slice(0, 8)}...`
+        name: (name && typeof name === 'string' && name.trim()) ? name.trim() : `Unknown (${id.slice(0, 8)}...)`
       })),
     };
   }, [clientsData, userMap]);
@@ -269,8 +391,29 @@ const ClientsPage = () => {
     setClientActionItemsPage(1); // Reset to first page
   };
 
+  const handleActionItemsRefresh = () => {
+    if (!selectedClient) return;
+
+    if (clientActionItemsPage === 1) {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.clients.overview(
+          selectedClient.id,
+          clientActionItemsPageSize
+        ),
+      });
+    } else {
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.actionItems.byClient(selectedClient.id, {
+          page: clientActionItemsPage,
+          page_size: clientActionItemsPageSize,
+        }),
+      });
+    }
+  };
+
   // Meeting handlers
   const handleMeetingSelect = async (meeting) => {
+    setActiveTab("meetings");
     setSelectedMeeting(meeting);
     setMeetingsView("details");
     // Meeting details will be loaded via useMeeting hook
@@ -308,10 +451,32 @@ const ClientsPage = () => {
   };
 
   const handleMeetingFormSave = () => {
+    const editedMeetingId = editingMeeting?.id;
+    const clientId = selectedClient?.id;
+
     setShowMeetingForm(false);
     setEditingMeeting(null);
-    // Cache will be invalidated by mutation hooks
-    queryClient.invalidateQueries({ queryKey: ['clients', 'meetings', selectedClient?.id] });
+
+    if (clientId) {
+      // Refresh consolidated client overview (meetings + action items)
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.clients.all, 'overview', clientId],
+        exact: false,
+      });
+
+      // Refresh any cached meeting lists for this client
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meetings.list(clientId),
+        exact: false,
+      });
+    }
+
+    if (editedMeetingId) {
+      // Ensure meeting details view shows the latest data
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meetings.detail(editedMeetingId),
+      });
+    }
   };
 
   const handleMeetingFormCancel = () => {
@@ -320,6 +485,67 @@ const ClientsPage = () => {
   };
 
   // Client form handlers
+  const UUID_REGEX = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+  const extractIdValue = (...candidates) => {
+    for (const candidate of candidates) {
+      if (!candidate) continue;
+      if (typeof candidate === "string") {
+        const trimmed = candidate.trim();
+        if (trimmed && UUID_REGEX.test(trimmed)) {
+          return trimmed;
+        }
+      } else if (typeof candidate === "object") {
+        if (candidate.id && UUID_REGEX.test(candidate.id)) {
+          return candidate.id;
+        }
+        if (candidate.value && UUID_REGEX.test(candidate.value)) {
+          return candidate.value;
+        }
+      }
+    }
+    return "";
+  };
+
+  const normalizeClientForForm = (client) => {
+    if (!client) return null;
+    const normalized = { ...client };
+
+    normalized.account_manager =
+      extractIdValue(
+        client.account_manager_id,
+        client.account_manager,
+        client.account_manager_user,
+        client.account_manager_details
+      ) || client.account_manager || "";
+
+    normalized.adoption_specialist =
+      extractIdValue(
+        client.adoption_specialist_id,
+        client.adoption_specialist,
+        client.adoption_specialist_user,
+        client.adoption_specialist_details
+      ) || client.adoption_specialist || "";
+
+    normalized.ai_executor =
+      extractIdValue(
+        client.ai_executor_id,
+        client.ai_executor,
+        client.ai_executor_user,
+        client.ai_executor_details
+      ) || client.ai_executor || "";
+
+    if (typeof client.plan_details === "object" && client.plan_details !== null) {
+      normalized.plan_details =
+        client.plan_details.value ||
+        client.plan_details.id ||
+        client.plan_details.name ||
+        "";
+    }
+
+    return normalized;
+  };
+
   const handleAddClient = () => {
     console.log("Add client button clicked"); // Debug log
     setEditingClient(null);
@@ -327,9 +553,64 @@ const ClientsPage = () => {
     console.log("showClientForm set to true"); // Debug log
   };
 
-  const handleEditClient = (client) => {
-    setEditingClient(client);
-    setShowClientForm(true);
+  const buildClientDataFromCache = (client) => {
+    if (!client?.id) return null;
+    const clientId = client.id;
+
+    // Try to find client from list data first
+    const listClient = (clientsData || []).find((c) => c.id === clientId) || client;
+
+    // Attempt to get overview data from query cache (same key used by useClientOverview)
+    const cachedOverview = queryClient.getQueryData(
+      queryKeys.clients.overview(clientId, clientActionItemsPageSize)
+    );
+
+    if (cachedOverview && typeof cachedOverview === "object") {
+      return { ...listClient, ...cachedOverview };
+    }
+
+    // Fallback to current clientOverview (if we're already viewing this client)
+    if (clientOverview && clientOverview.id === clientId) {
+      return { ...listClient, ...clientOverview };
+    }
+
+    return listClient || null;
+  };
+
+  const hasSufficientClientFields = (data) => {
+    if (!data) return false;
+    return Boolean(
+      data.name &&
+      data.website &&
+      data.status !== undefined &&
+      data.status !== null
+    );
+  };
+
+  const handleEditClient = async (client) => {
+    if (!client?.id) return;
+    try {
+      // Prefer cached overview data when available to avoid extra network call
+      const cachedClient = normalizeClientForForm(
+        buildClientDataFromCache(client)
+      );
+      if (hasSufficientClientFields(cachedClient)) {
+        setEditingClient(cachedClient);
+        setShowClientForm(true);
+        return;
+      }
+
+      // Fallback to API if required fields are missing
+      setIsLoadingClientForEdit(true);
+      const fullClient = await clientAPI.getById(client.id);
+      setEditingClient(fullClient);
+      setShowClientForm(true);
+    } catch (error) {
+      console.error("Failed to load client for editing:", error);
+      showError("Failed to load client details for editing");
+    } finally {
+      setIsLoadingClientForEdit(false);
+    }
   };
 
   const handleClientFormSave = () => {
@@ -364,16 +645,14 @@ const ClientsPage = () => {
 
   // Enhanced filtering and sorting logic
   const getClientStatus = (client) => {
-    // Return the actual status from the client object
-    if (client.status) {
-      return client.status.toLowerCase();
-    }
+    // Return the normalized status from the client object
+    const normalizedStatus = normalizeStatusValue(client?.status);
     // Default to pre-boarding for new clients
-    return "pre-boarding";
+    return normalizedStatus || "pre-boarding";
   };
 
   const getStatusLabel = (status) => {
-    switch (status) {
+    switch (normalizeStatusValue(status)) {
       case "pre-boarding":
         return "Pre-boarding";
       case "onboarding":
@@ -390,13 +669,20 @@ const ClientsPage = () => {
   };
 
   const getUserName = (userId, userNameField) => {
-    // If user name is provided directly from backend, use it
-    if (userNameField) return userNameField;
+    // If user name is provided directly from backend, use it (check for non-empty string)
+    if (userNameField && typeof userNameField === 'string' && userNameField.trim()) {
+      return userNameField.trim();
+    }
     // Look up user name from userMap
-    if (userId && userMap[userId]) return userMap[userId];
-    // Fallback: return formatted ID if name not available
-    if (!userId) return null;
-    return `User ${userId.slice(0, 8)}...`;
+    if (userId && userMap[userId]) {
+      const name = userMap[userId];
+      // Return the name if it's a valid non-empty string
+      if (name && typeof name === 'string' && name.trim()) {
+        return name.trim();
+      }
+    }
+    // Return null if no name found (will show "Not assigned" in UI)
+    return null;
   };
 
   // Count active filters
@@ -422,15 +708,22 @@ const ClientsPage = () => {
 
       // Status filter
       const matchesStatus =
-        !statusFilter || getClientStatus(client) === statusFilter;
+        !statusFilter ||
+        getClientStatus(client) === normalizeStatusValue(statusFilter);
 
-      // Account Manager filter
+      // Account Manager filter - compare the actual value (name or ID)
       const matchesAccountManager =
-        !accountManagerFilter || client.account_manager === accountManagerFilter;
+        !accountManagerFilter || 
+        (client?.account_manager && 
+         typeof client.account_manager === 'string' && 
+         client.account_manager.trim() === accountManagerFilter.trim());
 
-      // Adoption Specialist filter
+      // Adoption Specialist filter - compare the actual value (name or ID)
       const matchesAdoptionSpecialist =
-        !adoptionSpecialistFilter || client.adoption_specialist === adoptionSpecialistFilter;
+        !adoptionSpecialistFilter || 
+        (client?.adoption_specialist && 
+         typeof client.adoption_specialist === 'string' && 
+         client.adoption_specialist.trim() === adoptionSpecialistFilter.trim());
 
       return matchesSearch && matchesStatus && matchesAccountManager && matchesAdoptionSpecialist;
     })
@@ -563,7 +856,7 @@ const ClientsPage = () => {
               onClick={() => setActiveTab("action-items")}
             >
               <ActionItemsIcon />
-              Action Items ({actionItemsData?.total || 0})
+              Action Items ({actionItemsPageMeta.total || 0})
             </button>
             <button
               className={`tab-btn ${
@@ -663,9 +956,7 @@ const ClientsPage = () => {
                               <div className="info-item-content">
                                 <label>Account Manager</label>
                                 <span>
-                                  {getUserName(
-                                    selectedClient.account_manager
-                                  ) || "Not assigned"}
+                                  {getAccountManagerName(selectedClient) || "Not assigned"}
                                 </span>
                               </div>
                             </div>
@@ -677,14 +968,13 @@ const ClientsPage = () => {
                               <div className="info-item-content">
                                 <label>Adoption Specialist</label>
                                 <span>
-                                  {getUserName(
-                                    selectedClient.adoption_specialist
-                                  ) || "Not assigned"}
+                                  {getAdoptionSpecialistName(selectedClient) || "Not assigned"}
                                 </span>
                               </div>
                             </div>
 
-                            {selectedClient.plan_details && (
+                            {(clientDetails?.plan_details ||
+                              selectedClient.plan_details) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <PlanIcon className="info-icon" />
@@ -692,25 +982,35 @@ const ClientsPage = () => {
                                 <div className="info-item-content">
                                   <label>Plan Details</label>
                                   <span>
-                                    {selectedClient.plan_details.replace(/_/g, ' ').replace(/AI /g, 'AI ')}
+                                    {(clientDetails?.plan_details ||
+                                      selectedClient.plan_details)
+                                      ?.replace(/_/g, " ")
+                                      ?.replace(/AI /g, "AI ")}
                                   </span>
                                 </div>
                               </div>
                             )}
 
-                            {selectedClient.communication_tool && (
+                            {(clientDetails?.communication_tool ||
+                              selectedClient.communication_tool) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <CommunicationIcon className="info-icon" />
                                 </div>
                                 <div className="info-item-content">
                                   <label>Communication Tool</label>
-                                  <span>{selectedClient.communication_tool}</span>
+                                  <span>
+                                    {clientDetails?.communication_tool ||
+                                      selectedClient.communication_tool}
+                                  </span>
                                 </div>
                               </div>
                             )}
 
-                            {selectedClient.ai_executor && (
+                            {(clientDetails?.ai_executor ||
+                              clientDetails?.ai_executor_name ||
+                              selectedClient.ai_executor ||
+                              selectedClient.ai_executor_name) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <AIExecutorIcon className="info-icon" />
@@ -718,7 +1018,12 @@ const ClientsPage = () => {
                                 <div className="info-item-content">
                                   <label>AI Executor</label>
                                   <span>
-                                    {getUserName(selectedClient.ai_executor) || "Not assigned"}
+                                    {getUserName(
+                                      clientDetails?.ai_executor ||
+                                        selectedClient.ai_executor,
+                                      clientDetails?.ai_executor_name ||
+                                        selectedClient.ai_executor_name
+                                    ) || "Not assigned"}
                                   </span>
                                 </div>
                               </div>
@@ -734,7 +1039,7 @@ const ClientsPage = () => {
                                   <div className="assignment-chip-list">
                                     {selectedClient.interns.map((internId) => (
                                       <span key={internId} className="assignment-chip">
-                                        {getUserName(internId) || `User ${internId.slice(0, 8)}...`}
+                                        {getUserName(internId) || `Unknown (${internId.slice(0, 8)}...)`}
                                       </span>
                                     ))}
                                   </div>
@@ -742,7 +1047,10 @@ const ClientsPage = () => {
                               </div>
                             )}
 
-                            {(selectedClient.assessment_start_date || selectedClient.assessment_end_date) && (
+                            {(clientDetails?.assessment_start_date ||
+                              clientDetails?.assessment_end_date ||
+                              selectedClient.assessment_start_date ||
+                              selectedClient.assessment_end_date) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <DateIcon className="info-icon" />
@@ -750,18 +1058,57 @@ const ClientsPage = () => {
                                 <div className="info-item-content">
                                   <label>Assessment Period</label>
                                   <span>
-                                    {selectedClient.assessment_start_date && selectedClient.assessment_end_date
-                                      ? `${new Date(selectedClient.assessment_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} - ${new Date(selectedClient.assessment_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                                      : selectedClient.assessment_start_date
-                                      ? `From ${new Date(selectedClient.assessment_start_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                                      : `Until ${new Date(selectedClient.assessment_end_date).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}`
-                                    }
+                                    {(() => {
+                                      const start =
+                                        clientDetails?.assessment_start_date ||
+                                        selectedClient.assessment_start_date;
+                                      const end =
+                                        clientDetails?.assessment_end_date ||
+                                        selectedClient.assessment_end_date;
+                                      if (start && end) {
+                                        return `${new Date(start).toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          }
+                                        )} - ${new Date(end).toLocaleDateString(
+                                          "en-US",
+                                          {
+                                            month: "short",
+                                            day: "numeric",
+                                            year: "numeric",
+                                          }
+                                        )}`;
+                                      }
+                                      if (start) {
+                                        return `From ${new Date(
+                                          start
+                                        ).toLocaleDateString("en-US", {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric",
+                                        })}`;
+                                      }
+                                      if (end) {
+                                        return `Until ${new Date(
+                                          end
+                                        ).toLocaleDateString("en-US", {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric",
+                                        })}`;
+                                      }
+                                      return null;
+                                    })()}
                                   </span>
                                 </div>
                               </div>
                             )}
 
-                            {selectedClient.document_link && (
+                            {(clientDetails?.document_link ||
+                              selectedClient.document_link) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <LinkIcon className="info-icon" />
@@ -770,7 +1117,10 @@ const ClientsPage = () => {
                                   <label>Drive Link</label>
                                   <span>
                                     <a
-                                      href={selectedClient.document_link}
+                                      href={
+                                        clientDetails?.document_link ||
+                                        selectedClient.document_link
+                                      }
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="website-link"
@@ -782,7 +1132,8 @@ const ClientsPage = () => {
                               </div>
                             )}
 
-                            {selectedClient.task_audit_sheet_link && (
+                            {(clientDetails?.task_audit_sheet_link ||
+                              selectedClient.task_audit_sheet_link) && (
                               <div className="client-info-item">
                                 <div className="info-item-icon-wrapper">
                                   <AuditIcon className="info-icon" />
@@ -791,7 +1142,10 @@ const ClientsPage = () => {
                                   <label>Task Audit Sheet</label>
                                   <span>
                                     <a
-                                      href={selectedClient.task_audit_sheet_link}
+                                      href={
+                                        clientDetails?.task_audit_sheet_link ||
+                                        selectedClient.task_audit_sheet_link
+                                      }
                                       target="_blank"
                                       rel="noopener noreferrer"
                                       className="website-link"
@@ -803,9 +1157,13 @@ const ClientsPage = () => {
                               </div>
                             )}
 
-                            {(selectedClient.last_renewal_date || selectedClient.next_renewal_date) && (
+                            {(clientDetails?.last_renewal_date ||
+                              clientDetails?.next_renewal_date ||
+                              selectedClient.last_renewal_date ||
+                              selectedClient.next_renewal_date) && (
                               <>
-                                {selectedClient.last_renewal_date && (
+                                {(clientDetails?.last_renewal_date ||
+                                  selectedClient.last_renewal_date) && (
                                   <div className="client-info-item">
                                     <div className="info-item-icon-wrapper">
                                       <DateIcon className="info-icon" />
@@ -813,16 +1171,20 @@ const ClientsPage = () => {
                                     <div className="info-item-content">
                                       <label>Last Renewal Date</label>
                                       <span>
-                                        {new Date(selectedClient.last_renewal_date).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        {new Date(
+                                          clientDetails?.last_renewal_date ||
+                                            selectedClient.last_renewal_date
+                                        ).toLocaleDateString("en-US", {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric",
                                         })}
                                       </span>
                                     </div>
                                   </div>
                                 )}
-                                {selectedClient.next_renewal_date && (
+                                {(clientDetails?.next_renewal_date ||
+                                  selectedClient.next_renewal_date) && (
                                   <div className="client-info-item">
                                     <div className="info-item-icon-wrapper">
                                       <DateIcon className="info-icon" />
@@ -830,10 +1192,13 @@ const ClientsPage = () => {
                                     <div className="info-item-content">
                                       <label>Next Renewal Date</label>
                                       <span>
-                                        {new Date(selectedClient.next_renewal_date).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric', 
-                                          year: 'numeric' 
+                                        {new Date(
+                                          clientDetails?.next_renewal_date ||
+                                            selectedClient.next_renewal_date
+                                        ).toLocaleDateString("en-US", {
+                                          month: "short",
+                                          day: "numeric",
+                                          year: "numeric",
                                         })}
                                       </span>
                                     </div>
@@ -997,19 +1362,17 @@ const ClientsPage = () => {
                     <div className="action-items-tab">
                       <ActionItemsList
                         actionItems={clientDetails?.actionItems || []}
-                        onRefresh={() => {
-                          queryClient.invalidateQueries({ queryKey: ['action-items'] });
-                        }}
+                        onRefresh={handleActionItemsRefresh}
                         meetings={clientDetails?.meetings || []}
                         clients={clientsData || []}
                         users={usersData || []}
                         hideClientColumn={true}
                       />
                       <Pagination
-                        currentPage={actionItemsData?.page || 1}
-                        totalPages={actionItemsData?.total_pages || 1}
-                        totalItems={actionItemsData?.total || 0}
-                        pageSize={actionItemsData?.page_size || clientActionItemsPageSize}
+                        currentPage={actionItemsPageMeta.page}
+                        totalPages={actionItemsPageMeta.total_pages}
+                        totalItems={actionItemsPageMeta.total}
+                        pageSize={actionItemsPageMeta.page_size}
                         onPageChange={handleClientActionItemsPageChange}
                         onPageSizeChange={handleClientActionItemsPageSizeChange}
                         pageSizeOptions={[10, 20, 50, 100]}
@@ -1022,7 +1385,13 @@ const ClientsPage = () => {
                   <div className="onboarding-tab">
                     <OnboardingInfo
                       clientId={selectedClient.id}
-                      existingOnboardingInfo={selectedClient.onboarding_info}
+                      existingOnboardingInfo={
+                        clientOverview?.onboarding_info !== undefined
+                          ? clientOverview.onboarding_info
+                          : (clientDetails?.onboarding_info !== undefined
+                              ? clientDetails.onboarding_info
+                              : selectedClient?.onboarding_info)
+                      }
                     />
                   </div>
                 )}
@@ -1036,6 +1405,7 @@ const ClientsPage = () => {
                   </div>
                 )} */}
 
+                {/* Secrets tab is commented out
                 {activeTab === "secrets" && (
                   <div className="secrets-tab">
                     <SecretsManager
@@ -1043,14 +1413,45 @@ const ClientsPage = () => {
                       clientName={selectedClient.name}
                     />
                   </div>
-                )}
+                )} */}
 
                 {activeTab === "notes" && (
                   <div className="notes-tab">
                     <ClientNotes
                       clientId={selectedClient.id}
-                      onNotesUpdate={() => {
-                        queryClient.invalidateQueries({ queryKey: ['clients', 'notes', selectedClient.id] });
+                      // Use notes from overview if available (to avoid separate API call)
+                      // The overview endpoint already includes notes, so we pass it here
+                      initialNotes={
+                        clientOverview?.notes !== undefined 
+                          ? clientOverview.notes 
+                          : (clientDetails?.notes !== undefined 
+                              ? clientDetails.notes 
+                              : selectedClient?.client_notes)
+                      }
+                      onNotesUpdate={(updatedNotes) => {
+                        // Update the overview cache directly with the new notes to avoid refetching
+                        if (updatedNotes !== undefined) {
+                          // Update all overview queries for this client (different page sizes)
+                          queryClient.setQueriesData(
+                            { 
+                              queryKey: [...queryKeys.clients.all, 'overview', selectedClient.id],
+                              exact: false 
+                            },
+                            (oldData) => {
+                              if (!oldData) return oldData;
+                              return {
+                                ...oldData,
+                                notes: updatedNotes,
+                                client_notes: updatedNotes
+                              };
+                            }
+                          );
+                        }
+                        // Only invalidate the separate notes query (not the overview)
+                        queryClient.invalidateQueries({ 
+                          queryKey: ['clients', 'notes', selectedClient.id],
+                          refetchType: 'none' // Don't refetch, just mark as stale
+                        });
                       }}
                     />
                   </div>
@@ -1199,7 +1600,7 @@ const ClientsPage = () => {
                     <option value="">All Account Managers</option>
                     {usersFromClients.accountManagers.map((user) => (
                       <option key={user.id} value={user.id}>
-                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                        {user.name}
                       </option>
                     ))}
                   </select>
@@ -1214,7 +1615,7 @@ const ClientsPage = () => {
                     <option value="">All Adoption Specialists</option>
                     {usersFromClients.adoptionSpecialists.map((user) => (
                       <option key={user.id} value={user.id}>
-                        {getUserName(user.id) || `User ${user.id.slice(0, 8)}...`}
+                        {user.name}
                       </option>
                     ))}
                   </select>
@@ -1317,14 +1718,14 @@ const ClientsPage = () => {
                                   <div className="client-card-assignments">
                                     <div className="assignment-item-modern">
                                       <AccountManagerIcon className="assignment-icon-modern" />
-                                      <span className={`assignment-text ${!getUserName(client.account_manager) ? 'unassigned' : ''}`}>
-                                        {getUserName(client.account_manager) || "Unassigned"}
+                                      <span className={`assignment-text ${!getAccountManagerName(client) ? 'unassigned' : ''}`}>
+                                        {getAccountManagerName(client) || "Unassigned"}
                                       </span>
                                     </div>
                                     <div className="assignment-item-modern">
                                       <AdoptionSpecialistIcon className="assignment-icon-modern" />
-                                      <span className={`assignment-text ${!getUserName(client.adoption_specialist) ? 'unassigned' : ''}`}>
-                                        {getUserName(client.adoption_specialist) || "Unassigned"}
+                                      <span className={`assignment-text ${!getAdoptionSpecialistName(client) ? 'unassigned' : ''}`}>
+                                        {getAdoptionSpecialistName(client) || "Unassigned"}
                                       </span>
                                     </div>
                                   </div>
@@ -1460,7 +1861,7 @@ const ClientsPage = () => {
                             <div className="client-assignment-content">
                               <AccountManagerIcon className="assignment-icon-small" />
                               <span>
-                                {getUserName(client.account_manager) || "Unassigned"}
+                                {getAccountManagerName(client) || "Unassigned"}
                               </span>
                             </div>
                           </td>
@@ -1468,7 +1869,7 @@ const ClientsPage = () => {
                             <div className="client-assignment-content">
                               <AdoptionSpecialistIcon className="assignment-icon-small" />
                               <span>
-                                {getUserName(client.adoption_specialist) || "Unassigned"}
+                                {getAdoptionSpecialistName(client) || "Unassigned"}
                               </span>
                             </div>
                           </td>

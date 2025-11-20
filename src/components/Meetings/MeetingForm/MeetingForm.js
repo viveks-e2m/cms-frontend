@@ -124,8 +124,8 @@ const MeetingForm = ({
       }
     });
 
-    // Show different loading message for Fathom
-    if (formData.source === "fathom" && !meeting) {
+    // Show different loading message for Fathom when creating a new meeting
+    if (!meeting && formData.source === "fathom") {
       setFathomStatus((prev) => ({ ...prev, fetching: true, error: null }));
       showInfo(
         "Creating meeting and fetching data from Fathom... This may take up to 5 minutes."
@@ -497,7 +497,7 @@ const MeetingForm = ({
             >
               <SaveIcon />
               {loading
-                ? formData.source === "fathom"
+                ? (!meeting && formData.source === "fathom")
                   ? "Creating & Fetching Fathom Data..."
                   : "Saving..."
                 : meeting

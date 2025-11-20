@@ -5,11 +5,13 @@ import "@blocknote/mantine/style.css";
 import { Save as SaveIcon, Notes as NotesIcon } from "@mui/icons-material";
 import { clientAPI } from "../../../utils/apiServices";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
+import { PermissionGuard } from "../../PermissionGuard";
+import { PERMISSIONS } from "../../../constants/permissions";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
 import "./ClientNotes.css";
 
-const ClientNotes = ({ clientId, onNotesUpdate }) => {
-  const [loading, setLoading] = useState(true);
+const ClientNotes = ({ clientId, initialNotes, onNotesUpdate }) => {
+  const [loading, setLoading] = useState(!initialNotes); // Only load if initialNotes not provided
   const [saving, setSaving] = useState(false);
   const { showSuccess, showError } = useNotificationContext();
 
@@ -49,22 +51,30 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
 
   useEffect(() => {
     if (clientId && editor) {
-      loadNotes();
+      // If initialNotes is provided, use it directly; otherwise fetch
+      if (initialNotes !== undefined) {
+        loadNotesFromData(initialNotes);
+      } else {
+        loadNotes();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [clientId, editor]);
+  }, [clientId, editor, initialNotes]);
 
-  const loadNotes = async () => {
+  const loadNotesFromData = async (notesData) => {
     try {
       setLoading(true);
-      const notesData = await clientAPI.getNotes(clientId);
+      // Handle both direct notes string and object with client_notes property
+      const notesContent = typeof notesData === "string" 
+        ? notesData 
+        : (notesData?.client_notes || notesData?.notes || notesData);
       
-      if (notesData && notesData.client_notes) {
+      if (notesContent) {
         try {
           // Try to parse as JSON (BlockNote format)
-          const parsedContent = typeof notesData.client_notes === "string"
-            ? JSON.parse(notesData.client_notes)
-            : notesData.client_notes;
+          const parsedContent = typeof notesContent === "string"
+            ? JSON.parse(notesContent)
+            : notesContent;
 
           if (parsedContent && Array.isArray(parsedContent) && parsedContent.length > 0) {
             await editor.replaceBlocks(editor.document, parsedContent);
@@ -72,7 +82,7 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
         } catch (parseError) {
           // If parsing fails, it might be old plain text format
           // Convert plain text to BlockNote format
-          const textContent = notesData.client_notes;
+          const textContent = notesContent;
           if (textContent && textContent.trim()) {
             const lines = textContent.split('\n').filter(line => line.trim());
             const blocks = lines.map(line => ({
@@ -83,6 +93,18 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
           }
         }
       }
+    } catch (error) {
+      console.error("Error loading notes from data:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const loadNotes = async () => {
+    try {
+      setLoading(true);
+      const notesData = await clientAPI.getNotes(clientId);
+      await loadNotesFromData(notesData);
     } catch (error) {
       showError("Failed to load client notes");
       console.error("Error loading client notes:", error);
@@ -97,11 +119,12 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
     try {
       setSaving(true);
       const content = editor.document;
-      await clientAPI.updateNotes(clientId, JSON.stringify(content));
+      const response = await clientAPI.updateNotes(clientId, JSON.stringify(content));
       showSuccess("Client notes saved successfully");
       
       if (onNotesUpdate) {
-        onNotesUpdate();
+        // Pass the updated notes from the response to update cache without refetching
+        onNotesUpdate(response?.client_notes || JSON.stringify(content));
       }
     } catch (error) {
       showError("Failed to save client notes");
@@ -127,14 +150,16 @@ const ClientNotes = ({ clientId, onNotesUpdate }) => {
           <h3>Client Notes</h3>
         </div>
         
-        <button
-          className="btn btn-primary btn-xs"
-          onClick={handleSave}
-          disabled={saving}
-        >
-          <SaveIcon />
-          {saving ? "Saving..." : "Save"}
-        </button>
+        <PermissionGuard permissions={[PERMISSIONS.UPDATE_CLIENT]}>
+          <button
+            className="btn btn-primary btn-xs"
+            onClick={handleSave}
+            disabled={saving}
+          >
+            <SaveIcon />
+            {saving ? "Saving..." : "Save"}
+          </button>
+        </PermissionGuard>
       </div>
 
       <div className="client-notes-content">

@@ -54,6 +54,23 @@ export const clientAPI = {
     return handleApiResponse(response);
   },
 
+  // Get consolidated client overview (meetings, action items, notes)
+  getOverview: async (clientId, params = {}) => {
+    const queryParams = new URLSearchParams();
+    if (params.action_items_page_size) {
+      queryParams.append("action_items_page_size", params.action_items_page_size);
+    }
+
+    const queryString = queryParams.toString()
+      ? `?${queryParams.toString()}`
+      : "";
+
+    const response = await api.get(`/clients/${clientId}/overview${queryString}`, {
+      timeout: API_CONFIG.LONG_TIMEOUT,
+    });
+    return handleApiResponse(response);
+  },
+
   // Update client
   update: async (clientId, clientData) => {
     const response = await api.put(`/clients/${clientId}`, clientData);
@@ -120,6 +137,26 @@ export const clientAPI = {
 
 // Meeting API services
 export const meetingAPI = {
+  // Search meetings across clients
+  searchAll: async (filters = {}) => {
+    const queryParams = new URLSearchParams();
+    if (filters.search) queryParams.append("search", filters.search);
+    if (filters.client_id) queryParams.append("client_id", filters.client_id);
+    if (filters.time_range) queryParams.append("time_range", filters.time_range);
+    if (typeof filters.limit === "number") queryParams.append("limit", filters.limit);
+    if (typeof filters.offset === "number") queryParams.append("offset", filters.offset);
+    if (filters.lightweight === false) queryParams.append("lightweight", "false");
+
+    const queryString = queryParams.toString();
+    const response = await api.get(
+      `/meetings${queryString ? `?${queryString}` : ""}`,
+      {
+        timeout: API_CONFIG.DEFAULT_TIMEOUT,
+      }
+    );
+    return handleApiResponse(response);
+  },
+
   // Create meeting for client
   create: async (clientId, meetingData) => {
     const response = await api.post(
@@ -153,6 +190,14 @@ export const meetingAPI = {
   getById: async (meetingId) => {
     const response = await api.get(`/meetings/${meetingId}`, {
       timeout: API_CONFIG.LONG_TIMEOUT, // 2 minutes timeout for meeting details
+    });
+    return handleApiResponse(response);
+  },
+
+  // Get meeting transcript (heavy payload)
+  getTranscript: async (meetingId) => {
+    const response = await api.get(`/meetings/${meetingId}/transcript`, {
+      timeout: API_CONFIG.LONG_TIMEOUT,
     });
     return handleApiResponse(response);
   },
@@ -272,12 +317,17 @@ export const openPointsAPI = {
   },
 
   // Get recent open points with pagination support
+  // Note: Backend only supports status and client_id filters
+  // task_owner and assignee should be filtered client-side
   getRecentOptimized: async (params = {}) => {
     const queryParams = new URLSearchParams();
+    // Add view parameter (list or kanban)
+    if (params.view) {
+      queryParams.append("view", params.view);
+    }
     if (params.status && params.status !== "all") queryParams.append("status", params.status);
     if (params.client_id && params.client_id !== "all") queryParams.append("client_id", params.client_id);
-    if (params.task_owner && params.task_owner !== "all") queryParams.append("task_owner", params.task_owner);
-    if (params.assignee && params.assignee !== "all") queryParams.append("assignee", params.assignee);
+    // task_owner and assignee are NOT sent - backend doesn't support them
     if (params.page) queryParams.append("page", params.page);
     if (params.page_size) queryParams.append("page_size", params.page_size);
 

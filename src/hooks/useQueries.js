@@ -33,6 +33,24 @@ export const useClient = (clientId, options = {}) => {
   });
 };
 
+export const useClientOverview = (clientId, options = {}) => {
+  const {
+    enabled = true,
+    actionItemsPageSize = 20,
+  } = options;
+
+  return useQuery({
+    queryKey: queryKeys.clients.overview(clientId, actionItemsPageSize),
+    queryFn: () =>
+      clientAPI.getOverview(clientId, {
+        action_items_page_size: actionItemsPageSize,
+      }),
+    enabled: !!clientId && enabled,
+    staleTime: CACHE_TIMES.DETAILS,
+    gcTime: CACHE_TIMES.DETAILS_CACHE,
+  });
+};
+
 export const useRecentClients = (limit = 5) => {
   // Use the same query as useClients to share cache
   const queryKey = queryKeys.clients.list();
@@ -139,13 +157,14 @@ export const useMeetings = (clientId, options = {}) => {
   });
 };
 
-export const useMeetingSummary = (clientId, options = {}) => {
+export const useMeetingsDirectory = (filters = {}, options = {}) => {
   return useQuery({
-    queryKey: [...queryKeys.meetings.list(clientId), 'summary'],
-    queryFn: () => meetingAPI.getSummaryByClient(clientId),
-    enabled: !!clientId && (options.enabled !== false),
+    queryKey: queryKeys.meetings.search(filters),
+    queryFn: () => meetingAPI.searchAll(filters),
+    keepPreviousData: true,
     staleTime: CACHE_TIMES.LISTS,
     gcTime: CACHE_TIMES.LISTS_CACHE,
+    ...options,
   });
 };
 
@@ -156,6 +175,17 @@ export const useMeeting = (meetingId, options = {}) => {
     enabled: !!meetingId && (options.enabled !== false),
     staleTime: CACHE_TIMES.DETAILS,
     gcTime: CACHE_TIMES.DETAILS_CACHE,
+  });
+};
+
+export const useMeetingTranscript = (meetingId, options = {}) => {
+  return useQuery({
+    queryKey: queryKeys.meetings.transcript(meetingId),
+    queryFn: () => meetingAPI.getTranscript(meetingId),
+    enabled: !!meetingId && (options.enabled !== false),
+    staleTime: CACHE_TIMES.DETAILS,
+    gcTime: CACHE_TIMES.DETAILS_CACHE,
+    ...options,
   });
 };
 
