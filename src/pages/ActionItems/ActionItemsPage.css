@@ -39,16 +39,19 @@
   flex-shrink: 0;
 }
 
-.view-toggle {
+/* Scoped button styles for Action Items page to avoid conflicts */
+.action-items-page .view-toggle {
   display: flex;
   background: #f1f5f9;
   border-radius: 8px;
   padding: 3px;
   gap: 3px;
   border: 1px solid #e2e8f0;
+  height: 36px;
+  align-items: center;
 }
 
-.view-btn {
+.action-items-page .view-btn {
   padding: 0.5rem 0.875rem;
   border: none;
   background: transparent;
@@ -59,32 +62,37 @@
   font-weight: 500;
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.375rem;
   cursor: pointer;
+  height: 30px;
+  min-width: fit-content;
+  box-sizing: border-box;
 }
 
-.view-btn:hover {
+.action-items-page .view-btn:hover {
   background: #e2e8f0;
   color: #475569;
 }
 
-.view-btn.active {
+.action-items-page .view-btn.active {
   background: #ffffff;
   color: #4f46e5;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
-.view-btn svg {
+.action-items-page .view-btn svg {
   width: 16px !important;
   height: 16px !important;
+  flex-shrink: 0;
 }
 
-.refresh-btn {
+.action-items-page .refresh-btn {
   background: #ffffff;
   color: #64748b;
   border: 1px solid #e2e8f0;
   border-radius: 8px;
-  padding: 0.5rem;
+  padding: 0;
   font-weight: 500;
   display: flex;
   align-items: center;
@@ -93,25 +101,27 @@
   cursor: pointer;
   width: 36px;
   height: 36px;
+  min-width: 36px;
+  flex-shrink: 0;
 }
 
-.refresh-btn:hover {
+.action-items-page .refresh-btn:hover {
   background: #f1f5f9;
   border-color: #cbd5e1;
   color: #475569;
 }
 
-.refresh-btn:disabled {
+.action-items-page .refresh-btn:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
 
-.refresh-btn svg {
+.action-items-page .refresh-btn svg {
   width: 18px !important;
   height: 18px !important;
 }
 
-.refresh-btn .spinning {
+.action-items-page .refresh-btn .spinning {
   animation: spin 1s linear infinite;
 }
 
@@ -145,16 +155,18 @@
 
 .search-input {
   width: 100%;
-  padding: 0.625rem 1rem 0.625rem 3rem;
+  padding: 0.5rem 1rem 0.5rem 3rem;
   border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
-  font-size: 0.9375rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   background: #fafafa;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
   font-weight: 400;
   color: #1e293b;
-  height: 42px;
+  height: 36px;
+  min-height: 36px;
   line-height: 1.5;
+  box-sizing: border-box;
 }
 
 .search-input::placeholder {
@@ -218,10 +230,11 @@
   border-color: #cbd5e1;
 }
 
-/* Filter Button */
-.filter-btn {
+/* Filter Button - Scoped */
+.action-items-page .filter-btn {
   display: flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
   padding: 0.5rem 1rem;
   border: 1px solid #e2e8f0;
@@ -233,27 +246,31 @@
   cursor: pointer;
   transition: all 0.2s ease;
   height: 36px;
+  min-height: 36px;
+  min-width: fit-content;
   position: relative;
+  box-sizing: border-box;
 }
 
-.filter-btn:hover {
+.action-items-page .filter-btn:hover {
   border-color: #cbd5e1;
   background: #f8fafc;
   color: #475569;
 }
 
-.filter-btn.active {
+.action-items-page .filter-btn.active {
   border-color: #4f46e5;
   background: #eef2ff;
   color: #4f46e5;
 }
 
-.filter-btn svg {
+.action-items-page .filter-btn svg {
   width: 18px !important;
   height: 18px !important;
+  flex-shrink: 0;
 }
 
-.filter-badge {
+.action-items-page .filter-badge {
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -266,6 +283,7 @@
   font-size: 0.625rem;
   font-weight: 600;
   margin-left: 2px;
+  flex-shrink: 0;
 }
 
 /* Filter Popup */
@@ -444,64 +462,84 @@
   cursor: not-allowed;
 }
 
-/* Button Styles */
-.btn {
+/* Button Styles - Scoped to Action Items page */
+.action-items-page .btn {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   gap: 0.5rem;
-  padding: 0.75rem 1.5rem;
+  padding: 0.5rem 0.875rem;
   border: none;
-  border-radius: var(--border-radius);
-  font-size: 0.875rem;
+  border-radius: 8px;
+  font-size: 0.8125rem;
   font-weight: 500;
   cursor: pointer;
-  transition: var(--transition);
+  transition: all 0.2s ease;
   text-decoration: none;
   white-space: nowrap;
+  height: 36px;
+  min-height: 36px;
+  min-width: fit-content;
+  box-sizing: border-box;
 }
 
-.btn:disabled {
+.action-items-page .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Button Styles - Enhanced */
-.btn-primary {
+/* Button Styles - Enhanced - Scoped */
+.action-items-page .btn-primary {
   background: #4f46e5;
   color: #ffffff;
   border: 1px solid #4f46e5;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
   height: 36px;
+  min-height: 36px;
   padding: 0.5rem 0.875rem;
   font-size: 0.8125rem;
 }
 
-.btn-primary:hover:not(:disabled) {
+.action-items-page .btn-primary:hover:not(:disabled) {
   background: #4338ca;
   border-color: #4338ca;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
-.btn-secondary {
-  background: var(--neutral-light);
-  color: var(--text-primary);
-  border: 1px solid var(--neutral-medium);
+.action-items-page .btn-secondary {
+  background: #f1f5f9;
+  color: #1e293b;
+  border: 1px solid #e2e8f0;
+  height: 36px;
+  min-height: 36px;
 }
 
-.btn-secondary:hover:not(:disabled) {
-  background: var(--neutral-medium);
-  border-color: var(--text-muted);
+.action-items-page .btn-secondary:hover:not(:disabled) {
+  background: #e2e8f0;
+  border-color: #cbd5e1;
 }
 
-.btn-outline {
+.action-items-page .btn-outline {
   background: transparent;
-  color: var(--accent-gold);
-  border: 1px solid var(--accent-gold);
+  color: #4f46e5;
+  border: 1px solid #e2e8f0;
+  height: 36px;
+  min-height: 36px;
 }
 
-.btn-outline:hover:not(:disabled) {
-  background: var(--accent-gold);
-  color: var(--primary-white);
+.action-items-page .btn-outline:hover:not(:disabled) {
+  background: #f1f5f9;
+  border-color: #cbd5e1;
+  color: #4338ca;
+}
+
+/* Consistent icon sizing for all buttons in action items page */
+.action-items-page .btn svg,
+.action-items-page .btn-primary svg,
+.action-items-page .btn-outline svg {
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
 }
 
 /* Action Items Container - Enhanced */
@@ -845,8 +883,10 @@
     flex-direction: column;
   }
   
-  .filter-popup-footer .btn {
+  .action-items-page .filter-popup-footer .btn {
     width: 100%;
+    height: 36px;
+    min-height: 36px;
   }
   
   .view-toggle {
