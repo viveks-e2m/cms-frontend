@@ -54,16 +54,65 @@ const ActionItemsList = ({
     setLocalActionItems(actionItems);
   }, [actionItems]);
 
-  const invalidateClientActionItems = (clientId) => {
+  const applyCollectionUpdate = (data, updateFn, options = {}) => {
+    if (!data) return data;
+    const { totalDelta = 0 } = options;
+
+    if (Array.isArray(data)) {
+      return updateFn(data);
+    }
+
+    if (Array.isArray(data.items)) {
+      const updatedItems = updateFn(data.items);
+      return {
+        ...data,
+        items: updatedItems,
+        total:
+          typeof data.total === "number"
+            ? data.total + totalDelta
+            : data.total,
+      };
+    }
+
+    return data;
+  };
+
+  const updateMeetingActionItemsCache = (meetingId, updateFn, options) => {
+    if (!meetingId) return;
+    queryClient.setQueriesData(
+      { queryKey: ["action-items", "meeting", meetingId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+    queryClient.setQueriesData(
+      { queryKey: ["meetings", "action-items", meetingId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+  };
+
+  const updateClientActionItemsCache = (clientId, updateFn, options) => {
     if (!clientId) return;
-    queryClient.invalidateQueries({
-      queryKey: ["clients", "overview", clientId],
-      exact: false,
-    });
-    queryClient.invalidateQueries({
-      queryKey: ["action-items", "byClient", clientId],
-      exact: false,
-    });
+
+    // Update dedicated action item queries scoped to client
+    queryClient.setQueriesData(
+      { queryKey: ["action-items", "byClient", clientId], exact: false },
+      (oldData) => applyCollectionUpdate(oldData, updateFn, options)
+    );
+
+    // Update client overview queries (any page size)
+    queryClient.setQueriesData(
+      { queryKey: ["clients", "overview", clientId], exact: false },
+      (oldData) => {
+        if (!oldData || !oldData.action_items) return oldData;
+        return {
+          ...oldData,
+          action_items: applyCollectionUpdate(
+            oldData.action_items,
+            updateFn,
+            options
+          ),
+        };
+      }
+    );
   };
 
   const getClientName = (item) => {
@@ -116,6 +165,7 @@ const ActionItemsList = ({
     console.log("Updating item status:", itemId, "to:", newStatus);
     const targetItem = localActionItems.find((item) => item.id === itemId);
     const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
     const previousStatus = targetItem?.status;
     
     // Optimistic update - update UI immediately
@@ -149,7 +199,12 @@ const ActionItemsList = ({
           return applyKanbanItemUpdate(oldData, { ...targetItem, ...updatedItem }, previousStatus);
         }
       );
-      invalidateClientActionItems(targetClientId);
+      const applyUpdatedItem = (items) =>
+        items.map((item) =>
+          item.id === itemId ? { ...item, ...updatedItem } : item
+        );
+      updateClientActionItemsCache(targetClientId, applyUpdatedItem);
+      updateMeetingActionItemsCache(targetMeetingId, applyUpdatedItem);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -165,6 +220,7 @@ const ActionItemsList = ({
     }
     const targetItem = localActionItems.find((item) => item.id === itemId);
     const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
 
     // Optimistic update - remove item from UI immediately
     const previousItems = localActionItems;
@@ -190,7 +246,13 @@ const ActionItemsList = ({
           return applyKanbanItemDeletion(oldData, itemId, targetItem?.status);
         }
       );
-      invalidateClientActionItems(targetClientId);
+      const removeItem = (items) => items.filter((item) => item.id !== itemId);
+      updateClientActionItemsCache(targetClientId, removeItem, {
+        totalDelta: -1,
+      });
+      updateMeetingActionItemsCache(targetMeetingId, removeItem, {
+        totalDelta: -1,
+      });
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);
@@ -231,6 +293,7 @@ const ActionItemsList = ({
     };
     const targetItem = localActionItems.find((item) => item.id === itemId);
     const targetClientId = targetItem?.client_id;
+    const targetMeetingId = targetItem?.meeting_id;
     const previousStatus = targetItem?.status;
 
     // Optimistic update - update UI immediately
@@ -266,7 +329,12 @@ const ActionItemsList = ({
           );
         }
       );
-      invalidateClientActionItems(targetClientId);
+      const applyUpdatedItem = (items) =>
+        items.map((item) =>
+          item.id === itemId ? { ...item, ...updatedItem, ...updateData } : item
+        );
+      updateClientActionItemsCache(targetClientId, applyUpdatedItem);
+      updateMeetingActionItemsCache(targetMeetingId, applyUpdatedItem);
     } catch (error) {
       // Revert optimistic update on error
       setLocalActionItems(previousItems);

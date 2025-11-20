@@ -408,6 +408,7 @@ const ClientsPage = () => {
 
   // Meeting handlers
   const handleMeetingSelect = async (meeting) => {
+    setActiveTab("meetings");
     setSelectedMeeting(meeting);
     setMeetingsView("details");
     // Meeting details will be loaded via useMeeting hook
@@ -445,10 +446,32 @@ const ClientsPage = () => {
   };
 
   const handleMeetingFormSave = () => {
+    const editedMeetingId = editingMeeting?.id;
+    const clientId = selectedClient?.id;
+
     setShowMeetingForm(false);
     setEditingMeeting(null);
-    // Cache will be invalidated by mutation hooks
-    queryClient.invalidateQueries({ queryKey: ['clients', 'meetings', selectedClient?.id] });
+
+    if (clientId) {
+      // Refresh consolidated client overview (meetings + action items)
+      queryClient.invalidateQueries({
+        queryKey: [...queryKeys.clients.all, 'overview', clientId],
+        exact: false,
+      });
+
+      // Refresh any cached meeting lists for this client
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meetings.list(clientId),
+        exact: false,
+      });
+    }
+
+    if (editedMeetingId) {
+      // Ensure meeting details view shows the latest data
+      queryClient.invalidateQueries({
+        queryKey: queryKeys.meetings.detail(editedMeetingId),
+      });
+    }
   };
 
   const handleMeetingFormCancel = () => {

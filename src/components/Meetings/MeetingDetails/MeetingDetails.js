@@ -9,6 +9,7 @@ import {
   Assignment as AssignmentIcon,
   Description as MomIcon,
 } from "@mui/icons-material";
+import { useQueryClient } from "@tanstack/react-query";
 import { useMeeting, useMeetingTranscript } from "../../../hooks/useQueries";
 import { useNotificationContext } from "../../../contexts/NotificationContext";
 import LoadingSpinner from "../../UI/LoadingSpinner/LoadingSpinner";
@@ -19,6 +20,7 @@ import ActionItems from "../ActionItems/ActionItems";
 import MinutesOfMeeting from "../MinutesOfMeeting/MinutesOfMeeting";
 import { PermissionGuard } from "../../PermissionGuard";
 import { PERMISSIONS } from "../../../constants/permissions";
+import { queryKeys } from "../../../utils/queryClient";
 import "./MeetingDetails.css";
 
 const MeetingDetails = ({
@@ -31,6 +33,7 @@ const MeetingDetails = ({
 }) => {
   const [activeTab, setActiveTab] = useState("details");
   const { showError } = useNotificationContext();
+  const queryClient = useQueryClient();
 
   // Use cached query for meeting details
   const {
@@ -218,7 +221,16 @@ const MeetingDetails = ({
             meetingId={meetingId}
             meeting={meeting}
             onRefresh={() => {
-              // React Query will automatically refetch
+              if (meetingId) {
+                // Ensure meeting details cache picks up latest action-item edits
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.meetings.detail(meetingId),
+                });
+                queryClient.invalidateQueries({
+                  queryKey: queryKeys.meetings.actionItems(meetingId),
+                  exact: false,
+                });
+              }
             }}
           />
         )}
