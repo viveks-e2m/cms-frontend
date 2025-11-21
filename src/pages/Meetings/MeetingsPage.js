@@ -18,6 +18,7 @@ import {
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
   RecordVoiceOver as TranscriptIcon,
+  AccessTime as TimeIcon,
 } from "@mui/icons-material";
 import "../../styles/pages.css";
 import "./MeetingsPage.css";
@@ -125,6 +126,126 @@ const highlightPlainText = (text = "", searchTerm = "") => {
       <React.Fragment key={`transcript-text-${index}`}>{part}</React.Fragment>
     );
   });
+};
+
+// Helper function to format time in seconds to MM:SS format
+const formatTime = (seconds) => {
+  if (typeof seconds !== "number" || isNaN(seconds)) return "00:00";
+  const minutes = Math.floor(seconds / 60);
+  const remainingSeconds = Math.floor(seconds % 60);
+  return `${minutes.toString().padStart(2, "0")}:${remainingSeconds.toString().padStart(2, "0")}`;
+};
+
+// Helper function to extract matching transcript cues with timestamps
+const extractMatchingTranscriptSnippets = (transcriptData, searchTerm = "", contextCues = 2) => {
+  if (!searchTerm || !searchTerm.trim()) {
+    return null; // Return null to show full transcript when no search
+  }
+  
+  if (!transcriptData?.transcript_cues || !Array.isArray(transcriptData.transcript_cues)) {
+    return null;
+  }
+  
+  const escapedTerm = searchTerm.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const regex = new RegExp(escapedTerm, "gi");
+  
+  // Find all matching cues
+  const matchingCueIndices = [];
+  transcriptData.transcript_cues.forEach((cue, index) => {
+    if (cue.text && regex.test(cue.text)) {
+      matchingCueIndices.push(index);
+    }
+  });
+  
+  if (matchingCueIndices.length === 0) {
+    return null;
+  }
+  
+  // Create snippets with context cues around each match
+  const snippets = matchingCueIndices.map((matchIndex, snippetIndex) => {
+    const startCueIndex = Math.max(0, matchIndex - contextCues);
+    const endCueIndex = Math.min(
+      transcriptData.transcript_cues.length - 1,
+      matchIndex + contextCues
+    );
+    
+    // Get the range of cues for this snippet
+    const snippetCues = transcriptData.transcript_cues.slice(startCueIndex, endCueIndex + 1);
+    
+    // Combine text from all cues in the snippet
+    const snippetText = snippetCues.map(cue => cue.text || "").join(" ");
+    
+    // Get timing information from the first matching cue
+    const matchCue = transcriptData.transcript_cues[matchIndex];
+    const startTime = snippetCues[0]?.start_time ?? matchCue?.start_time ?? 0;
+    const endTime = snippetCues[snippetCues.length - 1]?.end_time ?? matchCue?.end_time ?? 0;
+    const matchTime = matchCue?.start_time ?? 0;
+    
+    // Get speaker information
+    const speakers = [...new Set(snippetCues.map(cue => cue.speaker_name).filter(Boolean))];
+    const primarySpeaker = matchCue?.speaker_name || speakers[0] || "Unknown";
+    
+    return {
+      text: snippetText,
+      startTime,
+      endTime,
+      matchTime,
+      speaker: primarySpeaker,
+      speakers: speakers,
+      isFirst: snippetIndex === 0,
+      isLast: snippetIndex === matchingCueIndices.length - 1,
+      snippetNumber: snippetIndex + 1,
+      totalMatches: matchingCueIndices.length,
+      cueIndices: snippetCues.map((_, idx) => startCueIndex + idx),
+    };
+  });
+  
+  // Merge snippets that are close together (within 3 cues)
+  const mergedSnippets = [];
+  let currentSnippet = snippets[0];
+  
+  for (let i = 1; i < snippets.length; i++) {
+    const nextSnippet = snippets[i];
+    const currentLastCueIndex = currentSnippet.cueIndices[currentSnippet.cueIndices.length - 1];
+    const nextFirstCueIndex = nextSnippet.cueIndices[0];
+    
+    // If snippets are close (within 3 cues), merge them
+    if (nextFirstCueIndex - currentLastCueIndex <= 3) {
+      const mergedStartCueIndex = Math.min(
+        currentSnippet.cueIndices[0],
+        nextSnippet.cueIndices[0]
+      );
+      const mergedEndCueIndex = Math.max(
+        currentSnippet.cueIndices[currentSnippet.cueIndices.length - 1],
+        nextSnippet.cueIndices[nextSnippet.cueIndices.length - 1]
+      );
+      
+      const mergedCues = transcriptData.transcript_cues.slice(
+        mergedStartCueIndex,
+        mergedEndCueIndex + 1
+      );
+      
+      currentSnippet = {
+        text: mergedCues.map(cue => cue.text || "").join(" "),
+        startTime: mergedCues[0]?.start_time ?? currentSnippet.startTime,
+        endTime: mergedCues[mergedCues.length - 1]?.end_time ?? nextSnippet.endTime,
+        matchTime: currentSnippet.matchTime, // Keep first match time
+        speaker: currentSnippet.speaker,
+        speakers: [...new Set([...currentSnippet.speakers, ...nextSnippet.speakers])],
+        isFirst: currentSnippet.isFirst,
+        isLast: nextSnippet.isLast,
+        snippetNumber: currentSnippet.snippetNumber,
+        totalMatches: snippets.length,
+        cueIndices: Array.from({ length: mergedEndCueIndex - mergedStartCueIndex + 1 }, (_, i) => mergedStartCueIndex + i),
+      };
+    } else {
+      mergedSnippets.push(currentSnippet);
+      currentSnippet = nextSnippet;
+    }
+  }
+  mergedSnippets.push(currentSnippet);
+  
+  return mergedSnippets;
 };
 
 // Helper function to check if search term matches in text (case-insensitive)
@@ -439,12 +560,12 @@ const MeetingsPage = () => {
                 <p className="meeting-explorer__row-client">
                   <BusinessIcon />
                   <span className="meeting-explorer__row-client-name">
-                    {meeting.client_name || "Unknown client"}
+                    {highlightText(meeting.client_name || "Unknown client", debouncedSearch)}
                   </span>
                 </p>
               </div>
               <span className="meeting-explorer__row-date">
-                <CalendarIcon /> {formatDateTime(meeting.created_at)}
+                <CalendarIcon /> {highlightText(formatDateTime(meeting.created_at), debouncedSearch)}
               </span>
             </div>
             {meeting.match_snippet && (
@@ -488,8 +609,8 @@ const MeetingsPage = () => {
       <div className="meeting-explorer__details-card">
         <div className="meeting-explorer__details-header">
           <div>
-            <h2>{activeMeeting.meeting_name || "Untitled meeting"}</h2>
-            <p>{formatDateTime(activeMeeting.created_at)}</p>
+            <h2>{highlightText(activeMeeting.meeting_name || "Untitled meeting", debouncedSearch)}</h2>
+            <p>{highlightText(formatDateTime(activeMeeting.created_at), debouncedSearch)}</p>
           </div>
           <div className="meeting-explorer__details-badges">
             <span className="meeting-explorer__chip meeting-explorer__chip--info">
@@ -516,7 +637,7 @@ const MeetingsPage = () => {
             <div>
               <p className="meeting-explorer__meta-label">Client</p>
               <p className="meeting-explorer__meta-value">
-                {activeMeeting.client_name || "Unknown client"}
+                {highlightText(activeMeeting.client_name || "Unknown client", debouncedSearch)}
               </p>
             </div>
           </div>
@@ -525,15 +646,20 @@ const MeetingsPage = () => {
             <div>
               <p className="meeting-explorer__meta-label">Recorded</p>
               <p className="meeting-explorer__meta-value">
-                {formatDateTime(activeMeeting.created_at)}
+                {highlightText(formatDateTime(activeMeeting.created_at), debouncedSearch)}
               </p>
             </div>
           </div>
         </div>
 
-        {activeMeeting.match_snippet && (
+        {activeMeeting.match_snippet && debouncedSearch && (
           <div className="meeting-explorer__panel meeting-explorer__panel-content">
-            <p className="meeting-explorer__meta-label">Matched context</p>
+            <p className="meeting-explorer__meta-label">
+              Search match preview
+              <span className="meeting-explorer__match-preview-hint">
+                {" "}• Showing where "{debouncedSearch}" appears
+              </span>
+            </p>
             <ReactMarkdown remarkPlugins={[remarkGfm]} components={detailsMarkdownComponents}>
               {activeMeeting.match_snippet}
             </ReactMarkdown>
@@ -541,22 +667,24 @@ const MeetingsPage = () => {
         )}
 
         {(() => {
-          // Extract transcript text for ordering logic
+          // Parse transcript data
+          let parsedTranscript = null;
           let transcriptText = "";
+          
           if (transcriptData?.transcript && !isLoadingTranscript) {
             try {
-              const parsed = typeof transcriptData.transcript === "string" 
+              parsedTranscript = typeof transcriptData.transcript === "string" 
                 ? JSON.parse(transcriptData.transcript) 
                 : transcriptData.transcript;
               
-              // If it's a structured transcript with cues, extract text
-              if (parsed?.transcript_cues && Array.isArray(parsed.transcript_cues)) {
-                transcriptText = parsed.transcript_cues
+              // Extract text for ordering logic
+              if (parsedTranscript?.transcript_cues && Array.isArray(parsedTranscript.transcript_cues)) {
+                transcriptText = parsedTranscript.transcript_cues
                   .map((cue) => cue.text || "")
                   .filter(Boolean)
                   .join(" ");
-              } else if (typeof parsed === "string") {
-                transcriptText = parsed;
+              } else if (typeof parsedTranscript === "string") {
+                transcriptText = parsedTranscript;
               } else if (typeof transcriptData.transcript === "string") {
                 transcriptText = transcriptData.transcript;
               }
@@ -580,7 +708,7 @@ const MeetingsPage = () => {
             if (!activeMeeting.summary) return null;
             return (
               <div className="meeting-explorer__panel meeting-explorer__panel-content">
-                <MarkdownSummary summary={activeMeeting.summary} title="Summary" />
+                <MarkdownSummary summary={activeMeeting.summary} title="Summary" searchTerm={debouncedSearch} />
               </div>
             );
           };
@@ -589,11 +717,22 @@ const MeetingsPage = () => {
           const renderTranscript = () => {
             if (!activeMeeting.has_transcript) return null;
             
+            // Extract matching snippets with timestamps if search is active and we have structured data
+            const matchingSnippets = parsedTranscript?.transcript_cues 
+              ? extractMatchingTranscriptSnippets(parsedTranscript, debouncedSearch)
+              : null;
+            const showSnippets = matchingSnippets && matchingSnippets.length > 0;
+            
             return (
               <div className="meeting-explorer__panel meeting-explorer__panel-content">
                 <div className="meeting-explorer__panel-header">
                   <TranscriptIcon />
                   <p className="meeting-explorer__meta-label">Transcript</p>
+                  {showSnippets && (
+                    <span className="meeting-explorer__transcript-match-count">
+                      {matchingSnippets.length} match{matchingSnippets.length !== 1 ? 'es' : ''} found
+                    </span>
+                  )}
                 </div>
                 {isLoadingTranscript ? (
                   <div className="meeting-explorer__loading">
@@ -601,9 +740,79 @@ const MeetingsPage = () => {
                   </div>
                 ) : transcriptData?.transcript ? (
                   <div className="meeting-explorer__transcript-content">
-                    <p className="meeting-explorer__transcript-text">
-                      {highlightPlainText(transcriptText, debouncedSearch)}
-                    </p>
+                    {showSnippets ? (
+                      <div className="meeting-explorer__transcript-snippets">
+                        {matchingSnippets.map((snippet, index) => (
+                          <div key={index} className="meeting-explorer__transcript-snippet">
+                            <div className="meeting-explorer__transcript-snippet-header">
+                              <div className="meeting-explorer__transcript-snippet-info">
+                                <span className="meeting-explorer__transcript-snippet-number">
+                                  Match {snippet.snippetNumber} of {snippet.totalMatches}
+                                </span>
+                                <span className="meeting-explorer__transcript-snippet-time">
+                                  <TimeIcon className="meeting-explorer__time-icon" />
+                                  {formatTime(snippet.matchTime)}
+                                  {snippet.startTime !== snippet.endTime && (
+                                    <span className="meeting-explorer__time-range">
+                                      {" "}• {formatTime(snippet.startTime)} - {formatTime(snippet.endTime)}
+                                    </span>
+                                  )}
+                                </span>
+                              </div>
+                              {snippet.speaker && (
+                                <span className="meeting-explorer__transcript-snippet-speaker">
+                                  {snippet.speaker}
+                                </span>
+                              )}
+                            </div>
+                            <div className="meeting-explorer__transcript-snippet-text">
+                              {highlightPlainText(snippet.text, debouncedSearch)}
+                            </div>
+                            {!snippet.isLast && (
+                              <div className="meeting-explorer__transcript-snippet-divider">
+                                <span>...</span>
+                              </div>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="meeting-explorer__transcript-full">
+                        {parsedTranscript?.transcript_cues ? (
+                          // Show structured transcript with timestamps
+                          <div className="meeting-explorer__transcript-cues">
+                            {parsedTranscript.transcript_cues.map((cue, index) => (
+                              <div key={index} className="meeting-explorer__transcript-cue">
+                                <div className="meeting-explorer__transcript-cue-header">
+                                  {cue.speaker_name && (
+                                    <span className="meeting-explorer__transcript-cue-speaker">
+                                      {cue.speaker_name}
+                                    </span>
+                                  )}
+                                  {(cue.start_time !== undefined || cue.end_time !== undefined) && (
+                                    <span className="meeting-explorer__transcript-cue-time">
+                                      <TimeIcon className="meeting-explorer__time-icon" />
+                                      {cue.start_time !== undefined ? formatTime(cue.start_time) : "00:00"}
+                                      {cue.end_time !== undefined && cue.start_time !== cue.end_time && (
+                                        <span> - {formatTime(cue.end_time)}</span>
+                                      )}
+                                    </span>
+                                  )}
+                                </div>
+                                <div className="meeting-explorer__transcript-cue-text">
+                                  {highlightPlainText(cue.text || "", debouncedSearch)}
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        ) : (
+                          // Fallback to plain text
+                          <p className="meeting-explorer__transcript-text">
+                            {highlightPlainText(transcriptText, debouncedSearch)}
+                          </p>
+                        )}
+                      </div>
+                    )}
                   </div>
                 ) : (
                   <div className="meeting-explorer__transcript-empty">
@@ -684,7 +893,7 @@ const MeetingsPage = () => {
               <SearchIcon />
               <input
                 type="text"
-                placeholder="Search meetings, notes, or transcripts"
+                placeholder="Search meetings, transcripts"
                 value={searchValue}
                 onChange={handleSearchChange}
               />
