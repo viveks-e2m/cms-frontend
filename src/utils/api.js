@@ -8,7 +8,7 @@ const dynamicBaseUrl = API_CONFIG.DYNAMIC_BASE_URL();
 
 // Create axios instance with base configuration
 const api = axios.create({
-  baseURL: dynamicBaseUrl || API_CONFIG.BASE_URL || 'http://localhost:8001',
+  baseURL: dynamicBaseUrl || API_CONFIG.BASE_URL || 'https://py-cms.sitepreviews.dev',
   timeout: API_CONFIG.TIMEOUT,
   headers: {
     'Content-Type': 'application/json',
