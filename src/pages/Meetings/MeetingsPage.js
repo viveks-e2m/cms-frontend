@@ -893,7 +893,7 @@ const MeetingsPage = () => {
               <SearchIcon />
               <input
                 type="text"
-                placeholder="Search meetings, notes, or transcripts"
+                placeholder="Search meetings, transcripts"
                 value={searchValue}
                 onChange={handleSearchChange}
               />

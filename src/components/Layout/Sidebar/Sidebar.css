@@ -67,7 +67,7 @@
   width: 48px;
   height: 48px;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-  border-radius: 12px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -91,7 +91,7 @@
     rgba(255, 255, 255, 0.2) 0%,
     transparent 50%
   );
-  border-radius: 12px;
+  border-radius: 6px;
 }
 
 .logo-icon svg {
@@ -125,7 +125,7 @@
   height: 36px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -179,7 +179,7 @@
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   text-align: left;
-  border-radius: 12px;
+  border-radius: 6px;
   position: relative;
   overflow: hidden;
 }
@@ -303,7 +303,7 @@
   margin-bottom: 1.5rem;
   padding: 1rem;
   background: rgba(255, 255, 255, 0.05);
-  border-radius: 12px;
+  border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
@@ -378,7 +378,7 @@
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -403,7 +403,7 @@
   border: none;
   background: rgba(255, 255, 255, 0.1);
   color: #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
@@ -506,7 +506,7 @@
   height: 44px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -523,7 +523,7 @@
   height: 44px;
   border: none;
   background: rgba(255, 255, 255, 0.1);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -693,7 +693,7 @@
   color: #a1a1aa;
   background: rgba(255, 255, 255, 0.1);
   padding: 2px 8px;
-  border-radius: 10px;
+  border-radius: 4px;
   margin-top: 4px;
   display: inline-block;
   border: 1px solid rgba(255, 255, 255, 0.2);
