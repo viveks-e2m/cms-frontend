@@ -1,7 +1,7 @@
 /* Action Items Table Styles */
 .action-items-table-container {
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
   border: 1px solid #e2e8f0;
   overflow: hidden;
@@ -91,7 +91,7 @@
 .action-items-table tr:has(.edit-textarea) {
   background: #f8fafc;
   border: 2px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
@@ -412,7 +412,7 @@
   padding: 4rem 2rem;
   text-align: center;
   background: #ffffff;
-  border-radius: 8px;
+  border-radius: 6px;
   border: 1px solid #e2e8f0;
 }
 

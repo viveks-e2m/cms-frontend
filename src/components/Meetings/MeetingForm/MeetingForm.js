@@ -103,9 +103,9 @@ const MeetingForm = ({
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Validate required fields
-    if (!formData.recording_url?.trim()) {
-      showError("Recording URL is required");
+    // Validate required fields - Recording URL is only required for Fathom source
+    if (formData.source === "fathom" && !formData.recording_url?.trim()) {
+      showError("Recording URL is required for Fathom meetings");
       return;
     }
 
@@ -337,11 +337,11 @@ const MeetingForm = ({
               </small>
             </div>
 
-            {/* Recording URL - Always Required */}
+            {/* Recording URL - Required for Fathom, Optional for Other */}
             <div className="form-group">
               <label htmlFor="recording_url">
                 <LinkIcon className="label-icon" />
-                Recording URL *
+                Recording URL {formData.source === "fathom" && <span className="required-asterisk"></span>}
               </label>
               <input
                 type="url"
@@ -352,15 +352,15 @@ const MeetingForm = ({
                 placeholder={
                   formData.source === "fathom"
                     ? "https://app.fathom.video/call/..."
-                    : "https://example.com/recording.mp4"
+                    : "https://example.com/recording.mp4 (optional)"
                 }
                 className="form-input"
-                required
+                required={formData.source === "fathom"}
               />
               <small className="field-hint">
                 {formData.source === "fathom"
-                  ? "Paste the Fathom recording URL"
-                  : "Provide the URL to the meeting recording"}
+                  ? "Paste the Fathom recording URL (required)"
+                  : "Provide the URL to the meeting recording (optional)"}
               </small>
             </div>
 

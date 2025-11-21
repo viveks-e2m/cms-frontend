@@ -16,7 +16,7 @@
   padding: 1rem 1.25rem;
   background: #ffffff;
   border: 1px solid rgba(226, 232, 240, 0.8);
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: 
     0 2px 4px -1px rgba(0, 0, 0, 0.05),
     0 1px 2px -1px rgba(0, 0, 0, 0.03);
@@ -66,7 +66,7 @@
   width: 100%;
   padding: 0.625rem 1rem 0.625rem 3rem;
   border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 6px;
   font-size: 0.9375rem;
   background: #fafafa;
   transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
@@ -102,7 +102,7 @@
   gap: 0.5rem;
   padding: 0.625rem 1.125rem;
   border: 1.5px solid #e2e8f0;
-  border-radius: 10px;
+  border-radius: 6px;
   background: #ffffff;
   color: #64748b;
   font-size: 0.875rem;
@@ -145,7 +145,7 @@
   padding: 0 4px;
   background: #4f46e5;
   color: #ffffff;
-  border-radius: 9px;
+  border-radius: 4px;
   font-size: 0.625rem;
   font-weight: 600;
   margin-left: 2px;
@@ -175,7 +175,7 @@
 .view-toggle {
   display: flex;
   background: #f1f5f9;
-  border-radius: 8px;
+  border-radius: 6px;
   padding: 3px;
   gap: 3px;
   border: 1px solid #e2e8f0;
@@ -188,7 +188,7 @@
   width: 36px;
   height: 36px;
   border: none;
-  border-radius: 6px;
+  border-radius: 4px;
   background: transparent;
   color: #64748b;
   cursor: pointer;
@@ -215,7 +215,7 @@
 .sort-select {
   padding: 0.5rem 2rem 0.5rem 0.75rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
   color: #0f172a;
   font-size: 0.8125rem;
@@ -258,7 +258,7 @@
   left: 50%;
   transform: translate(-50%, -50%);
   background: #ffffff;
-  border-radius: 16px;
+  border-radius: 8px;
   box-shadow: 
     0 20px 25px -5px rgba(0, 0, 0, 0.1),
     0 10px 10px -5px rgba(0, 0, 0, 0.04);
@@ -308,7 +308,7 @@
   background: transparent;
   color: #64748b;
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: all 0.2s ease;
   padding: 0;
 }
@@ -349,7 +349,7 @@
   width: 100%;
   padding: 0.625rem 0.875rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
   color: #0f172a;
   font-size: 0.875rem;
@@ -387,7 +387,7 @@
 .btn-secondary {
   padding: 0.625rem 1.25rem;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
   color: #64748b;
   font-size: 0.8125rem;
@@ -426,7 +426,7 @@
   width: 36px;
   height: 36px;
   border: 1px solid #e2e8f0;
-  border-radius: 8px;
+  border-radius: 6px;
   background: #ffffff;
   color: #64748b;
   font-size: 1rem;
@@ -468,7 +468,7 @@
   padding: 1rem 1.25rem;
   background: #ffffff;
   border: 1px solid #e5e7eb;
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   transition: all 0.2s ease;
 }
@@ -513,7 +513,7 @@
   background: transparent;
   color: #6b7280;
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 4px;
   transition: all 0.2s ease;
   padding: 0;
 }
@@ -538,7 +538,7 @@
 /* Clients Table */
 .clients-table-wrapper {
   background: #FFFFFF;
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   overflow: hidden;
   border: 1px solid #E5E7EB;
@@ -772,7 +772,7 @@
 /* Modern Client Card */
 .client-card-modern {
   background: #FFFFFF;
-  border-radius: 20px;
+  border-radius: 6px;
   padding: 0;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   border: 1px solid #F3F4F6;
@@ -854,7 +854,7 @@
 
 .client-status-modern {
   padding: 4px 10px;
-  border-radius: 12px;
+  border-radius: 4px;
   font-size: 0.7rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -1024,7 +1024,7 @@
   width: 32px;
   height: 32px;
   border: none;
-  border-radius: 8px;
+  border-radius: 6px;
   background: transparent;
   color: #6B7280;
   cursor: pointer;
@@ -1051,7 +1051,7 @@
 /* Legacy client-card styles for backward compatibility */
 .client-card {
   background: var(--primary-white);
-  border-radius: 16px;
+  border-radius: 6px;
   padding: 24px;
   box-shadow: 0 2px 12px rgba(0, 31, 63, 0.08);
   border: 1px solid var(--neutral-light);
@@ -1182,7 +1182,7 @@
 
 .client-status {
   padding: 6px 12px;
-  border-radius: 20px;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: var(--font-weight-medium);
   text-transform: uppercase;
@@ -1240,7 +1240,7 @@
   height: 36px;
   border: 1px solid var(--neutral-medium);
   background: var(--primary-white);
-  border-radius: 8px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -1536,7 +1536,7 @@
   }
   
   .client-card-modern {
-    border-radius: 16px;
+    border-radius: 6px;
   }
 
   .client-card-header {
@@ -1581,7 +1581,7 @@
   .clients-table-wrapper {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
-    border-radius: 8px;
+    border-radius: 6px;
   }
 
   .clients-table {
@@ -1747,7 +1747,7 @@
   }
   
   .client-card-modern {
-    border-radius: 12px;
+    border-radius: 6px;
   }
 
   .client-card-header {
@@ -1816,7 +1816,7 @@
   padding: 1rem 1.5rem;
   background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   color: white;
-  border-radius: 12px;
+  border-radius: 6px;
   box-shadow: 0 4px 16px rgba(102, 126, 234, 0.25);
   position: relative;
   overflow: hidden;
@@ -1841,7 +1841,7 @@
   background: rgba(255, 255, 255, 0.2);
   color: white;
   border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 12px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.3s ease;
   font-size: 0.875rem;
@@ -1933,7 +1933,7 @@
 .client-details-tabs {
   display: flex;
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 0.5rem;
   margin-bottom: 1rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
@@ -1950,7 +1950,7 @@
   padding: 0.625rem 1rem;
   border: none;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #718096;
   cursor: pointer;
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
@@ -1983,7 +1983,7 @@
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, rgba(255, 255, 255, 0.2) 0%, transparent 100%);
-  border-radius: 12px;
+  border-radius: 6px;
   pointer-events: none;
 }
 
@@ -2004,7 +2004,7 @@
 /* Tab Content */
 .client-details-content {
   background: rgba(255, 255, 255, 0.95);
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 1rem;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.8);
@@ -2041,7 +2041,7 @@
 
 .stat-card {
   background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
-  border-radius: 16px;
+  border-radius: 6px;
   padding: 1.75rem;
   display: flex;
   align-items: center;
@@ -2114,7 +2114,7 @@
 .stat-card-icon-wrapper {
   width: 64px;
   height: 64px;
-  border-radius: 16px;
+  border-radius: 6px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -2319,7 +2319,7 @@
   gap: 0.75rem;
   padding: 0.5rem 0.5rem 0.5rem 0;
   background: transparent;
-  border-radius: 8px;
+  border-radius: 6px;
   cursor: pointer;
   transition: all 0.2s ease;
   position: relative;
@@ -2420,7 +2420,7 @@
 
 .status-badge {
   padding: 0.125rem 0.5rem;
-  border-radius: 8px;
+  border-radius: 4px;
   font-size: 0.6875rem;
   font-weight: 600;
   text-transform: uppercase;
@@ -2444,7 +2444,7 @@
 
 .overview-card {
   background: #FFFFFF;
-  border-radius: 12px;
+  border-radius: 6px;
   padding: 1rem;
   border: 1px solid #E5E7EB;
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
@@ -2502,7 +2502,7 @@
   border: none;
   color: white;
   padding: 0.375rem 0.75rem;
-  border-radius: 6px;
+  border-radius: 4px;
   font-size: 0.75rem;
   font-weight: 600;
   cursor: pointer;
@@ -2526,7 +2526,7 @@
   align-items: flex-start;
   gap: 0.75rem;
   padding: 0.5rem 0.5rem 0.5rem 0;
-  border-radius: 8px;
+  border-radius: 6px;
   transition: all 0.2s ease;
   background: transparent;
 }
@@ -2539,7 +2539,7 @@
 .info-item-icon-wrapper {
   width: 32px;
   height: 32px;
-  border-radius: 8px;
+  border-radius: 6px;
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(102, 126, 234, 0.05) 100%);
   display: flex;
   align-items: center;
@@ -3040,7 +3040,7 @@
   padding: 8px;
   border: 1px solid #E5E7EB;
   background: #FFFFFF;
-  border-radius: 8px;
+  border-radius: 6px;
   color: #6B7280;
   cursor: pointer;
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
