@@ -7,6 +7,7 @@ import {
   useClientStats,
   useMeetingStats,
   useActionItemStats,
+  useClients,
 } from "../../hooks/useQueries";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
@@ -19,13 +20,21 @@ import {
   Assignment as AssignmentIcon,
   WavingHand as WavingHandIcon,
   Schedule as ScheduleIcon,
+  CalendarMonth as CalendarMonthIcon,
 } from "@mui/icons-material";
+import ClientRenewalCalendar from "../../components/Clients/ClientRenewalCalendar/ClientRenewalCalendar";
 import "./DashboardPage.css";
 
 const DashboardPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const { showError } = useNotificationContext();
+
+  const {
+    data: allClientsData,
+    isLoading: loadingAllClients,
+    error: allClientsError,
+  } = useClients();
 
   // Use cached queries
   const {
@@ -56,14 +65,28 @@ const DashboardPage = () => {
     loadingClients ||
     loadingClientStats ||
     loadingMeetingStats ||
-    loadingActionItemStats;
+    loadingActionItemStats ||
+    loadingAllClients;
 
   // Handle errors
   React.useEffect(() => {
-    if (clientsError || clientStatsError || meetingStatsError || actionItemStatsError) {
+    if (
+      clientsError ||
+      clientStatsError ||
+      meetingStatsError ||
+      actionItemStatsError ||
+      allClientsError
+    ) {
       showError("Failed to load dashboard data. Please try again.");
     }
-  }, [clientsError, clientStatsError, meetingStatsError, actionItemStatsError, showError]);
+  }, [
+    clientsError,
+    clientStatsError,
+    meetingStatsError,
+    actionItemStatsError,
+    allClientsError,
+    showError,
+  ]);
 
   // Prepare dashboard data
   const dashboardData = React.useMemo(() => {
@@ -110,6 +133,128 @@ const DashboardPage = () => {
     return user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || user?.email?.split("@")[0] || "User";
   };
 
+  const clientsForCalendar = React.useMemo(() => {
+    if (!Array.isArray(allClientsData)) {
+      console.log('[Calendar] allClientsData is not an array:', typeof allClientsData, allClientsData);
+      return [];
+    }
+    console.log(`[Calendar] Processing ${allClientsData.length} clients for calendar`);
+    // Log clients with renewal dates
+    const clientsWithRenewals = allClientsData.filter(c => c.next_renewal_date);
+    console.log(`[Calendar] Clients with renewal dates: ${clientsWithRenewals.length}`, 
+      clientsWithRenewals.map(c => ({
+        id: c.id,
+        name: c.name,
+        next_renewal_date: c.next_renewal_date
+      }))
+    );
+    return allClientsData;
+  }, [allClientsData]);
+
+  const renewalEvents = React.useMemo(() => {
+    if (!clientsForCalendar.length) {
+      console.log('[Calendar] No clients available for calendar');
+      return [];
+    }
+
+    // Get today's date in local timezone, normalized to midnight
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+
+    const events = clientsForCalendar
+      .filter((client) => {
+        const hasDate = Boolean(client.next_renewal_date);
+        if (!hasDate) {
+          console.log(`[Calendar] Client ${client.id} (${client.name}) has no next_renewal_date`);
+        }
+        return hasDate;
+      })
+      .map((client) => {
+        try {
+          // Handle different date formats from the API
+          let renewalDate;
+          const dateValue = client.next_renewal_date;
+          
+          console.log(`[Calendar] Processing date for client ${client.id}:`, {
+            raw: dateValue,
+            type: typeof dateValue
+          });
+
+          // If it's already a Date object, use it
+          if (dateValue instanceof Date) {
+            renewalDate = new Date(dateValue);
+          } 
+          // If it's a string, parse it
+          else if (typeof dateValue === 'string') {
+            // Handle PostgreSQL timestamp format: "2025-11-20 00:00:00+00"
+            // Replace space before timezone with 'T' for ISO format
+            const isoString = dateValue.replace(' ', 'T');
+            renewalDate = new Date(isoString);
+          } 
+          else {
+            renewalDate = new Date(dateValue);
+          }
+          
+          if (Number.isNaN(renewalDate.getTime())) {
+            console.warn(`[Calendar] Invalid date for client ${client.id}:`, {
+              raw: dateValue,
+              parsed: renewalDate
+            });
+            return null;
+          }
+
+          // Create a new date object and normalize to local midnight
+          // This ensures we're comparing dates, not times
+          const normalizedDate = new Date(
+            renewalDate.getFullYear(),
+            renewalDate.getMonth(),
+            renewalDate.getDate()
+          );
+
+          // Compare dates (not times) for overdue check
+          const isOverdue = normalizedDate < today;
+
+          const event = {
+            id: `renewal-${client.id}`,
+            title: client.name || client.company || "Unnamed Client",
+            start: normalizedDate,
+            end: normalizedDate,
+            allDay: true,
+            isOverdue: isOverdue,
+            clientId: client.id,
+            company: client.company,
+          };
+          
+          console.log(`[Calendar] Created event for client ${client.id}:`, {
+            name: event.title,
+            rawDate: dateValue,
+            parsedDate: renewalDate.toISOString(),
+            normalizedDate: normalizedDate.toISOString(),
+            localDate: normalizedDate.toLocaleDateString(),
+            today: today.toLocaleDateString(),
+            isOverdue: event.isOverdue,
+          });
+          
+          return event;
+        } catch (error) {
+          console.error(`[Calendar] Error parsing date for client ${client.id}:`, error, {
+            dateValue: client.next_renewal_date
+          });
+          return null;
+        }
+      })
+      .filter(Boolean)
+      .sort((a, b) => a.start - b.start);
+    
+    console.log(`[Calendar] Total renewal events: ${events.length}`, events);
+    return events;
+  }, [clientsForCalendar]);
+
+  const overdueRenewalCount = React.useMemo(
+    () => renewalEvents.filter((event) => event.isOverdue).length,
+    [renewalEvents]
+  );
+
   // Navigation handlers
   const formatStatusForClientsPage = (value) => {
     if (!value || typeof value !== "string") return "";
@@ -142,6 +287,12 @@ const DashboardPage = () => {
       navigate(`/meetings?range=${range}`);
     } else {
       navigate("/meetings");
+    }
+  };
+
+  const handleRenewalSelect = (event) => {
+    if (event?.clientId) {
+      handleClientClick(event.clientId);
     }
   };
 
@@ -353,6 +504,35 @@ const DashboardPage = () => {
                   </p>
                 </div>
               )}
+            </div>
+          </div>
+        </PermissionGuard>
+
+        <PermissionGuard
+          permissions={[PERMISSIONS.READ_CLIENT]}
+          fallback={
+            <div className="dashboard-section">
+              <div className="access-denied-message">
+                <p>You don't have permission to view client information.</p>
+              </div>
+            </div>
+          }
+        >
+          <div className="dashboard-section calendar-section">
+            <div className="section-header-modern">
+              <div className="section-header-content">
+                <CalendarMonthIcon className="section-title-icon" />
+                <h3 className="section-title-modern">Client Renewal Calendar</h3>
+              </div>
+              <div className="calendar-overdue-pill">
+                {overdueRenewalCount} overdue
+              </div>
+            </div>
+            <div className="section-content-modern calendar-section-content">
+              <ClientRenewalCalendar
+                events={renewalEvents}
+                onSelectEvent={handleRenewalSelect}
+              />
             </div>
           </div>
         </PermissionGuard>

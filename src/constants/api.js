@@ -11,7 +11,7 @@ const getApiUrl = () => {
   }
   
   // Fallback - use the backend URL directly
-  return 'https://py-cms.sitepreviews.dev';
+  return 'http://localhost:8001';
 };
 
 // Create a function to get API URL dynamically (for runtime updates)
@@ -27,7 +27,7 @@ const getDynamicApiUrl = () => {
   }
   
   // Fallback
-  return 'https://py-cms.sitepreviews.dev';
+  return 'http://localhost:8001';
 };
 
 // API Configuration Constants
