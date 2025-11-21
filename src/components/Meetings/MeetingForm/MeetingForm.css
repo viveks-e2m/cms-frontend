@@ -103,6 +103,12 @@
   justify-content: center !important;
   flex-shrink: 0;
 }
+
+.meeting-form .form-group label .required-asterisk {
+  color: #DC2626;
+  font-weight: 600;
+  margin-left: 2px;
+}
 form-input,
 .form-select,
 .form-textarea {
