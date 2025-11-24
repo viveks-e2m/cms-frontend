@@ -1,0 +1,162 @@
+.client-renewal-calendar {
+  width: 100%;
+}
+
+.renewal-calendar-instance {
+  min-height: 520px;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 1rem;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.5);
+}
+
+.calendar-info-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.calendar-legend {
+  display: flex;
+  gap: 1.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.875rem;
+  color: #4b5563;
+  font-weight: 500;
+}
+
+.legend-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 9999px;
+  display: inline-flex;
+}
+
+.legend-dot-overdue {
+  background: #ef4444;
+}
+
+.legend-dot-upcoming {
+  background: #10b981;
+}
+
+.renewal-calendar-event {
+  border: none;
+  border-radius: 3px;
+  padding: 2px 6px;
+  color: #ffffff;
+  font-weight: 600;
+  font-size: 0.75rem;
+}
+
+.renewal-calendar-event-overdue {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+}
+
+.renewal-calendar-event-upcoming {
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+}
+
+.renewal-calendar-empty-state {
+  border: 1px dashed #d1d5db;
+  border-radius: 8px;
+  padding: 2rem;
+  text-align: center;
+  color: #6b7280;
+  background: #f9fafb;
+}
+
+.renewal-calendar-empty-state p {
+  margin: 0;
+  font-size: 0.9375rem;
+}
+
+.renewal-calendar-empty-message {
+  margin-top: 1rem;
+  padding: 1rem;
+  text-align: center;
+  color: #6b7280;
+  font-size: 0.875rem;
+  background: #f9fafb;
+  border-radius: 6px;
+  border: 1px dashed #d1d5db;
+}
+
+.renewal-calendar-empty-message p {
+  margin: 0;
+}
+
+.client-renewal-calendar .rbc-toolbar {
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.client-renewal-calendar .rbc-toolbar button {
+  border-radius: 9999px;
+  padding: 0.35rem 1rem;
+  border: 1px solid #d1d5db;
+  background: #ffffff;
+  font-weight: 600;
+  color: #374151;
+  transition: all 0.2s ease;
+}
+
+.client-renewal-calendar .rbc-toolbar button:hover {
+  background: #f3f4f6;
+  color: #111827;
+}
+
+.client-renewal-calendar .rbc-toolbar button.rbc-active {
+  background: #111827;
+  color: #ffffff;
+  border-color: #111827;
+}
+
+.client-renewal-calendar .rbc-month-view,
+.client-renewal-calendar .rbc-time-view {
+  border-color: #e5e7eb;
+}
+
+.client-renewal-calendar .rbc-header {
+  padding: 0.75rem 0;
+  font-weight: 600;
+  color: #6b7280;
+}
+
+.client-renewal-calendar .rbc-date-cell {
+  padding: 0.5rem;
+  font-weight: 600;
+  color: #374151;
+}
+
+.client-renewal-calendar .rbc-off-range {
+  color: #d1d5db;
+}
+
+.client-renewal-calendar .rbc-today {
+  background: rgba(59, 130, 246, 0.08);
+}
+
+@media (max-width: 768px) {
+  .renewal-calendar-instance {
+    padding: 0.5rem;
+  }
+
+  .calendar-info-bar {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+}
+
