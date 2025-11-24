@@ -7,18 +7,25 @@ import DashboardLayout from "../Layout/DashboardLayout/DashboardLayout";
 import "./UserProfile.css";
 
 const UserProfile = () => {
-  const { user, role, permissions } = useAuth();
+  const { user, role, permissions, refreshUserProfile } = useAuth();
   const { showSuccess, showError } = useNotificationContext();
   const [userPermissions, setUserPermissions] = useState(null);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [fathomApiKey, setFathomApiKey] = useState("");
   const [showApiKey, setShowApiKey] = useState(false);
+  const [profileImageUrl, setProfileImageUrl] = useState(
+    user?.profile_image_url || user?.profileImageUrl || ""
+  );
+  const [uploadingAvatar, setUploadingAvatar] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
       loadUserPermissions();
       loadUserProfile();
+    }
+    if (user?.profile_image_url || user?.profileImageUrl) {
+      setProfileImageUrl(user.profile_image_url || user.profileImageUrl);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
@@ -27,6 +34,9 @@ const UserProfile = () => {
     try {
       const profile = await authAPI.getProfile();
       setFathomApiKey(profile.fathom_api_key || "");
+      if (profile.profile_image_url) {
+        setProfileImageUrl(profile.profile_image_url);
+      }
     } catch (error) {
       console.error("Error loading user profile:", error);
     }
@@ -59,6 +69,46 @@ const UserProfile = () => {
     }
   };
 
+  const handleAvatarUpload = async (event) => {
+    const file = event.target.files?.[0];
+    if (!file) {
+      return;
+    }
+
+    if (!file.type.startsWith("image/")) {
+      showError("Please select a valid image file.");
+      return;
+    }
+
+    const maxSize = 5 * 1024 * 1024;
+    if (file.size > maxSize) {
+      showError("Please choose an image smaller than 5 MB.");
+      return;
+    }
+
+    setUploadingAvatar(true);
+    try {
+      await authAPI.uploadProfileImage(file);
+      showSuccess("Profile image updated");
+      const updatedUser = await refreshUserProfile();
+      setProfileImageUrl(
+        updatedUser.profile_image_url || updatedUser.profileImageUrl || ""
+      );
+    } catch (error) {
+      console.error("Error uploading profile image:", error);
+      showError(error.message || "Failed to upload profile image");
+    } finally {
+      setUploadingAvatar(false);
+      event.target.value = "";
+    }
+  };
+
+  const avatarInitial =
+    user?.first_name?.charAt(0)?.toUpperCase() ||
+    user?.full_name?.charAt(0)?.toUpperCase() ||
+    user?.email?.charAt(0)?.toUpperCase() ||
+    "U";
+
   if (!user) {
     return (
       <DashboardLayout>
@@ -89,6 +139,41 @@ const UserProfile = () => {
         </div> */}
 
         <div className="profile-content">
+          <div className="profile-section profile-avatar-section">
+            <h3>Profile photo</h3>
+            <p className="section-description">
+              Upload a clear, square image (JPG or PNG, max 5 MB). This will be
+              shown across the dashboard instead of your initials.
+            </p>
+            <div className="profile-avatar-grid">
+              <div className="profile-avatar-preview">
+                {profileImageUrl ? (
+                  <img
+                    src={profileImageUrl}
+                    alt="Profile avatar"
+                    className="profile-avatar-image"
+                  />
+                ) : (
+                  <span className="profile-avatar-fallback">{avatarInitial}</span>
+                )}
+              </div>
+              <div className="profile-avatar-actions">
+                <label className="avatar-upload-button">
+                  {uploadingAvatar ? "Uploading..." : "Upload new photo"}
+                  <input
+                    type="file"
+                    accept="image/png, image/jpeg, image/webp"
+                    onChange={handleAvatarUpload}
+                    disabled={uploadingAvatar}
+                  />
+                </label>
+                <p className="avatar-upload-hint">
+                  Recommended 400x400px or larger. Supported formats: JPG, PNG,
+                  WebP.
+                </p>
+              </div>
+            </div>
+          </div>
           <div className="profile-section">
             <h3>User Information</h3>
             <div className="info-grid">

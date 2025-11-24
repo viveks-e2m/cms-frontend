@@ -374,7 +374,11 @@ export const authAPI = {
         first_name: data.user_metadata?.first_name || data.first_name,
         last_name: data.user_metadata?.last_name || data.last_name,
         full_name: data.user_metadata?.full_name || data.full_name,
-        ...data.user_metadata
+        profile_image_url: data.profile_image_url || data.user_metadata?.profile_image_url || null,
+        profile_image_path: data.profile_image_path || null,
+        fathom_api_key: data.fathom_api_key ?? data.user_metadata?.fathom_api_key,
+        role_details: data.role_details,
+        ...data.user_metadata,
       };
 
       // Cache the user data
@@ -437,7 +441,41 @@ export const authAPI = {
       const errorMessage = extractAuthError(error, 'Token refresh failed. Please sign in again.');
       throw new Error(errorMessage);
     }
-  }
+  },
+
+  uploadProfileAvatar: async (file) => {
+    if (!file) {
+      throw new Error('Please select an image to upload');
+    }
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await api.post('/auth/profile/avatar', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      });
+
+      const { success, data, error } = response.data;
+
+      if (!success) {
+        let errorMessage = 'Failed to upload profile image';
+        if (error) {
+          if (typeof error === 'string') {
+            errorMessage = error;
+          } else if (error.message) {
+            errorMessage = error.message;
+          }
+        }
+        throw new Error(errorMessage);
+      }
+
+      return data;
+    } catch (error) {
+      const errorMessage = extractAuthError(error, 'Failed to upload profile image. Please try again.');
+      throw new Error(errorMessage);
+    }
+  },
 };
 
 export default api;

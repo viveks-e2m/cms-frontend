@@ -53,6 +53,8 @@ export const AuthProvider = ({ children }) => {
       const userResponse = await authAPI.getCurrentUser();
       setUser(userResponse);
       setIsAuthenticated(true);
+      localStorage.setItem('user', JSON.stringify(userResponse));
+      setCachedUser(userResponse);
 
       // Get user permissions and role from RBAC service (will use cache if available)
       console.log('Loading RBAC data...');
@@ -92,12 +94,18 @@ export const AuthProvider = ({ children }) => {
       // Store tokens and user data
       localStorage.setItem('authToken', result.token);
       localStorage.setItem('refreshToken', result.refreshToken);
-      localStorage.setItem('user', JSON.stringify(result.user));
+
+      let enrichedUser = result.user;
+      try {
+        enrichedUser = await authAPI.getCurrentUser(true);
+      } catch (profileError) {
+        console.error('Failed to fetch enriched user profile after login:', profileError);
+      }
+
+      localStorage.setItem('user', JSON.stringify(enrichedUser));
+      setCachedUser(enrichedUser);
       
-      // Cache user data
-      setCachedUser(result.user);
-      
-      setUser(result.user);
+      setUser(enrichedUser);
       setIsAuthenticated(true);
       
       // Load RBAC data after login (force refresh to get fresh data)
@@ -152,6 +160,19 @@ export const AuthProvider = ({ children }) => {
       setRole(null);
       setPermissions([]);
       setIsAuthenticated(false);
+    }
+  };
+
+  const refreshUserProfile = async () => {
+    try {
+      const updatedUser = await authAPI.getCurrentUser(true);
+      setUser(updatedUser);
+      setCachedUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
+      return updatedUser;
+    } catch (error) {
+      console.error('Failed to refresh user profile:', error);
+      throw error;
     }
   };
 
@@ -215,6 +236,7 @@ export const AuthProvider = ({ children }) => {
     login,
     logout,
     signup,
+    refreshUserProfile,
     hasPermission,
     hasAnyPermission,
     hasAllPermissions,
