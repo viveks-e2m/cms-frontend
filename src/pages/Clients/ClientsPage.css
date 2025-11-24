@@ -3,7 +3,7 @@
   width: 100%;
   max-width: 1400px;
   margin: 0 auto;
-  padding: 0.5rem 1rem;
+  padding: 2rem;
 }
 
 /* Compact Controls Bar */
@@ -1369,6 +1369,10 @@
 }
 
 @media (max-width: 1024px) {
+  .clients-page {
+    padding: 1.5rem;
+  }
+
   .clients-grid {
     grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   }
@@ -1460,6 +1464,10 @@
 }
 
 @media (max-width: 768px) {
+  .clients-page {
+    padding: 1rem;
+  }
+
   .clients-grouped-container {
     gap: 1.25rem;
   }
