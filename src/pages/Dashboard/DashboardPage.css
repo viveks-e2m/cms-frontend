@@ -368,6 +368,11 @@
   padding: 1.5rem 2rem;
   background: linear-gradient(135deg, #f9fafb 0%, #f3f4f6 100%);
   border-bottom: 1px solid #e5e7eb;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  flex-wrap: wrap;
 }
 
 .section-header-content {
@@ -683,4 +688,40 @@
 
 .client-card-clickable:active {
   transform: translateY(-2px);
+}
+
+.calendar-section {
+  margin-top: 2rem;
+}
+
+.calendar-section .section-content-modern {
+  padding: 1.5rem;
+}
+
+.calendar-section-content {
+  background: #f9fafb;
+}
+
+.calendar-overdue-pill {
+  padding: 0.35rem 1rem;
+  border-radius: 9999px;
+  background: rgba(239, 68, 68, 0.1);
+  color: #b91c1c;
+  font-weight: 600;
+  font-size: 0.875rem;
+  border: 1px solid rgba(239, 68, 68, 0.2);
+}
+
+@media (max-width: 768px) {
+  .calendar-section {
+    margin-top: 1.5rem;
+  }
+
+  .calendar-section .section-content-modern {
+    padding: 1rem;
+  }
+
+  .calendar-overdue-pill {
+    margin-top: 1rem;
+  }
 }
