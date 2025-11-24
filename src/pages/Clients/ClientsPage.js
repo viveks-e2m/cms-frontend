@@ -435,17 +435,27 @@ const ClientsPage = () => {
   };
 
   const handleDeleteMeeting = async (meeting) => {
+    const meetingName = meeting.meeting_name || meeting.title || 'this meeting';
     if (
-      !window.confirm(`Are you sure you want to delete "${meeting.title}"?`)
+      !window.confirm(`Are you sure you want to delete "${meetingName}"?`)
     ) {
       return;
     }
 
     deleteMeetingMutation.mutate(meeting.id, {
       onSuccess: () => {
-        // Invalidate client details to refresh meetings list
-        queryClient.invalidateQueries({ queryKey: ['clients', 'meetings', selectedClient?.id] });
-        queryClient.invalidateQueries({ queryKey: ['meetings'] });
+        // Invalidate client overview to refresh meetings list
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.clients.overview(selectedClient?.id, clientActionItemsPageSize) 
+        });
+        // Also invalidate meetings list for this client
+        queryClient.invalidateQueries({ 
+          queryKey: queryKeys.meetings.list(selectedClient?.id) 
+        });
+        // If viewing meeting details, go back to list
+        if (meetingsView === 'details' && selectedMeeting?.id === meeting.id) {
+          handleBackToMeetings();
+        }
       },
     });
   };
