@@ -207,11 +207,10 @@
   width: 160px;
   height: 160px;
   border-radius: 32px;
-  background: linear-gradient(135deg, #6741ff 0%, #a855f7 100%);
+  background: linear-gradient(135deg, #D3D3D3 0%, #A9A9A9 100%);
   display: flex;
   align-items: center;
   justify-content: center;
-  box-shadow: 0 25px 40px rgba(111, 76, 255, 0.3);
   position: relative;
   overflow: hidden;
 }
@@ -363,41 +362,49 @@
   margin-top: 20px;
 }
 
-.btn-primary,
-.btn-secondary {
-  padding: 12px 20px;
+.user-profile-action-btn {
+  padding: 12px 24px;
   font-size: 0.95rem;
   font-weight: 600;
   border-radius: 12px;
-  border: none;
+  border: 2px solid transparent;
   cursor: pointer;
   transition: all 0.2s;
-  min-width: 140px;
+  min-width: 170px;
+  height: 48px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
 }
 
-.btn-primary {
+.user-profile-action-btn.primary {
   color: white;
-  box-shadow: 0 15px 30px rgba(67, 56, 202, 0.3);
+  background: #0f172a;
+  border-color: #0f172a;
+  box-shadow: 0 15px 30px rgba(15, 23, 42, 0.3);
 }
 
-.btn-primary:hover:not(:disabled) {
+.user-profile-action-btn.primary:hover:not(:disabled) {
   transform: translateY(-1px);
 }
 
-.btn-primary:disabled {
+.user-profile-action-btn.primary:disabled {
   opacity: 0.6;
   cursor: not-allowed;
   box-shadow: none;
 }
 
-.btn-secondary {
+.user-profile-action-btn.secondary {
   background: white;
   color: #0f172a;
-  border: 1px solid #cbd5f5;
+  border-color: #cbd5f5;
+  box-shadow: inset 0 0 0 1px rgba(203, 213, 245, 0.4);
 }
 
-.btn-secondary:hover:not(:disabled) {
+.user-profile-action-btn.secondary:hover:not(:disabled) {
   background: #f8fafc;
+  border-color: #94a3b8;
 }
 
 .info-grid {
@@ -596,8 +603,7 @@
     flex-direction: column;
   }
 
-  .btn-primary,
-  .btn-secondary {
+  .user-profile-action-btn {
     width: 100%;
   }
 }

@@ -18,6 +18,8 @@ const UserProfile = () => {
     user?.profile_image_url || user?.profileImageUrl || ""
   );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
+  const [hasSavedFathomKey, setHasSavedFathomKey] = useState(null);
+  const [registeringWebhook, setRegisteringWebhook] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -34,6 +36,7 @@ const UserProfile = () => {
     try {
       const profile = await authAPI.getProfile();
       setFathomApiKey(profile.fathom_api_key || "");
+      setHasSavedFathomKey(Boolean(profile.fathom_api_key));
       if (profile.profile_image_url) {
         setProfileImageUrl(profile.profile_image_url);
       }
@@ -61,11 +64,30 @@ const UserProfile = () => {
         fathom_api_key: fathomApiKey || null,
       });
       showSuccess("Profile updated successfully");
+      setHasSavedFathomKey(Boolean(fathomApiKey));
     } catch (error) {
       console.error("Error saving profile:", error);
       showError(error.message || "Failed to save profile");
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleWebhookSetup = async () => {
+    if (!hasSavedFathomKey) {
+      showError("Save your Fathom API key before creating a webhook.");
+      return;
+    }
+
+    try {
+      setRegisteringWebhook(true);
+      await authAPI.setupFathomWebhook();
+      showSuccess("Fathom webhook created successfully");
+    } catch (error) {
+      console.error("Error setting up Fathom webhook:", error);
+      showError(error.message || "Failed to create Fathom webhook");
+    } finally {
+      setRegisteringWebhook(false);
     }
   };
 
@@ -330,13 +352,25 @@ const UserProfile = () => {
               </div>
               <div className="profile-actions">
                 <button
-                  className="btn-primary"
+                  className="user-profile-action-btn primary"
                   onClick={handleSave}
                   disabled={saving}
                 >
                   {saving ? "Saving..." : "Save Changes"}
                 </button>
+                <button
+                  className="user-profile-action-btn secondary"
+                  onClick={handleWebhookSetup}
+                  disabled={!hasSavedFathomKey || registeringWebhook}
+                >
+                  {registeringWebhook ? "Creating webhook..." : "Create Fathom Webhook"}
+                </button>
               </div>
+              {hasSavedFathomKey === false && (
+                <p className="field-hint">
+                  Save your Fathom API key to enable automatic webhook setup.
+                </p>
+              )}
             </section>
           </div>
 

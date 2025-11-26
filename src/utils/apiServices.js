@@ -522,6 +522,12 @@ export const authAPI = {
     return handleApiResponse(response);
   },
 
+  // Register or refresh the user's Fathom webhook
+  setupFathomWebhook: async () => {
+    const response = await api.post("/auth/profile/fathom-webhook");
+    return handleApiResponse(response);
+  },
+
   // Upload profile image
   uploadProfileImage: async (file) => {
     if (!file) {
