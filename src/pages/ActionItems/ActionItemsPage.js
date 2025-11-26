@@ -27,6 +27,63 @@ import { openPointsAPI } from "../../utils/apiServices";
 
 import "./ActionItemsPage.css";
 
+const DUE_DATE_OPTIONS = [
+  { value: "all", label: "All Due Dates" },
+  { value: "specific", label: "Specific Date" },
+  { value: "range", label: "Date Range" },
+];
+
+const startOfDay = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(0, 0, 0, 0);
+  return d;
+};
+
+const endOfDay = (date) => {
+  if (!date) return null;
+  const d = new Date(date);
+  if (Number.isNaN(d.getTime())) return null;
+  d.setHours(23, 59, 59, 999);
+  return d;
+};
+
+const toISOStringSafe = (date) => {
+  if (!date) return null;
+  return date.toISOString();
+};
+
+const buildDueDateQueryParams = (mode, startDate, endDate) => {
+  const params = {};
+
+  switch (mode) {
+    case "specific": {
+      const singleStart = startOfDay(startDate);
+      if (singleStart) {
+        params.due_date_from = toISOStringSafe(singleStart);
+        params.due_date_to = toISOStringSafe(endOfDay(singleStart));
+      }
+      break;
+    }
+    case "range": {
+      const rangeStart = startOfDay(startDate);
+      const rangeEnd = endOfDay(endDate);
+      if (rangeStart) {
+        params.due_date_from = toISOStringSafe(rangeStart);
+      }
+      if (rangeEnd) {
+        params.due_date_to = toISOStringSafe(rangeEnd);
+      }
+      break;
+    }
+    default:
+      break;
+  }
+
+  return params;
+};
+
 const ActionItemsPage = () => {
   const location = useLocation();
   const { showSuccess, showError } = useNotificationContext();
@@ -39,12 +96,18 @@ const ActionItemsPage = () => {
   const [pendingClientFilter, setPendingClientFilter] = useState("all");
   const [pendingTaskOwnerFilter, setPendingTaskOwnerFilter] = useState("all");
   const [pendingAssigneeFilter, setPendingAssigneeFilter] = useState("all");
+  const [pendingDueDateFilter, setPendingDueDateFilter] = useState("all");
+  const [pendingDueDateStart, setPendingDueDateStart] = useState("");
+  const [pendingDueDateEnd, setPendingDueDateEnd] = useState("");
   
   // Applied filters (what gets sent to the API)
   const [appliedStatusFilter, setAppliedStatusFilter] = useState("all");
   const [appliedClientFilter, setAppliedClientFilter] = useState("all");
   const [appliedTaskOwnerFilter, setAppliedTaskOwnerFilter] = useState("all");
   const [appliedAssigneeFilter, setAppliedAssigneeFilter] = useState("all");
+  const [appliedDueDateFilter, setAppliedDueDateFilter] = useState("all");
+  const [appliedDueDateStart, setAppliedDueDateStart] = useState("");
+  const [appliedDueDateEnd, setAppliedDueDateEnd] = useState("");
   
   const [viewMode, setViewMode] = useState("kanban"); // "list" or "kanban"
   const [showActionItemForm, setShowActionItemForm] = useState(false);
@@ -63,6 +126,11 @@ const ActionItemsPage = () => {
 
   // Prepare filters for query (only use applied filters that backend supports)
   // Note: task_owner and assignee are filtered client-side since backend doesn't support them
+  const dueDateQueryParams = useMemo(
+    () => buildDueDateQueryParams(appliedDueDateFilter, appliedDueDateStart, appliedDueDateEnd),
+    [appliedDueDateFilter, appliedDueDateStart, appliedDueDateEnd]
+  );
+
   const currentFilters = useMemo(() => {
     const filters = {
       view: viewMode, // Add view parameter: "list" or "kanban"
@@ -78,9 +146,15 @@ const ActionItemsPage = () => {
       // Kanban view always fetches all statuses
       filters.status = "all";
     }
-    
+
+    if (dueDateQueryParams.due_date_from) {
+      filters.due_date_from = dueDateQueryParams.due_date_from;
+    }
+    if (dueDateQueryParams.due_date_to) {
+      filters.due_date_to = dueDateQueryParams.due_date_to;
+    }
     return filters;
-  }, [viewMode, appliedStatusFilter, appliedClientFilter, currentPage, pageSize]);
+  }, [viewMode, appliedStatusFilter, appliedClientFilter, currentPage, pageSize, dueDateQueryParams]);
 
   // Use cached queries
   const {
@@ -134,8 +208,54 @@ const ActionItemsPage = () => {
   useEffect(() => {
     setColumnPages({ open: 1, in_progress: 1, completed: 1 });
     setAdditionalColumnItems({ open: [], in_progress: [], completed: [] });
-  }, [appliedClientFilter, appliedStatusFilter, viewMode, pageSize]);
+  }, [
+    appliedClientFilter,
+    appliedStatusFilter,
+    appliedDueDateFilter,
+    appliedDueDateStart,
+    appliedDueDateEnd,
+    viewMode,
+    pageSize,
+  ]);
 
+
+  const dueDateMatcher = useMemo(() => {
+    const filterValue = appliedDueDateFilter;
+    if (filterValue === "all") {
+      return () => true;
+    }
+
+    const customStart = startOfDay(appliedDueDateStart);
+    const customEndForRange = endOfDay(appliedDueDateEnd);
+    const customEndForSpecific = endOfDay(appliedDueDateStart);
+
+    return (dueDateValue) => {
+      if (!dueDateValue) return false;
+
+      const parsedDueDate = new Date(dueDateValue);
+      if (Number.isNaN(parsedDueDate.getTime())) {
+        return false;
+      }
+
+      switch (filterValue) {
+        case "specific":
+          if (!customStart || !customEndForSpecific) return true;
+          return (
+            parsedDueDate >= customStart && parsedDueDate <= customEndForSpecific
+          );
+        case "range": {
+          const hasStart = !!customStart;
+          const hasEnd = !!customEndForRange;
+          if (!hasStart && !hasEnd) return true;
+          if (hasStart && parsedDueDate < customStart) return false;
+          if (hasEnd && parsedDueDate > customEndForRange) return false;
+          return true;
+        }
+        default:
+          return true;
+      }
+    };
+  }, [appliedDueDateFilter, appliedDueDateStart, appliedDueDateEnd]);
 
   // Process action items with client names and pagination data
   // Handle both list view (flat items) and kanban view (grouped by status)
@@ -259,13 +379,21 @@ const ActionItemsPage = () => {
         // Assignee filter (client-side)
         const matchesAssignee =
           appliedAssigneeFilter === "all" || item.assignee === appliedAssigneeFilter;
+
+        const matchesDueDate = dueDateMatcher(item.due_date);
         
         // Status filter: if applied, only show items matching that status in their respective column
         // This way all columns are visible, but only the matching column has items
         const matchesStatus =
           appliedStatusFilter === "all" || item.status === appliedStatusFilter;
         
-        return matchesSearch && matchesTaskOwner && matchesAssignee && matchesStatus;
+        return (
+          matchesSearch &&
+          matchesTaskOwner &&
+          matchesAssignee &&
+          matchesDueDate &&
+          matchesStatus
+        );
       });
       
       columns[status] = {
@@ -290,7 +418,7 @@ const ActionItemsPage = () => {
       columns,
       summary: filteredSummary,
     };
-  }, [actionItemsData, clientsData, viewMode, searchTerm, appliedStatusFilter, appliedTaskOwnerFilter, appliedAssigneeFilter, additionalColumnItems]);
+  }, [actionItemsData, clientsData, viewMode, searchTerm, appliedStatusFilter, appliedTaskOwnerFilter, appliedAssigneeFilter, additionalColumnItems, dueDateMatcher]);
 
   const handleRefresh = async () => {
     try {
@@ -322,10 +450,16 @@ const ActionItemsPage = () => {
     setPendingClientFilter("all");
     setPendingTaskOwnerFilter("all");
     setPendingAssigneeFilter("all");
+    setPendingDueDateFilter("all");
+    setPendingDueDateStart("");
+    setPendingDueDateEnd("");
     setAppliedStatusFilter("all");
     setAppliedClientFilter("all");
     setAppliedTaskOwnerFilter("all");
     setAppliedAssigneeFilter("all");
+    setAppliedDueDateFilter("all");
+    setAppliedDueDateStart("");
+    setAppliedDueDateEnd("");
     setCurrentPage(1); // Reset to first page when clearing filters
     // Reset column pages and additional items when clearing filters
     setColumnPages({ open: 1, in_progress: 1, completed: 1 });
@@ -333,11 +467,28 @@ const ActionItemsPage = () => {
   };
   
   const handleApplyFilters = () => {
+    if (pendingDueDateFilter === "specific" && !pendingDueDateStart) {
+      showError("Please select a date for the Specific Date filter.");
+      return;
+    }
+
+    if (
+      pendingDueDateFilter === "range" &&
+      !pendingDueDateStart &&
+      !pendingDueDateEnd
+    ) {
+      showError("Please select at least a start or end date for the Date Range filter.");
+      return;
+    }
+
     // Apply pending filters to the actual filters used for API calls
     setAppliedStatusFilter(pendingStatusFilter);
     setAppliedClientFilter(pendingClientFilter);
     setAppliedTaskOwnerFilter(pendingTaskOwnerFilter);
     setAppliedAssigneeFilter(pendingAssigneeFilter);
+    setAppliedDueDateFilter(pendingDueDateFilter);
+    setAppliedDueDateStart(pendingDueDateStart);
+    setAppliedDueDateEnd(pendingDueDateEnd);
     setCurrentPage(1); // Reset to first page when applying filters
     // Reset column pages and additional items when applying new filters
     setColumnPages({ open: 1, in_progress: 1, completed: 1 });
@@ -362,12 +513,18 @@ const ActionItemsPage = () => {
       
       // Prepare filters for the load more request
       // Use list view with specific status to fetch only that status's items
+      const loadMoreDueDateParams = buildDueDateQueryParams(
+        appliedDueDateFilter,
+        appliedDueDateStart,
+        appliedDueDateEnd
+      );
       const loadMoreFilters = {
         view: "list", // Use list view to get items for specific status
         status: status, // Fetch only this specific status
         client_id: appliedClientFilter !== "all" ? appliedClientFilter : undefined,
         page: nextPage,
         page_size: pageSize,
+        ...loadMoreDueDateParams,
       };
 
       // Fetch next page for this column
@@ -400,6 +557,7 @@ const ActionItemsPage = () => {
     appliedClientFilter !== "all" ? appliedClientFilter : null,
     appliedTaskOwnerFilter !== "all" ? appliedTaskOwnerFilter : null,
     appliedAssigneeFilter !== "all" ? appliedAssigneeFilter : null,
+    appliedDueDateFilter !== "all" ? appliedDueDateFilter : null,
   ].filter(Boolean).length;
 
   const handleStatusFilterChange = (newStatus) => {
@@ -418,6 +576,10 @@ const ActionItemsPage = () => {
     setPendingAssigneeFilter(newAssigneeId);
   };
 
+  const handleDueDateFilterChange = (newDueDate) => {
+    setPendingDueDateFilter(newDueDate);
+  };
+
   const handleAddActionItem = () => {
     setShowActionItemForm(true);
   };
@@ -428,6 +590,9 @@ const ActionItemsPage = () => {
     setPendingClientFilter(appliedClientFilter);
     setPendingTaskOwnerFilter(appliedTaskOwnerFilter);
     setPendingAssigneeFilter(appliedAssigneeFilter);
+    setPendingDueDateFilter(appliedDueDateFilter);
+    setPendingDueDateStart(appliedDueDateStart);
+    setPendingDueDateEnd(appliedDueDateEnd);
     setShowFilterPopup(true);
   };
 
@@ -453,8 +618,10 @@ const ActionItemsPage = () => {
     const matchesAssignee =
       appliedAssigneeFilter === "all" || item.assignee === appliedAssigneeFilter;
 
+    const matchesDueDate = dueDateMatcher(item.due_date);
+
     // Apply search filter and additional client-side filters
-    return matchesSearch && matchesTaskOwner && matchesAssignee;
+    return matchesSearch && matchesTaskOwner && matchesAssignee && matchesDueDate;
   });
 
   if (loading) {
@@ -632,6 +799,52 @@ const ActionItemsPage = () => {
                         </option>
                       ))}
                     </select>
+                  </div>
+                  <div className="filter-field">
+                    <label>Due Date</label>
+                    <select
+                      className="filter-popup-select"
+                      value={pendingDueDateFilter}
+                      onChange={(e) => handleDueDateFilterChange(e.target.value)}
+                    >
+                      {DUE_DATE_OPTIONS.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </select>
+                    {pendingDueDateFilter === "specific" && (
+                      <div className="filter-date-inputs">
+                        <div className="filter-date-input">
+                          <label className="filter-date-label">Select Date</label>
+                          <input
+                            type="date"
+                            value={pendingDueDateStart}
+                            onChange={(e) => setPendingDueDateStart(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
+                    {pendingDueDateFilter === "range" && (
+                      <div className="filter-date-inputs">
+                        <div className="filter-date-input">
+                          <label className="filter-date-label">Start Date</label>
+                          <input
+                            type="date"
+                            value={pendingDueDateStart}
+                            onChange={(e) => setPendingDueDateStart(e.target.value)}
+                          />
+                        </div>
+                        <div className="filter-date-input">
+                          <label className="filter-date-label">End Date</label>
+                          <input
+                            type="date"
+                            value={pendingDueDateEnd}
+                            onChange={(e) => setPendingDueDateEnd(e.target.value)}
+                          />
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
                 <div className="filter-popup-footer">
