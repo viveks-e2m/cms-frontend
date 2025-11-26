@@ -34,6 +34,7 @@ import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import ClientForm from "../../components/Clients/ClientForm";
 import ClientNotes from "../../components/Clients/ClientNotes/ClientNotes";
 import ClientAvatar from "../../components/UI/ClientAvatar";
+import MonthlySummaryCueCard from "../../components/Clients/MonthlySummaryCueCard/MonthlySummaryCueCard";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -227,6 +228,16 @@ const ClientsPage = () => {
 
   const overviewMeetings = clientOverview?.meetings || [];
   const overviewActionItems = clientOverview?.action_items;
+  const overviewActionItemsList = useMemo(() => {
+    if (!overviewActionItems) return [];
+    if (Array.isArray(overviewActionItems)) {
+      return overviewActionItems;
+    }
+    if (Array.isArray(overviewActionItems.items)) {
+      return overviewActionItems.items;
+    }
+    return [];
+  }, [overviewActionItems]);
 
   const currentActionItemsData =
     clientActionItemsPage === 1
@@ -234,7 +245,11 @@ const ClientsPage = () => {
       : paginatedActionItemsData;
 
   const currentActionItemsList =
-    currentActionItemsData?.items ?? currentActionItemsData ?? [];
+    clientActionItemsPage === 1
+      ? overviewActionItemsList
+      : (paginatedActionItemsData?.items ??
+        paginatedActionItemsData ??
+        []);
 
   const actionItemsPageMeta = currentActionItemsData?.items
     ? {
@@ -280,6 +295,126 @@ const ClientsPage = () => {
     secretsData,
     currentActionItemsList,
   ]);
+
+  const monthlySummary = useMemo(() => {
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+    const endOfLastMonth = new Date(
+      now.getFullYear(),
+      now.getMonth(),
+      0,
+      23,
+      59,
+      59,
+      999
+    );
+
+    const parseDate = (value) => {
+      if (!value) return null;
+      if (value instanceof Date && !Number.isNaN(value.getTime())) {
+        return value;
+      }
+      const parsed = new Date(value);
+      return Number.isNaN(parsed.getTime()) ? null : parsed;
+    };
+
+    const meetings = Array.isArray(overviewMeetings) ? overviewMeetings : [];
+    const meetingDates = meetings
+      .map((meeting) =>
+        parseDate(
+          meeting.meeting_date ||
+            meeting.meetingDate ||
+            meeting.start_time ||
+            meeting.startTime ||
+            meeting.created_at ||
+            meeting.createdAt ||
+            meeting.date
+        )
+      )
+      .filter(Boolean);
+
+    const meetingsThisMonth = meetingDates.filter(
+      (date) => date >= startOfMonth
+    ).length;
+    const meetingsLastMonth = meetingDates.filter(
+      (date) => date >= startOfLastMonth && date <= endOfLastMonth
+    ).length;
+    const meetingTrend = meetingsThisMonth - meetingsLastMonth;
+
+    const actionItemsSource = overviewActionItemsList || [];
+    const monthlyActionItems = actionItemsSource.filter((item) => {
+      const createdDate = parseDate(
+        item.created_at ||
+          item.createdAt ||
+          item.created_on ||
+          item.createdOn ||
+          item.updated_at ||
+          item.updatedAt ||
+          item.due_date ||
+          item.dueDate
+      );
+      return createdDate && createdDate >= startOfMonth;
+    });
+
+    const hasMonthlyData =
+      monthlyActionItems.length > 0 || actionItemsSource.length === 0;
+    const scopedItems = hasMonthlyData ? monthlyActionItems : actionItemsSource;
+
+    const statusCounts = scopedItems.reduce(
+      (acc, item) => {
+        const status = (item.status || "open").toLowerCase();
+        if (status === "completed") acc.completed += 1;
+        else if (status === "in_progress") acc.inProgress += 1;
+        else acc.open += 1;
+
+        const dueDate = item.due_date || item.dueDate;
+        if (dueDate && status !== "completed") {
+          const parsedDue = parseDate(dueDate);
+          if (parsedDue && parsedDue < now) {
+            acc.overdue += 1;
+          }
+        }
+        return acc;
+      },
+      { open: 0, inProgress: 0, completed: 0, overdue: 0 }
+    );
+
+    const totalActionItems = scopedItems.length;
+    const completionRate =
+      totalActionItems > 0
+        ? Math.round((statusCounts.completed / totalActionItems) * 100)
+        : 0;
+
+    const monthLabel = now.toLocaleString("en-US", {
+      month: "long",
+      year: "numeric",
+    });
+
+    const statusKey =
+      normalizeStatusValue(selectedClient?.status) || "pre-boarding";
+
+    return {
+      monthLabel,
+      statusLabel: getStatusLabel(selectedClient?.status),
+      statusKey,
+      actionItems: {
+        total: totalActionItems,
+        open: statusCounts.open,
+        inProgress: statusCounts.inProgress,
+        completed: statusCounts.completed,
+        overdue: statusCounts.overdue,
+        completionRate,
+        scopeLabel: hasMonthlyData ? "This month" : "Latest activity",
+        isMonthlyScope: hasMonthlyData,
+      },
+      meetings: {
+        thisMonth: meetingsThisMonth,
+        lastMonth: meetingsLastMonth,
+        trend: meetingTrend,
+      },
+    };
+  }, [overviewMeetings, overviewActionItemsList, selectedClient]);
 
   const loadingState = loadingClients || loadingUsers;
   const detailsLoadingState =
@@ -661,7 +796,7 @@ const ClientsPage = () => {
     return normalizedStatus || "pre-boarding";
   };
 
-  const getStatusLabel = (status) => {
+  function getStatusLabel(status) {
     switch (normalizeStatusValue(status)) {
       case "pre-boarding":
         return "Pre-boarding";
@@ -676,7 +811,7 @@ const ClientsPage = () => {
       default:
         return "Pre-boarding";
     }
-  };
+  }
 
   const getUserName = (userId, userNameField) => {
     // If user name is provided directly from backend, use it (check for non-empty string)
@@ -919,407 +1054,422 @@ const ClientsPage = () => {
                   >
                     <div className="overview-tab">
                       {/* Main Content Grid */}
-                      <div className="overview-cards">
-                        <div className="overview-card info-card">
-                          <div className="card-header">
-                            <PersonIcon className="card-header-icon" />
-                            <h3>Client Information</h3>
+                      <div className="overview-layout">
+                        <div className="overview-row">
+                          <div className="overview-column">
+                            <MonthlySummaryCueCard
+                              summary={monthlySummary}
+                              onActionItemsClick={() => setActiveTab("action-items")}
+                              onMeetingsClick={() => setActiveTab("meetings")}
+                            />
                           </div>
-                          <div className="info-grid">
-                            <div className="client-info-item">
-                              <div className="info-item-icon-wrapper">
-                                <PersonIcon className="info-icon" />
+                          <div className="overview-column">
+                            <div className="overview-card info-card">
+                              <div className="card-header">
+                                <PersonIcon className="card-header-icon" />
+                                <h3>Client Information</h3>
                               </div>
-                              <div className="info-item-content">
-                                <label>Name</label>
-                                <span>
-                                  {selectedClient.name || "Not provided"}
-                                </span>
-                              </div>
-                            </div>
-
-                            {selectedClient.website && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <WebsiteIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Website</label>
-                                  <span>
-                                    <a
-                                      href={selectedClient.website}
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="website-link"
-                                    >
-                                      {selectedClient.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
-                                    </a>
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            <div className="client-info-item">
-                              <div className="info-item-icon-wrapper">
-                                <AccountManagerIcon className="info-icon" />
-                              </div>
-                              <div className="info-item-content">
-                                <label>Account Manager</label>
-                                <span>
-                                  {getAccountManagerName(selectedClient) || "Not assigned"}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="client-info-item">
-                              <div className="info-item-icon-wrapper">
-                                <AdoptionSpecialistIcon className="info-icon" />
-                              </div>
-                              <div className="info-item-content">
-                                <label>Adoption Specialist</label>
-                                <span>
-                                  {getAdoptionSpecialistName(selectedClient) || "Not assigned"}
-                                </span>
-                              </div>
-                            </div>
-
-                            {(clientDetails?.plan_details ||
-                              selectedClient.plan_details) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <PlanIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Plan Details</label>
-                                  <span>
-                                    {(clientDetails?.plan_details ||
-                                      selectedClient.plan_details)
-                                      ?.replace(/_/g, " ")
-                                      ?.replace(/AI /g, "AI ")}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {(clientDetails?.communication_tool ||
-                              selectedClient.communication_tool) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <CommunicationIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Communication Tool</label>
-                                  <span>
-                                    {clientDetails?.communication_tool ||
-                                      selectedClient.communication_tool}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {(clientDetails?.ai_executor ||
-                              clientDetails?.ai_executor_name ||
-                              selectedClient.ai_executor ||
-                              selectedClient.ai_executor_name) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <AIExecutorIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>AI Executor</label>
-                                  <span>
-                                    {getUserName(
-                                      clientDetails?.ai_executor ||
-                                        selectedClient.ai_executor,
-                                      clientDetails?.ai_executor_name ||
-                                        selectedClient.ai_executor_name
-                                    ) || "Not assigned"}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
-
-                            {Array.isArray(selectedClient.interns) && selectedClient.interns.length > 0 && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <InternIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Interns</label>
-                                  <div className="assignment-chip-list">
-                                    {selectedClient.interns.map((internId) => (
-                                      <span key={internId} className="assignment-chip">
-                                        {getUserName(internId) || `Unknown (${internId.slice(0, 8)}...)`}
-                                      </span>
-                                    ))}
+                              <div className="info-grid">
+                                <div className="client-info-item">
+                                  <div className="info-item-icon-wrapper">
+                                    <PersonIcon className="info-icon" />
+                                  </div>
+                                  <div className="info-item-content">
+                                    <label>Name</label>
+                                    <span>
+                                      {selectedClient.name || "Not provided"}
+                                    </span>
                                   </div>
                                 </div>
-                              </div>
-                            )}
 
-                            {(clientDetails?.assessment_start_date ||
-                              clientDetails?.assessment_end_date ||
-                              selectedClient.assessment_start_date ||
-                              selectedClient.assessment_end_date) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <DateIcon className="info-icon" />
+                                {selectedClient.website && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <WebsiteIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Website</label>
+                                      <span>
+                                        <a
+                                          href={selectedClient.website}
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="website-link"
+                                        >
+                                          {selectedClient.website.replace(/^https?:\/\//, '').replace(/\/$/, '')}
+                                        </a>
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                <div className="client-info-item">
+                                  <div className="info-item-icon-wrapper">
+                                    <AccountManagerIcon className="info-icon" />
+                                  </div>
+                                  <div className="info-item-content">
+                                    <label>Account Manager</label>
+                                    <span>
+                                      {getAccountManagerName(selectedClient) || "Not assigned"}
+                                    </span>
+                                  </div>
                                 </div>
-                                <div className="info-item-content">
-                                  <label>Assessment Period</label>
-                                  <span>
-                                    {(() => {
-                                      const start =
-                                        clientDetails?.assessment_start_date ||
-                                        selectedClient.assessment_start_date;
-                                      const end =
-                                        clientDetails?.assessment_end_date ||
-                                        selectedClient.assessment_end_date;
-                                      if (start && end) {
-                                        return `${new Date(start).toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
+
+                                <div className="client-info-item">
+                                  <div className="info-item-icon-wrapper">
+                                    <AdoptionSpecialistIcon className="info-icon" />
+                                  </div>
+                                  <div className="info-item-content">
+                                    <label>Adoption Specialist</label>
+                                    <span>
+                                      {getAdoptionSpecialistName(selectedClient) || "Not assigned"}
+                                    </span>
+                                  </div>
+                                </div>
+
+                                {(clientDetails?.plan_details ||
+                                  selectedClient.plan_details) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <PlanIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Plan Details</label>
+                                      <span>
+                                        {(clientDetails?.plan_details ||
+                                          selectedClient.plan_details)
+                                          ?.replace(/_/g, " ")
+                                          ?.replace(/AI /g, "AI ")}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(clientDetails?.communication_tool ||
+                                  selectedClient.communication_tool) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <CommunicationIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Communication Tool</label>
+                                      <span>
+                                        {clientDetails?.communication_tool ||
+                                          selectedClient.communication_tool}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(clientDetails?.ai_executor ||
+                                  clientDetails?.ai_executor_name ||
+                                  selectedClient.ai_executor ||
+                                  selectedClient.ai_executor_name) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <AIExecutorIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>AI Executor</label>
+                                      <span>
+                                        {getUserName(
+                                          clientDetails?.ai_executor ||
+                                            selectedClient.ai_executor,
+                                          clientDetails?.ai_executor_name ||
+                                            selectedClient.ai_executor_name
+                                        ) || "Not assigned"}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {Array.isArray(selectedClient.interns) && selectedClient.interns.length > 0 && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <InternIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Interns</label>
+                                      <div className="assignment-chip-list">
+                                        {selectedClient.interns.map((internId) => (
+                                          <span key={internId} className="assignment-chip">
+                                            {getUserName(internId) || `Unknown (${internId.slice(0, 8)}...)`}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </div>
+                                )}
+
+                                {(clientDetails?.assessment_start_date ||
+                                  clientDetails?.assessment_end_date ||
+                                  selectedClient.assessment_start_date ||
+                                  selectedClient.assessment_end_date) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <DateIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Assessment Period</label>
+                                      <span>
+                                        {(() => {
+                                          const start =
+                                            clientDetails?.assessment_start_date ||
+                                            selectedClient.assessment_start_date;
+                                          const end =
+                                            clientDetails?.assessment_end_date ||
+                                            selectedClient.assessment_end_date;
+                                          if (start && end) {
+                                            return `${new Date(start).toLocaleDateString(
+                                              "en-US",
+                                              {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              }
+                                            )} - ${new Date(end).toLocaleDateString(
+                                              "en-US",
+                                              {
+                                                month: "short",
+                                                day: "numeric",
+                                                year: "numeric",
+                                              }
+                                            )}`;
                                           }
-                                        )} - ${new Date(end).toLocaleDateString(
-                                          "en-US",
-                                          {
-                                            month: "short",
-                                            day: "numeric",
-                                            year: "numeric",
+                                          if (start) {
+                                            return `From ${new Date(
+                                              start
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}`;
                                           }
-                                        )}`;
-                                      }
-                                      if (start) {
-                                        return `From ${new Date(
-                                          start
-                                        ).toLocaleDateString("en-US", {
-                                          month: "short",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}`;
-                                      }
-                                      if (end) {
-                                        return `Until ${new Date(
-                                          end
-                                        ).toLocaleDateString("en-US", {
-                                          month: "short",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}`;
-                                      }
-                                      return null;
-                                    })()}
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                                          if (end) {
+                                            return `Until ${new Date(
+                                              end
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}`;
+                                          }
+                                          return null;
+                                        })()}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
 
-                            {(clientDetails?.document_link ||
-                              selectedClient.document_link) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <LinkIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Drive Link</label>
-                                  <span>
-                                    <a
-                                      href={
-                                        clientDetails?.document_link ||
-                                        selectedClient.document_link
-                                      }
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="website-link"
-                                    >
-                                      View Drive
-                                    </a>
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                                {(clientDetails?.document_link ||
+                                  selectedClient.document_link) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <LinkIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Drive Link</label>
+                                      <span>
+                                        <a
+                                          href={
+                                            clientDetails?.document_link ||
+                                            selectedClient.document_link
+                                          }
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="website-link"
+                                        >
+                                          View Drive
+                                        </a>
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
 
-                            {(clientDetails?.task_audit_sheet_link ||
-                              selectedClient.task_audit_sheet_link) && (
-                              <div className="client-info-item">
-                                <div className="info-item-icon-wrapper">
-                                  <AuditIcon className="info-icon" />
-                                </div>
-                                <div className="info-item-content">
-                                  <label>Task Audit Sheet</label>
-                                  <span>
-                                    <a
-                                      href={
-                                        clientDetails?.task_audit_sheet_link ||
-                                        selectedClient.task_audit_sheet_link
-                                      }
-                                      target="_blank"
-                                      rel="noopener noreferrer"
-                                      className="website-link"
-                                    >
-                                      View Audit Sheet
-                                    </a>
-                                  </span>
-                                </div>
-                              </div>
-                            )}
+                                {(clientDetails?.task_audit_sheet_link ||
+                                  selectedClient.task_audit_sheet_link) && (
+                                  <div className="client-info-item">
+                                    <div className="info-item-icon-wrapper">
+                                      <AuditIcon className="info-icon" />
+                                    </div>
+                                    <div className="info-item-content">
+                                      <label>Task Audit Sheet</label>
+                                      <span>
+                                        <a
+                                          href={
+                                            clientDetails?.task_audit_sheet_link ||
+                                            selectedClient.task_audit_sheet_link
+                                          }
+                                          target="_blank"
+                                          rel="noopener noreferrer"
+                                          className="website-link"
+                                        >
+                                          View Audit Sheet
+                                        </a>
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
 
-                            {(clientDetails?.last_renewal_date ||
-                              clientDetails?.next_renewal_date ||
-                              selectedClient.last_renewal_date ||
-                              selectedClient.next_renewal_date) && (
-                              <>
                                 {(clientDetails?.last_renewal_date ||
-                                  selectedClient.last_renewal_date) && (
-                                  <div className="client-info-item">
-                                    <div className="info-item-icon-wrapper">
-                                      <DateIcon className="info-icon" />
-                                    </div>
-                                    <div className="info-item-content">
-                                      <label>Last Renewal Date</label>
-                                      <span>
-                                        {new Date(
-                                          clientDetails?.last_renewal_date ||
-                                            selectedClient.last_renewal_date
-                                        ).toLocaleDateString("en-US", {
-                                          month: "short",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                )}
-                                {(clientDetails?.next_renewal_date ||
+                                  clientDetails?.next_renewal_date ||
+                                  selectedClient.last_renewal_date ||
                                   selectedClient.next_renewal_date) && (
-                                  <div className="client-info-item">
-                                    <div className="info-item-icon-wrapper">
-                                      <DateIcon className="info-icon" />
-                                    </div>
-                                    <div className="info-item-content">
-                                      <label>Next Renewal Date</label>
-                                      <span>
-                                        {new Date(
-                                          clientDetails?.next_renewal_date ||
-                                            selectedClient.next_renewal_date
-                                        ).toLocaleDateString("en-US", {
-                                          month: "short",
-                                          day: "numeric",
-                                          year: "numeric",
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
+                                  <>
+                                    {(clientDetails?.last_renewal_date ||
+                                      selectedClient.last_renewal_date) && (
+                                      <div className="client-info-item">
+                                        <div className="info-item-icon-wrapper">
+                                          <DateIcon className="info-icon" />
+                                        </div>
+                                        <div className="info-item-content">
+                                          <label>Last Renewal Date</label>
+                                          <span>
+                                            {new Date(
+                                              clientDetails?.last_renewal_date ||
+                                                selectedClient.last_renewal_date
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                    {(clientDetails?.next_renewal_date ||
+                                      selectedClient.next_renewal_date) && (
+                                      <div className="client-info-item">
+                                        <div className="info-item-icon-wrapper">
+                                          <DateIcon className="info-icon" />
+                                        </div>
+                                        <div className="info-item-content">
+                                          <label>Next Renewal Date</label>
+                                          <span>
+                                            {new Date(
+                                              clientDetails?.next_renewal_date ||
+                                                selectedClient.next_renewal_date
+                                            ).toLocaleDateString("en-US", {
+                                              month: "short",
+                                              day: "numeric",
+                                              year: "numeric",
+                                            })}
+                                          </span>
+                                        </div>
+                                      </div>
+                                    )}
+                                  </>
                                 )}
-                              </>
-                            )}
-                          </div>
-                        </div>
-
-                        {/* Recent Activity Section */}
-                        <div className="overview-card activity-card-main">
-                          <div className="card-header">
-                            <VideoCallIcon className="card-header-icon" />
-                            <h3>Recent Activity</h3>
-                            <button
-                              className="view-all-btn"
-                              onClick={() => setActiveTab("meetings")}
-                            >
-                              View All
-                            </button>
-                          </div>
-                          <div className="activity-content">
-                            {clientDetails?.meetings?.length > 0 ? (
-                              clientDetails.meetings
-                                .slice(0, 3)
-                                .map((meeting, index) => (
-                                  <div
-                                    key={meeting.id}
-                                    className="activity-item"
-                                    onClick={() => handleMeetingSelect(meeting)}
-                                  >
-                                    <div className="activity-item-bullet"></div>
-                                    <div className="activity-item-content">
-                                      <h5>
-                                        {meeting.meeting_name ||
-                                          meeting.title ||
-                                          `Meeting #${
-                                            meeting.id?.slice(-8) || "Unknown"
-                                          }`}
-                                      </h5>
-                                      <span className="activity-date">
-                                        {new Date(
-                                          meeting.created_at
-                                        ).toLocaleDateString('en-US', { 
-                                          month: 'short', 
-                                          day: 'numeric'
-                                        })}
-                                      </span>
-                                    </div>
-                                  </div>
-                                ))
-                            ) : (
-                              <div className="activity-empty">
-                                <VideoCallIcon className="empty-icon" />
-                                <p>No meetings yet</p>
                               </div>
-                            )}
+                            </div>
                           </div>
                         </div>
-
-                        {/* Recent Action Items Section */}
-                        <div className="overview-card action-items-card-main">
-                          <div className="card-header">
-                            <ActionItemsIcon className="card-header-icon" />
-                            <h3>Recent Action Items</h3>
-                            <button
-                              className="view-all-btn"
-                              onClick={() => setActiveTab("action-items")}
-                            >
-                              View All
-                            </button>
-                          </div>
-                          <div className="activity-content">
-                            {clientDetails?.actionItems?.length > 0 ? (
-                              clientDetails.actionItems
-                                .slice(0, 3)
-                                .map((item, index) => (
-                                  <div
-                                    key={item.id}
-                                    className="activity-item"
-                                    onClick={() => setActiveTab("action-items")}
-                                  >
-                                    <div className="activity-item-bullet"></div>
-                                    <div className="activity-item-content">
-                                      <h5>
-                                        {item.message || item.task || `Action Item #${item.id?.slice(-8) || "Unknown"}`}
-                                      </h5>
-                                      <div className="task-meta">
-                                        <span className={`status-badge status-${item.status || "open"}`}>
-                                          {item.status === "completed" ? "Done" : 
-                                           item.status === "in_progress" ? "In Progress" : "Open"}
-                                        </span>
-                                        {item.due_date && (
+                        <div className="overview-row">
+                          <div className="overview-column">
+                            {/* Recent Activity Section */}
+                            <div className="overview-card activity-card-main">
+                              <div className="card-header">
+                                <VideoCallIcon className="card-header-icon" />
+                                <h3>Recent Activity</h3>
+                                <button
+                                  className="view-all-btn"
+                                  onClick={() => setActiveTab("meetings")}
+                                >
+                                  View All
+                                </button>
+                              </div>
+                              <div className="activity-content">
+                                {clientDetails?.meetings?.length > 0 ? (
+                                  clientDetails.meetings
+                                    .slice(0, 3)
+                                    .map((meeting, index) => (
+                                      <div
+                                        key={meeting.id}
+                                        className="activity-item"
+                                        onClick={() => handleMeetingSelect(meeting)}
+                                      >
+                                        <div className="activity-item-bullet"></div>
+                                        <div className="activity-item-content">
+                                          <h5>
+                                            {meeting.meeting_name ||
+                                              meeting.title ||
+                                              `Meeting #${
+                                                meeting.id?.slice(-8) || "Unknown"
+                                              }`}
+                                          </h5>
                                           <span className="activity-date">
-                                            Due {new Date(item.due_date).toLocaleDateString('en-US', { 
+                                            {new Date(
+                                              meeting.created_at
+                                            ).toLocaleDateString('en-US', { 
                                               month: 'short', 
                                               day: 'numeric'
                                             })}
                                           </span>
-                                        )}
+                                        </div>
                                       </div>
-                                    </div>
+                                    ))
+                                ) : (
+                                  <div className="activity-empty">
+                                    <VideoCallIcon className="empty-icon" />
+                                    <p>No meetings yet</p>
                                   </div>
-                                ))
-                            ) : (
-                              <div className="activity-empty">
-                                <ActionItemsIcon className="empty-icon" />
-                                <p>No action items yet</p>
+                                )}
                               </div>
-                            )}
+                            </div>
+                          </div>
+                          <div className="overview-column">
+                            {/* Recent Action Items Section */}
+                            <div className="overview-card action-items-card-main">
+                              <div className="card-header">
+                                <ActionItemsIcon className="card-header-icon" />
+                                <h3>Recent Action Items</h3>
+                                <button
+                                  className="view-all-btn"
+                                  onClick={() => setActiveTab("action-items")}
+                                >
+                                  View All
+                                </button>
+                              </div>
+                              <div className="activity-content">
+                                {clientDetails?.actionItems?.length > 0 ? (
+                                  clientDetails.actionItems
+                                    .slice(0, 3)
+                                    .map((item, index) => (
+                                      <div
+                                        key={item.id}
+                                        className="activity-item"
+                                        onClick={() => setActiveTab("action-items")}
+                                      >
+                                        <div className="activity-item-bullet"></div>
+                                        <div className="activity-item-content">
+                                          <h5>
+                                            {item.message || item.task || `Action Item #${item.id?.slice(-8) || "Unknown"}`}
+                                          </h5>
+                                          <div className="task-meta">
+                                            <span className={`status-badge status-${item.status || "open"}`}>
+                                              {item.status === "completed" ? "Done" : 
+                                               item.status === "in_progress" ? "In Progress" : "Open"}
+                                            </span>
+                                            {item.due_date && (
+                                              <span className="activity-date">
+                                                Due {new Date(item.due_date).toLocaleDateString('en-US', { 
+                                                  month: 'short', 
+                                                  day: 'numeric'
+                                                })}
+                                              </span>
+                                            )}
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ))
+                                ) : (
+                                  <div className="activity-empty">
+                                    <ActionItemsIcon className="empty-icon" />
+                                    <p>No action items yet</p>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
                           </div>
                         </div>
                       </div>
