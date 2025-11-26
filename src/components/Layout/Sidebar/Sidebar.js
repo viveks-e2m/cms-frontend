@@ -170,10 +170,30 @@ const Sidebar = ({ isCollapsed, onToggle, isMobileOpen }) => {
       {/* User Profile Section */}
       <div className="sidebar-footer">
         <div className="sidebar-user-profile">
-          <div className="sidebar-user-avatar">
-            {user?.name
-              ? user.name.charAt(0).toUpperCase()
-              : user?.email?.charAt(0).toUpperCase() || "U"}
+          <div
+            className={`sidebar-user-avatar ${
+              user?.profile_image_url || user?.profileImageUrl ? "has-image" : ""
+            }`}
+          >
+            {user?.profile_image_url || user?.profileImageUrl ? (
+              <img
+                src={user.profile_image_url || user.profileImageUrl}
+                alt={`${user?.first_name || user?.full_name || user?.email || "User"} avatar`}
+                className="sidebar-user-avatar-image"
+                onError={(event) => {
+                  event.currentTarget.style.display = "none";
+                  event.currentTarget
+                    .closest(".sidebar-user-avatar")
+                    ?.classList.remove("has-image");
+                }}
+              />
+            ) : null}
+            <span className="sidebar-user-avatar-fallback">
+              {user?.first_name?.charAt(0)?.toUpperCase() ||
+                user?.full_name?.charAt(0)?.toUpperCase() ||
+                user?.email?.charAt(0)?.toUpperCase() ||
+                "U"}
+            </span>
           </div>
           {!isCollapsed && (
             <div className="sidebar-user-info">

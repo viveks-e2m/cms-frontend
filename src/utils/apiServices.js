@@ -521,6 +521,28 @@ export const authAPI = {
     const response = await api.put("/auth/profile", profileData);
     return handleApiResponse(response);
   },
+
+  // Register or refresh the user's Fathom webhook
+  setupFathomWebhook: async () => {
+    const response = await api.post("/auth/profile/fathom-webhook");
+    return handleApiResponse(response);
+  },
+
+  // Upload profile image
+  uploadProfileImage: async (file) => {
+    if (!file) {
+      throw new Error("Please select an image to upload");
+    }
+
+    const formData = new FormData();
+    formData.append("file", file);
+
+    const response = await api.post("/auth/profile/avatar", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    return handleApiResponse(response);
+  },
 };
 
 // Fathom API services

@@ -323,6 +323,29 @@
   position: relative;
 }
 
+.sidebar-user-avatar-image {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  object-position: center;
+  display: block;
+}
+
+.sidebar-user-avatar-fallback {
+  font-weight: 700;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.sidebar-user-avatar.has-image .sidebar-user-avatar-fallback {
+  display: none;
+}
+
 .sidebar-user-avatar::before {
   content: "";
   position: absolute;
