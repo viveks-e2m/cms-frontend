@@ -50,6 +50,21 @@ const MonthlySummaryCueCard = ({
   const dashOffset =
     circumference - (completionRate / 100) * circumference || circumference;
 
+  // Dynamic gradient colors based on completion
+  const getGradientColors = () => {
+    if (completionRate >= 75) {
+      return { start: "#10b981", end: "#059669" }; // Green
+    } else if (completionRate >= 50) {
+      return { start: "#3b82f6", end: "#2563eb" }; // Blue
+    } else if (completionRate >= 25) {
+      return { start: "#f59e0b", end: "#d97706" }; // Orange
+    } else {
+      return { start: "#ef4444", end: "#dc2626" }; // Red
+    }
+  };
+
+  const gradientColors = getGradientColors();
+
   const meetingTrend = meetings?.trend ?? 0;
   const trendPositive = meetingTrend > 0;
   const trendNeutral = meetingTrend === 0;
@@ -84,39 +99,39 @@ const MonthlySummaryCueCard = ({
 
       <div className="client-monthly-summary-card__body">
         <div className="client-monthly-summary-card__gauge">
-          <svg viewBox="0 0 120 120">
+          <svg viewBox="0 0 140 140">
             <defs>
               <linearGradient id="gaugeGradient" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stopColor="#6366f1" />
-                <stop offset="100%" stopColor="#8b5cf6" />
+                <stop offset="0%" stopColor={gradientColors.start} />
+                <stop offset="100%" stopColor={gradientColors.end} />
               </linearGradient>
             </defs>
             <circle
               className="client-monthly-summary-card__gauge-track"
-              cx="60"
-              cy="60"
+              cx="70"
+              cy="70"
               r={gaugeRadius}
               strokeWidth="10"
             />
             <circle
               className="client-monthly-summary-card__gauge-progress"
-              cx="60"
-              cy="60"
+              cx="70"
+              cy="70"
               r={gaugeRadius}
               strokeWidth="10"
               strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
             />
             <text
-              x="60"
-              y="56"
+              x="70"
+              y="63"
               className="client-monthly-summary-card__gauge-value"
             >
               {completionRate}%
             </text>
             <text
-              x="60"
-              y="72"
+              x="70"
+              y="82"
               className="client-monthly-summary-card__gauge-subtitle"
             >
               Completion
@@ -147,7 +162,7 @@ const MonthlySummaryCueCard = ({
             </div>
             <div className="client-monthly-summary-card__status-grid">
               <div className="client-monthly-summary-card__status-chip status-open">
-                <span>Open</span>
+                <span>To Do</span>
                 <strong>{actionItems?.open ?? 0}</strong>
               </div>
               <div className="client-monthly-summary-card__status-chip status-progress">
@@ -206,13 +221,6 @@ const MonthlySummaryCueCard = ({
                   </span>
                 </div>
               </div>
-              <button
-                type="button"
-                className="client-monthly-summary-card__link-btn"
-                onClick={handleMeetingsClick}
-              >
-                Review meetings
-              </button>
             </div>
           </div>
         </div>
