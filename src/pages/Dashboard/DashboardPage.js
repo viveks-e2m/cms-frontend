@@ -342,6 +342,10 @@ const DashboardPage = () => {
                   <span className="breakdown-label">Execution</span>
                   <span className="breakdown-value breakdown-success">{dashboardData.clientStats.active_clients}</span>
                 </div>
+                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('inactive')}>
+                  <span className="breakdown-label">Inactive</span>
+                  <span className="breakdown-value breakdown-secondary">{dashboardData.clientStats.inactive_clients}</span>
+                </div>
               </div>
             </div>
           </PermissionGuard>
