@@ -95,6 +95,7 @@ const ClientsPage = () => {
   // Client form state
   const [showClientForm, setShowClientForm] = useState(false);
   const [editingClient, setEditingClient] = useState(null);
+  const [clientFormMode, setClientFormMode] = useState("create");
   const [isLoadingClientForEdit, setIsLoadingClientForEdit] = useState(false);
 
   // Status group collapse state - inactive is collapsed by default
@@ -693,6 +694,7 @@ const ClientsPage = () => {
 
   const handleAddClient = () => {
     console.log("Add client button clicked"); // Debug log
+    setClientFormMode("create");
     setEditingClient(null);
     setShowClientForm(true);
     console.log("showClientForm set to true"); // Debug log
@@ -734,6 +736,7 @@ const ClientsPage = () => {
 
   const handleEditClient = async (client) => {
     if (!client?.id) return;
+    setClientFormMode("edit");
     try {
       // Prefer cached overview data when available to avoid extra network call
       const cachedClient = normalizeClientForForm(
@@ -761,12 +764,29 @@ const ClientsPage = () => {
   const handleClientFormSave = () => {
     setShowClientForm(false);
     setEditingClient(null);
+    setClientFormMode("create");
     // Cache will be invalidated by mutation hooks
   };
 
   const handleClientFormCancel = () => {
     setShowClientForm(false);
     setEditingClient(null);
+    setClientFormMode("create");
+  };
+
+  const handleViewClientDetails = () => {
+    if (!selectedClient) return;
+    const mergedData =
+      normalizeClientForForm(buildClientDataFromCache(selectedClient)) ||
+      normalizeClientForForm(selectedClient) ||
+      selectedClient;
+    if (mergedData) {
+      setEditingClient(mergedData);
+    } else {
+      setEditingClient(selectedClient);
+    }
+    setClientFormMode("view");
+    setShowClientForm(true);
   };
 
   const handleDeleteClient = async (client) => {
@@ -962,6 +982,16 @@ const ClientsPage = () => {
   }
 
   // Render client details view
+  const clientFormModal = (
+    <ClientForm
+      client={editingClient}
+      isOpen={showClientForm}
+      onSave={handleClientFormSave}
+      onCancel={handleClientFormCancel}
+      mode={clientFormMode}
+    />
+  );
+
   if (selectedClient) {
     return (
       <DashboardLayout>
@@ -970,15 +1000,37 @@ const ClientsPage = () => {
             <button className="back-btn" onClick={handleBackToList}>
               <ArrowBackIcon />
             </button>
-            <div className="client-details-title">
-              <ClientAvatar
-                client={selectedClient}
-                size="large"
-                className="client-avatar-large"
-              />
-              <div className="client-title-info">
-                <h1>{selectedClient.name || "Unnamed Client"}</h1>
-                <p>{selectedClient.email}</p>
+            <div className="client-details-title-row">
+              <div className="client-details-title">
+                <ClientAvatar
+                  client={selectedClient}
+                  size="large"
+                  className="client-avatar-large"
+                />
+                <div className="client-title-info">
+                  <h1>{selectedClient.name || "Unnamed Client"}</h1>
+                  <p>{selectedClient.email}</p>
+                </div>
+              </div>
+              <div className="client-header-actions">
+                <PermissionGuard permissions={["read_client"]}>
+                  <button
+                    className="client-header-action-btn"
+                    title="View client details"
+                    onClick={handleViewClientDetails}
+                  >
+                    <VisibilityIcon />
+                  </button>
+                </PermissionGuard>
+                <PermissionGuard permissions={["update_client"]}>
+                  <button
+                    className="client-header-action-btn"
+                    title="Edit client"
+                    onClick={() => handleEditClient(selectedClient)}
+                  >
+                    <EditIcon />
+                  </button>
+                </PermissionGuard>
               </div>
             </div>
           </div>
@@ -1631,6 +1683,7 @@ const ClientsPage = () => {
             onCancel={handleMeetingFormCancel}
             isOpen={showMeetingForm}
           />
+          {clientFormModal}
         </div>
       </DashboardLayout>
     );
@@ -2135,12 +2188,7 @@ const ClientsPage = () => {
         </div>
 
         {/* Client Form Modal - Available in both views */}
-        <ClientForm
-          client={editingClient}
-          isOpen={showClientForm}
-          onSave={handleClientFormSave}
-          onCancel={handleClientFormCancel}
-        />
+        {clientFormModal}
       </div>
     </DashboardLayout>
   );

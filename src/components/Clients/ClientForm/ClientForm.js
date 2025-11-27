@@ -37,7 +37,9 @@ const normalizeUserValue = (value) => {
   return "";
 };
 
-const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
+const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
+  const derivedMode = modeProp || (client ? "edit" : "create");
+  const isReadOnly = derivedMode === "view";
   const [formData, setFormData] = useState({
     name: "",
     website: "",
@@ -276,6 +278,10 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
+    if (isReadOnly) {
+      return;
+    }
+
     if (!validateForm()) {
       return;
     }
@@ -345,6 +351,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
   };
 
   const handleInternsChange = (internId) => {
+    if (isReadOnly) return;
     const currentInterns = formData.interns || [];
     const isSelected = currentInterns.includes(internId);
     
@@ -359,11 +366,13 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
 
   const removeIntern = (internId, e) => {
     e.stopPropagation();
+    if (isReadOnly) return;
     const currentInterns = formData.interns || [];
     handleInputChange("interns", currentInterns.filter(id => id !== internId));
   };
 
   const handleInputChange = (field, value) => {
+    if (isReadOnly) return;
     setFormData((prev) => ({
       ...prev,
       [field]: value,
@@ -389,11 +398,30 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
           <div className="modal-title">
             <BusinessIcon className="modal-icon" />
             <div>
-              <h3>{client ? "Edit Client" : "Add New Client"}</h3>
-              <p>Enter client information below</p>
+              <h3>
+                {isReadOnly
+                  ? "Client Details"
+                  : client
+                  ? "Edit Client"
+                  : "Add New Client"}
+              </h3>
+              <p>
+                {isReadOnly
+                  ? "Review client information"
+                  : "Enter client information below"}
+              </p>
             </div>
           </div>
-          <button className="close-btn" onClick={onCancel} disabled={createClientMutation.isPending || updateClientMutation.isPending}>
+          <button
+            className="close-btn"
+            onClick={onCancel}
+            disabled={
+              (!isReadOnly &&
+                (createClientMutation.isPending ||
+                  updateClientMutation.isPending)) ||
+              false
+            }
+          >
             <CloseIcon />
           </button>
         </div>
@@ -411,7 +439,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               placeholder="Enter client name"
               value={formData.name}
               onChange={(e) => handleInputChange("name", e.target.value)}
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
               maxLength={100}
             />
             {errors.name && (
@@ -431,7 +463,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               placeholder="https://example.com"
               value={formData.website}
               onChange={(e) => handleInputChange("website", e.target.value)}
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             />
             {errors.website && (
               <span className="error-message">{errors.website}</span>
@@ -451,7 +487,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               className="form-select"
               value={formData.status}
               onChange={(e) => handleInputChange("status", e.target.value)}
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             >
               <option value="pre-boarding">Pre-boarding</option>
               <option value="onboarding">Onboarding</option>
@@ -477,7 +517,12 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("account_manager", e.target.value)
               }
-              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                loadingUsers ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             >
               <option value="">
                 {client ? "Select Account Manager" : "Default to Current User"}
@@ -511,7 +556,12 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("adoption_specialist", e.target.value)
               }
-              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                loadingUsers ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             >
               <option value="">Select Adoption Specialist (Optional)</option>
               {usersByRole.adoption_specialist.map((user) => (
@@ -541,7 +591,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("plan_details", e.target.value)
               }
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             >
               <option value="">Select Plan (Optional)</option>
               <option value="AI_OLD_PLAN">AI Old Plan (5 hours/week)</option>
@@ -575,7 +629,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("communication_tool", e.target.value)
               }
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
               maxLength={100}
             />
             <div className="form-help">
@@ -593,7 +651,12 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               className="form-select"
               value={formData.ai_executor}
               onChange={(e) => handleInputChange("ai_executor", e.target.value)}
-              disabled={loadingUsers || createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                loadingUsers ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             >
               <option value="">Select AI Executor (Optional)</option>
               {usersByRole.ai_executor.map((user) => (
@@ -618,11 +681,24 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
             </label>
             <div className="multi-select-wrapper" ref={multiSelectRef}>
               <div 
-                className={`multi-select-input ${internsDropdownOpen ? 'open' : ''} ${errors.interns ? 'error' : ''} ${loadingUsers || createClientMutation.isPending || updateClientMutation.isPending ? 'disabled' : ''}`}
+                className={`multi-select-input ${internsDropdownOpen ? 'open' : ''} ${errors.interns ? 'error' : ''} ${
+                  isReadOnly ||
+                  loadingUsers ||
+                  createClientMutation.isPending ||
+                  updateClientMutation.isPending
+                    ? 'disabled'
+                    : ''
+                }`}
                 onClick={() => {
-                  if (!loadingUsers && !createClientMutation.isPending && !updateClientMutation.isPending) {
-                    setInternsDropdownOpen(!internsDropdownOpen);
+                  if (
+                    isReadOnly ||
+                    loadingUsers ||
+                    createClientMutation.isPending ||
+                    updateClientMutation.isPending
+                  ) {
+                    return;
                   }
+                    setInternsDropdownOpen(!internsDropdownOpen);
                 }}
               >
                 <div className="multi-select-value">
@@ -639,7 +715,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 <KeyboardArrowDownIcon className={`multi-select-arrow ${internsDropdownOpen ? 'open' : ''}`} />
               </div>
               
-              {internsDropdownOpen && (
+              {internsDropdownOpen && !isReadOnly && (
                 <>
                   <div 
                     className="multi-select-backdrop"
@@ -727,7 +803,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("assessment_start_date", e.target.value)
                 }
-                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
               />
               <div className="form-help">
                 Start date of the assessment period
@@ -749,7 +829,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("assessment_end_date", e.target.value)
                 }
-                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+                disabled={
+                  isReadOnly ||
+                  createClientMutation.isPending ||
+                  updateClientMutation.isPending
+                }
               />
               {errors.assessment_end_date && (
                 <span className="error-message">
@@ -774,7 +858,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("document_link", e.target.value)
               }
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             />
             {errors.document_link && (
               <span className="error-message">{errors.document_link}</span>
@@ -798,7 +886,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               onChange={(e) =>
                 handleInputChange("task_audit_sheet_link", e.target.value)
               }
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
             />
             {errors.task_audit_sheet_link && (
               <span className="error-message">
@@ -822,7 +914,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("last_renewal_date", e.target.value)
                 }
-                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                isReadOnly ||
+                createClientMutation.isPending ||
+                updateClientMutation.isPending
+              }
               />
               <div className="form-help">Date when the contract was last renewed</div>
             </div>
@@ -839,7 +935,11 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
                 onChange={(e) =>
                   handleInputChange("next_renewal_date", e.target.value)
                 }
-                disabled={createClientMutation.isPending || updateClientMutation.isPending}
+                disabled={
+                  isReadOnly ||
+                  createClientMutation.isPending ||
+                  updateClientMutation.isPending
+                }
               />
               <div className="form-help">Date when the contract is scheduled for renewal</div>
             </div>
@@ -850,27 +950,35 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               type="button"
               className="btn btn-secondary"
               onClick={onCancel}
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
+              disabled={
+                !isReadOnly &&
+                (createClientMutation.isPending ||
+                  updateClientMutation.isPending)
+              }
             >
-              Cancel
+              {isReadOnly ? "Close" : "Cancel"}
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createClientMutation.isPending || updateClientMutation.isPending}
-            >
-              {(createClientMutation.isPending || updateClientMutation.isPending) ? (
-                <>
-                  <div className="btn-spinner" />
-                  {client ? "Updating..." : "Creating..."}
-                </>
-              ) : (
-                <>
-                  <SaveIcon />
-                  {client ? "Update Client" : "Create Client"}
-                </>
-              )}
-            </button>
+            {!isReadOnly && (
+              <button
+                type="submit"
+                className="btn btn-primary"
+                disabled={
+                  createClientMutation.isPending || updateClientMutation.isPending
+                }
+              >
+                {createClientMutation.isPending || updateClientMutation.isPending ? (
+                  <>
+                    <div className="btn-spinner" />
+                    {client ? "Updating..." : "Creating..."}
+                  </>
+                ) : (
+                  <>
+                    <SaveIcon />
+                    {client ? "Update Client" : "Create Client"}
+                  </>
+                )}
+              </button>
+            )}
           </div>
         </form>
       </div>
