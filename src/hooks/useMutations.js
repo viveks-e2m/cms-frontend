@@ -171,12 +171,19 @@ export const useRemoveUserFromClient = () => {
 // Meeting mutations
 export const useCreateMeeting = (options = {}) => {
   const queryClient = useQueryClient();
-  const { showSuccess, showError } = useNotificationContext();
+  const { showSuccess, showError, showInfo } = useNotificationContext();
   const { suppressNotifications = false } = options;
 
   return useMutation({
     mutationFn: ({ clientId, meetingData }) => meetingAPI.create(clientId, meetingData),
     onSuccess: (data, variables) => {
+      if (data?.duplicate) {
+        if (!suppressNotifications) {
+          showInfo(data?.message || "A meeting with this share URL already exists.");
+        }
+        return;
+      }
+
       queryClient.invalidateQueries({ queryKey: queryKeys.meetings.list(variables.clientId) });
       queryClient.invalidateQueries({ queryKey: queryKeys.meetings.statistics() });
       queryClient.invalidateQueries({ queryKey: queryKeys.clients.all });
