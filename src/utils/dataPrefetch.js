@@ -19,15 +19,6 @@ import {
 const prefetchDashboardData = async (onProgress) => {
   const tasks = [
     {
-      name: 'Recent Clients',
-      fn: async () => {
-        // Fetch all clients and cache them
-        const allClients = await clientAPI.getAll();
-        queryClient.setQueryData(queryKeys.clients.list(), allClients);
-        return allClients;
-      },
-    },
-    {
       name: 'Client Statistics',
       fn: async () => {
         // Statistics are now calculated from clients data, so we just need to ensure clients are loaded
@@ -156,15 +147,6 @@ export const prefetchAllData = async (onProgress) => {
     {
       name: 'Dashboard Data',
       tasks: [
-        {
-          name: 'Recent Clients',
-          fn: async () => {
-            // Fetch all clients and cache them
-            const allClients = await clientAPI.getAll();
-            queryClient.setQueryData(queryKeys.clients.list(), allClients);
-            return allClients;
-          },
-        },
         {
           name: 'Client Statistics',
           fn: async () => {

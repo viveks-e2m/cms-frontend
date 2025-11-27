@@ -3,7 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../hooks/useAuth";
 import { useNotificationContext } from "../../contexts/NotificationContext";
 import {
-  useRecentClients,
   useClientStats,
   useMeetingStats,
   useActionItemStats,
@@ -11,7 +10,6 @@ import {
 } from "../../hooks/useQueries";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
-import ClientAvatar from "../../components/UI/ClientAvatar";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
@@ -19,7 +17,6 @@ import {
   VideoCall as VideoCallIcon,
   Assignment as AssignmentIcon,
   WavingHand as WavingHandIcon,
-  Schedule as ScheduleIcon,
   CalendarMonth as CalendarMonthIcon,
 } from "@mui/icons-material";
 import ClientRenewalCalendar from "../../components/Clients/ClientRenewalCalendar/ClientRenewalCalendar";
@@ -37,12 +34,6 @@ const DashboardPage = () => {
   } = useClients();
 
   // Use cached queries
-  const {
-    data: recentClientsData,
-    isLoading: loadingClients,
-    error: clientsError,
-  } = useRecentClients(10);
-
   const {
     data: clientStats,
     isLoading: loadingClientStats,
@@ -62,7 +53,6 @@ const DashboardPage = () => {
   } = useActionItemStats();
 
   const loading =
-    loadingClients ||
     loadingClientStats ||
     loadingMeetingStats ||
     loadingActionItemStats ||
@@ -71,7 +61,6 @@ const DashboardPage = () => {
   // Handle errors
   React.useEffect(() => {
     if (
-      clientsError ||
       clientStatsError ||
       meetingStatsError ||
       actionItemStatsError ||
@@ -80,7 +69,6 @@ const DashboardPage = () => {
       showError("Failed to load dashboard data. Please try again.");
     }
   }, [
-    clientsError,
     clientStatsError,
     meetingStatsError,
     actionItemStatsError,
@@ -90,8 +78,6 @@ const DashboardPage = () => {
 
   // Prepare dashboard data
   const dashboardData = React.useMemo(() => {
-    // Recent clients are already filtered (inactive clients excluded in the hook)
-    const clients = recentClientsData?.recent_clients || recentClientsData || [];
     const stats = clientStats || {};
     const meetings = meetingStats || {};
     const actionItems = openPointsStats || {};
@@ -102,7 +88,6 @@ const DashboardPage = () => {
     const totalClientsExcludingInactive = Math.max(0, totalWithInactive - inactiveCount);
 
     return {
-      clients,
       recentMeetings: [],
       clientStats: {
         total_clients: totalClientsExcludingInactive,
@@ -127,7 +112,7 @@ const DashboardPage = () => {
         last_week: meetings.last_week || 0,
       },
     };
-  }, [recentClientsData, clientStats, meetingStats, openPointsStats]);
+  }, [clientStats, meetingStats, openPointsStats]);
 
   const getUserDisplayName = () => {
     return user?.full_name || `${user?.first_name || ''} ${user?.last_name || ''}`.trim() || user?.name || user?.email?.split("@")[0] || "User";
@@ -442,71 +427,6 @@ const DashboardPage = () => {
             </div>
           </PermissionGuard>
         </div>
-
-        {/* Recent Clients Section */}
-        <PermissionGuard 
-          permissions={[PERMISSIONS.READ_CLIENT]}
-          fallback={
-            <div className="dashboard-section">
-              <div className="access-denied-message">
-                <p>You don't have permission to view client information.</p>
-              </div>
-            </div>
-          }
-        >
-          <div className="dashboard-section recent-clients-section">
-            <div className="section-header-modern">
-              <div className="section-header-content">
-                <PeopleIcon className="section-title-icon" />
-                <h3 className="section-title-modern">Recent {dashboardData.clients.length} Clients Added</h3>
-              </div>
-            </div>
-            <div className="section-content-modern">
-              {dashboardData.clients.length > 0 ? (
-                <div className="clients-grid-modern">
-                  {dashboardData.clients.map((client) => (
-                    <div 
-                      key={client.id} 
-                      className="client-card-modern client-card-clickable" 
-                      onClick={() => handleClientClick(client.id)}
-                    >
-                      <div className="client-card-avatar">
-                        <ClientAvatar 
-                          client={client} 
-                          size="medium"
-                        />
-                      </div>
-                      <div className="client-card-info">
-                        <h4 className="client-card-name">{client.name || "Unnamed Client"}</h4>
-                        {client.company && (
-                          <p className="client-card-company">{client.company}</p>
-                        )}
-                        <div className="client-card-footer">
-                          <ScheduleIcon className="client-card-date-icon" />
-                          <span className="client-card-date">
-                            Added {new Date(client.created_at || Date.now()).toLocaleDateString('en-US', { 
-                              month: 'short', 
-                              day: 'numeric', 
-                              year: 'numeric' 
-                            })}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className="empty-state-modern">
-                  <PeopleIcon className="empty-state-icon-modern" />
-                  <h4 className="empty-state-title-modern">No clients yet</h4>
-                  <p className="empty-state-description-modern">
-                    Start by adding your first client to see them here
-                  </p>
-                </div>
-              )}
-            </div>
-          </div>
-        </PermissionGuard>
 
         <PermissionGuard
           permissions={[PERMISSIONS.READ_CLIENT]}
