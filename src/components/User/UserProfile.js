@@ -20,8 +20,8 @@ const UserProfile = () => {
   );
   const [uploadingAvatar, setUploadingAvatar] = useState(false);
   const [hasSavedFathomKey, setHasSavedFathomKey] = useState(null);
-  const [registeringWebhook, setRegisteringWebhook] = useState(false);
   const [hasFathomWebhook, setHasFathomWebhook] = useState(false);
+  const [webhookUpdating, setWebhookUpdating] = useState(false);
 
   useEffect(() => {
     if (user?.id) {
@@ -76,22 +76,32 @@ const UserProfile = () => {
     }
   };
 
-  const handleWebhookSetup = async () => {
+  const handleWebhookToggle = async () => {
     if (!hasSavedFathomKey) {
-      showError("Save your Fathom API key before creating a webhook.");
+      showError("Save your Fathom API key before enabling syncing.");
       return;
     }
 
+    const enableSync = !hasFathomWebhook;
+
     try {
-      setRegisteringWebhook(true);
-      await authAPI.setupFathomWebhook();
-      showSuccess("Fathom webhook created successfully");
+      setWebhookUpdating(true);
+      if (enableSync) {
+        await authAPI.setupFathomWebhook();
+        showSuccess("Fathom syncing enabled");
+      } else {
+        await authAPI.deleteFathomWebhook();
+        showSuccess("Fathom syncing disabled");
+      }
       await loadUserProfile();
     } catch (error) {
-      console.error("Error setting up Fathom webhook:", error);
-      showError(error.message || "Failed to create Fathom webhook");
+      console.error("Error updating Fathom webhook:", error);
+      const fallbackMessage = enableSync
+        ? "Failed to enable Fathom syncing"
+        : "Failed to disable Fathom syncing";
+      showError(error.message || fallbackMessage);
     } finally {
-      setRegisteringWebhook(false);
+      setWebhookUpdating(false);
     }
   };
 
@@ -358,6 +368,29 @@ const UserProfile = () => {
                   </p>
                 </div>
                 <div className="profile-actions">
+                  <div className="profile-actions__left">
+                    <div className="fathom-toggle-group">
+                      <div className="fathom-toggle-inline">
+                        <label className={`switch ${hasFathomWebhook ? "on" : ""}`}>
+                          <input
+                            type="checkbox"
+                            checked={hasFathomWebhook}
+                            onChange={handleWebhookToggle}
+                            disabled={!hasSavedFathomKey || webhookUpdating}
+                          />
+                          <span className="slider" />
+                        </label>
+                        <span className="toggle-status">
+                          {webhookUpdating
+                            ? "Updating..."
+                            : hasFathomWebhook
+                            ? "Sync ON"
+                            : "Sync OFF"}
+                        </span>
+                      </div>
+                      <span className="toggle-helper">Sync meetings automatically</span>
+                    </div>
+                  </div>
                   <button
                     className="user-profile-action-btn primary"
                     onClick={handleSave}
@@ -365,17 +398,6 @@ const UserProfile = () => {
                   >
                     {saving ? "Saving..." : "Save Changes"}
                   </button>
-                  {hasFathomWebhook ? (
-                    <div className="webhook-pill">Webhook already set up</div>
-                  ) : (
-                    <button
-                      className="user-profile-action-btn secondary"
-                      onClick={handleWebhookSetup}
-                      disabled={!hasSavedFathomKey || registeringWebhook}
-                    >
-                      {registeringWebhook ? "Creating webhook..." : "Create Fathom Webhook"}
-                    </button>
-                  )}
                 </div>
                 {hasSavedFathomKey === false && (
                   <p className="field-hint">

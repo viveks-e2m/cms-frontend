@@ -530,6 +530,12 @@ export const authAPI = {
     return handleApiResponse(response);
   },
 
+  // Delete the user's Fathom webhook
+  deleteFathomWebhook: async () => {
+    const response = await api.delete("/auth/profile/fathom-webhook");
+    return handleApiResponse(response);
+  },
+
   // Upload profile image
   uploadProfileImage: async (file) => {
     if (!file) {
