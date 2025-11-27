@@ -98,7 +98,7 @@ const ClientsPage = () => {
   const [isLoadingClientForEdit, setIsLoadingClientForEdit] = useState(false);
 
   // Status group collapse state - inactive is collapsed by default
-  const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive"]));
+  const [collapsedStatusGroups, setCollapsedStatusGroups] = useState(new Set(["inactive", "paused"]));
 
   // Pagination state for client action items
   const [clientActionItemsPage, setClientActionItemsPage] = useState(1);
@@ -806,6 +806,8 @@ const ClientsPage = () => {
         return "Assessment";
       case "active":
         return "Execution";
+      case "paused":
+        return "Paused";
       case "inactive":
         return "Inactive";
       default:
@@ -914,8 +916,8 @@ const ClientsPage = () => {
     return grouped;
   }, [filteredAndSortedClients]);
 
-  // Order status groups: pre-boarding, onboarding, assessment, execution (active), inactive last
-  const statusOrder = ["pre-boarding", "onboarding", "assessment", "active", "inactive"];
+  // Order status groups: pre-boarding, onboarding, assessment, execution (active), paused, inactive last
+  const statusOrder = ["pre-boarding", "onboarding", "assessment", "active", "paused", "inactive"];
   const orderedStatusGroups = useMemo(() => {
     const ordered = [];
     const statusSet = new Set(Object.keys(clientsByStatus));
@@ -1747,6 +1749,7 @@ const ClientsPage = () => {
                     <option value="onboarding">Onboarding</option>
                     <option value="assessment">Assessment</option>
                     <option value="active">Execution</option>
+                    <option value="paused">Paused</option>
                     <option value="inactive">Inactive</option>
                   </select>
                 </div>
@@ -1814,13 +1817,15 @@ const ClientsPage = () => {
                     const clients = clientsByStatus[status] || [];
                     const isCollapsed = collapsedStatusGroups.has(status);
                     const isInactive = status === "inactive";
+                    const isPaused = status === "paused";
+                    const isCollapsibleStatus = isInactive || isPaused;
 
                   return (
                     <div key={status} className="status-group">
                       <div 
-                        className={`status-group-header ${isInactive ? 'inactive-group' : ''}`}
-                        onClick={isInactive ? () => toggleStatusGroup(status) : undefined}
-                        style={isInactive ? { cursor: 'pointer' } : {}}
+                        className={`status-group-header ${isCollapsibleStatus ? 'inactive-group' : ''}`}
+                        onClick={isCollapsibleStatus ? () => toggleStatusGroup(status) : undefined}
+                        style={isCollapsibleStatus ? { cursor: 'pointer' } : {}}
                       >
                         <div className="status-group-title">
                           <h3 className="status-group-name">
@@ -1830,7 +1835,7 @@ const ClientsPage = () => {
                             ({clients.length})
                           </span>
                         </div>
-                        {isInactive && (
+                        {isCollapsibleStatus && (
                           <button 
                             className="status-group-toggle"
                             onClick={(e) => {
@@ -1842,7 +1847,7 @@ const ClientsPage = () => {
                           </button>
                         )}
                       </div>
-                      {(!isInactive || !isCollapsed) && (
+                      {(!isCollapsibleStatus || !isCollapsed) && (
                         <div className="clients-grid">
                           {clients.map((client) => {
                             const clientStatus = getClientStatus(client);

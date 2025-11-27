@@ -457,6 +457,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel }) => {
               <option value="onboarding">Onboarding</option>
               <option value="assessment">Assessment</option>
               <option value="active">Execution</option>
+              <option value="paused">Paused</option>
               <option value="inactive">Inactive</option>
             </select>
             <div className="form-help">

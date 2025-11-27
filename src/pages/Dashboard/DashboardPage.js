@@ -95,6 +95,7 @@ const DashboardPage = () => {
         pre_boarding_clients: stats.pre_boarding_clients || 0,
         onboarding_clients: stats.onboarding_clients || 0,
         assessment_clients: stats.assessment_clients || 0,
+        paused_clients: stats.paused_clients || 0,
         inactive_clients: stats.inactive_clients || 0,
       },
       actionItemStats: {
@@ -341,6 +342,10 @@ const DashboardPage = () => {
                 <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('active')}>
                   <span className="breakdown-label">Execution</span>
                   <span className="breakdown-value breakdown-success">{dashboardData.clientStats.active_clients}</span>
+                </div>
+                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('paused')}>
+                  <span className="breakdown-label">Paused</span>
+                  <span className="breakdown-value breakdown-muted">{dashboardData.clientStats.paused_clients}</span>
                 </div>
                 <div className="breakdown-item breakdown-item-clickable" onClick={() => handleClientStatClick('inactive')}>
                   <span className="breakdown-label">Inactive</span>

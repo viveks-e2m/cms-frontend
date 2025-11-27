@@ -79,6 +79,12 @@
   border: 1px solid #bbf7d0;
 }
 
+.client-monthly-summary-card__status-pill.status-paused {
+  color: #5b21b6;
+  background: #f5f3ff;
+  border: 1px solid #ddd6fe;
+}
+
 .client-monthly-summary-card__status-pill.status-inactive {
   color: #dc2626;
   background: #fef2f2;

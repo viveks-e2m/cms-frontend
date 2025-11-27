@@ -278,6 +278,10 @@
   color: #8b5cf6;
 }
 
+.breakdown-muted {
+  color: #64748b;
+}
+
 .breakdown-danger {
   color: #ef4444;
 }

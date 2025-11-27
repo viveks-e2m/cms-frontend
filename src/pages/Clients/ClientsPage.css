@@ -885,6 +885,11 @@
   color: #059669;
 }
 
+.client-status-modern.paused {
+  background: rgba(99, 102, 241, 0.15);
+  color: #5b21b6;
+}
+
 .client-status-modern.inactive {
   background: rgba(239, 68, 68, 0.15);
   color: #DC2626;
@@ -1208,6 +1213,11 @@
 .client-status.active {
   background: rgba(16, 185, 129, 0.1);
   color: #10B981;
+}
+
+.client-status.paused {
+  background: rgba(99, 102, 241, 0.1);
+  color: #5b21b6;
 }
 
 .client-status.inactive {
@@ -3105,6 +3115,12 @@
   background: rgba(16, 185, 129, 0.1);
   color: #059669;
   border-color: rgba(16, 185, 129, 0.3);
+}
+
+.client-status.paused {
+  background: rgba(99, 102, 241, 0.1);
+  color: #5b21b6;
+  border-color: rgba(99, 102, 241, 0.3);
 }
 
 .client-status.inactive {

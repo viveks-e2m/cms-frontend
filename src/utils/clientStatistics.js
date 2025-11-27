@@ -16,6 +16,7 @@ export const calculateClientStatistics = (clients = []) => {
       pre_boarding_clients: 0,
       onboarding_clients: 0,
       assessment_clients: 0,
+      paused_clients: 0,
       inactive_clients: 0,
     };
   }
@@ -26,6 +27,7 @@ export const calculateClientStatistics = (clients = []) => {
     pre_boarding_clients: 0,
     onboarding_clients: 0,
     assessment_clients: 0,
+    paused_clients: 0,
     inactive_clients: 0,
   };
 
@@ -48,6 +50,9 @@ export const calculateClientStatistics = (clients = []) => {
         break;
       case 'assessment':
         stats.assessment_clients++;
+        break;
+      case 'paused':
+        stats.paused_clients++;
         break;
       case 'inactive':
         stats.inactive_clients++;
