@@ -150,6 +150,25 @@ const MeetingForm = ({
           meetingData,
         });
 
+        if (result?.duplicate) {
+          const duplicateMessage =
+            result?.message ||
+            "A meeting with this share URL already exists. Please use a different link.";
+
+          if (!meeting && formData.source === "fathom") {
+            setFathomStatus((prev) => ({
+              ...prev,
+              fetching: false,
+              success: false,
+              attempted: true,
+              error: duplicateMessage,
+            }));
+          }
+
+          showInfo(duplicateMessage);
+          return;
+        }
+
         // Check if Fathom data was fetched successfully
         if (formData.source === "fathom") {
           const meetingResult = result;
