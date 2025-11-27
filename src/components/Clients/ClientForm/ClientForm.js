@@ -129,7 +129,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
           adoption_specialist: adoptionSpecialistId,
           plan_details: client.plan_details || "",
           communication_tool: client.communication_tool || "",
-          ai_executor: normalizeUserValue(client.ai_executor) || "",
+          ai_executor: normalizeUserValue(client.ai_executor || client.ai_executor_name) || "",
           interns: Array.isArray(client.interns)
             ? client.interns.filter(Boolean)
             : [],
