@@ -1,5 +1,5 @@
 import React, { useState, useMemo, useEffect } from "react";
-import { useLocation } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import {
   Refresh as RefreshIcon,
   Search as SearchIcon,
@@ -84,8 +84,19 @@ const buildDueDateQueryParams = (mode, startDate, endDate) => {
   return params;
 };
 
+const formatDateInputValue = (dateObj) => {
+  if (!(dateObj instanceof Date) || Number.isNaN(dateObj.getTime())) {
+    return "";
+  }
+  const year = dateObj.getFullYear();
+  const month = String(dateObj.getMonth() + 1).padStart(2, "0");
+  const day = String(dateObj.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
+
 const ActionItemsPage = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { showSuccess, showError } = useNotificationContext();
   const queryClient = useQueryClient();
 
@@ -195,14 +206,55 @@ const ActionItemsPage = () => {
   // Handle URL parameters on mount and location change
   useEffect(() => {
     const searchParams = new URLSearchParams(location.search);
-    const statusParam = searchParams.get('status');
+    const statusParam = searchParams.get("status");
+    const duePresetParam = searchParams.get("due_preset");
 
-    // Apply status filter from URL
     if (statusParam) {
       setPendingStatusFilter(statusParam);
       setAppliedStatusFilter(statusParam);
     }
-  }, [location.search]);
+
+    if (duePresetParam) {
+      const today = new Date();
+
+      if (duePresetParam === "today") {
+        const todayValue = formatDateInputValue(today);
+        setPendingDueDateFilter("specific");
+        setPendingDueDateStart(todayValue);
+        setPendingDueDateEnd(todayValue);
+
+        setAppliedDueDateFilter("specific");
+        setAppliedDueDateStart(todayValue);
+        setAppliedDueDateEnd(todayValue);
+      } else if (duePresetParam === "next7") {
+        const rangeStart = new Date(today);
+        rangeStart.setDate(rangeStart.getDate() + 1);
+        const rangeEnd = new Date(today);
+        rangeEnd.setDate(rangeEnd.getDate() + 7);
+
+        const startValue = formatDateInputValue(rangeStart);
+        const endValue = formatDateInputValue(rangeEnd);
+
+        setPendingDueDateFilter("range");
+        setPendingDueDateStart(startValue);
+        setPendingDueDateEnd(endValue);
+
+        setAppliedDueDateFilter("range");
+        setAppliedDueDateStart(startValue);
+        setAppliedDueDateEnd(endValue);
+      }
+
+      searchParams.delete("due_preset");
+      const nextSearch = searchParams.toString();
+      navigate(
+        {
+          pathname: location.pathname,
+          search: nextSearch ? `?${nextSearch}` : "",
+        },
+        { replace: true }
+      );
+    }
+  }, [location.pathname, location.search, navigate]);
 
   // Reset column pages when filters change or view mode changes
   useEffect(() => {

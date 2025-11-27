@@ -104,6 +104,8 @@ const DashboardPage = () => {
         completed_tasks: actionItems.completed_tasks || 0,
         total_tasks: actionItems.total_tasks || 0,
         completion_rate: actionItems.completion_rate || 0,
+        due_today: actionItems.due_today || 0,
+        due_next_7_days: actionItems.due_next_7_days || 0,
       },
       meetingStats: {
         total_meetings: meetings.total_meetings || 0,
@@ -264,6 +266,12 @@ const DashboardPage = () => {
     }
   };
 
+  const handleActionItemsDueShortcut = (preset) => {
+    const params = new URLSearchParams();
+    params.set("due_preset", preset);
+    navigate(`/action-items?${params.toString()}`);
+  };
+
   const handleClientClick = (clientId) => {
     navigate(`/clients?clientId=${clientId}`);
   };
@@ -383,6 +391,14 @@ const DashboardPage = () => {
                 <div className="breakdown-item">
                   <span className="breakdown-label">Completion Rate</span>
                   <span className="breakdown-value breakdown-success">{dashboardData.actionItemStats.completion_rate}%</span>
+                </div>
+                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleActionItemsDueShortcut('today')}>
+                  <span className="breakdown-label">Due Today</span>
+                  <span className="breakdown-value breakdown-danger">{dashboardData.actionItemStats.due_today}</span>
+                </div>
+                <div className="breakdown-item breakdown-item-clickable" onClick={() => handleActionItemsDueShortcut('next7')}>
+                  <span className="breakdown-label">Due Next 7 Days</span>
+                  <span className="breakdown-value breakdown-muted">{dashboardData.actionItemStats.due_next_7_days}</span>
                 </div>
               </div>
             </div>
