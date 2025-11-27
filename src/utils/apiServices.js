@@ -330,6 +330,8 @@ export const openPointsAPI = {
     // task_owner and assignee are NOT sent - backend doesn't support them
     if (params.page) queryParams.append("page", params.page);
     if (params.page_size) queryParams.append("page_size", params.page_size);
+    if (params.due_date_from) queryParams.append("due_date_from", params.due_date_from);
+    if (params.due_date_to) queryParams.append("due_date_to", params.due_date_to);
 
     const url = `/open-points/recent${queryParams.toString() ? `?${queryParams.toString()}` : ""}`;
     console.log('API Request URL:', url);
