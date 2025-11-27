@@ -10,7 +10,7 @@ import {
   Close as CloseIcon,
 } from "@mui/icons-material";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
-import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import ActionItemsSkeleton from "../../components/ActionItems/ActionItemsSkeleton";
 import Pagination from "../../components/UI/Pagination/Pagination";
 import {
   ActionItemsList,
@@ -679,7 +679,7 @@ const ActionItemsPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <LoadingSpinner />
+        <ActionItemsSkeleton viewMode={viewMode} />
       </DashboardLayout>
     );
   }

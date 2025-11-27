@@ -9,7 +9,7 @@ import {
   useClients,
 } from "../../hooks/useQueries";
 import DashboardLayout from "../../components/Layout/DashboardLayout/DashboardLayout";
-import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import DashboardSkeleton from "../../components/Dashboard/DashboardSkeleton";
 import { PermissionGuard } from "../../components/PermissionGuard";
 import { PERMISSIONS } from "../../constants/permissions";
 import {
@@ -293,9 +293,7 @@ const DashboardPage = () => {
   if (loading) {
     return (
       <DashboardLayout>
-        <div className="dashboard-loading">
-          <LoadingSpinner message="Loading dashboard..." />
-        </div>
+        <DashboardSkeleton />
       </DashboardLayout>
     );
   }
