@@ -70,10 +70,14 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
         ? Math.round((manager.renewalsClients / manager.totalClients) * 100)
         : 0;
       
+      // Split name into first and last name for two-line display
+      const nameParts = manager.name.trim().split(/\s+/);
+      const firstName = nameParts[0] || "";
+      const lastName = nameParts.slice(1).join(" ") || "";
+      const displayName = lastName ? `${firstName}\n${lastName}` : firstName;
+      
       return {
-        name: manager.name.length > 15 
-          ? manager.name.substring(0, 15) + "..." 
-          : manager.name,
+        name: displayName,
         fullName: manager.name,
         percentage: percentage,
         renewalsClients: manager.renewalsClients,
@@ -138,6 +142,29 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
     );
   };
 
+  // Custom tick to render two-line names
+  const CustomTick = ({ x, y, payload }) => {
+    const lines = payload.value.split('\n');
+    return (
+      <g transform={`translate(${x},${y})`}>
+        {lines.map((line, index) => (
+          <text
+            key={index}
+            x={0}
+            y={0}
+            dy={index * 12 + 3}
+            textAnchor="middle"
+            fill="#6b7280"
+            fontSize={11}
+            fontWeight={500}
+          >
+            {line}
+          </text>
+        ))}
+      </g>
+    );
+  };
+
   if (chartData.length === 0) {
     return (
       <div className="account-manager-renewals-chart-container">
@@ -164,21 +191,19 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
       </div>
       
       <div className="account-manager-renewals-chart-content">
-        <ResponsiveContainer width="100%" height={280}>
+        <ResponsiveContainer width="100%" height={250}>
           <BarChart
             data={chartData}
-            margin={{ top: 30, right: 30, left: 20, bottom: 60 }}
+            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
             barCategoryGap="15%"
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
             <XAxis
               dataKey="name"
               stroke="#6b7280"
-              tick={{ fill: "#6b7280", fontSize: 11, fontWeight: 500 }}
               tickLine={{ stroke: "#6b7280" }}
-              angle={-45}
-              textAnchor="end"
-              height={80}
+              tick={<CustomTick />}
+              height={40}
             />
             <YAxis
               stroke="#6b7280"
