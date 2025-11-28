@@ -144,9 +144,64 @@ form-input,
 .form-actions {
   display: flex;
   justify-content: flex-end;
-  gap: 12px;
-  padding-top: 24px;
-  border-top: 1px solid #E5E7EB;
+  gap: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid #e5e7eb;
+}
+
+/* Button styles - Scoped to meeting form to match client form */
+.meeting-form .form-actions .btn {
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  padding: 0.875rem 1.25rem !important;
+  border: 1px solid transparent !important;
+  border-radius: 8px !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  text-decoration: none !important;
+  white-space: nowrap !important;
+  min-height: 48px !important;
+  box-sizing: border-box !important;
+}
+
+.meeting-form .form-actions .btn:disabled {
+  opacity: 0.6 !important;
+  cursor: not-allowed !important;
+}
+
+.meeting-form .form-actions .btn-primary {
+  background: #001F3F !important;
+  color: #ffffff !important;
+  border-color: #001F3F !important;
+  min-height: 48px !important;
+}
+
+.meeting-form .form-actions .btn-primary:hover:not(:disabled) {
+  background: #003366 !important;
+  border-color: #003366 !important;
+  transform: translateY(-1px) !important;
+  box-shadow: 0 4px 12px rgba(0, 31, 63, 0.3) !important;
+}
+
+.meeting-form .form-actions .btn-secondary {
+  background: #f3f4f6 !important;
+  color: #374151 !important;
+  border-color: #d1d5db !important;
+  padding: 0.875rem 1.25rem !important;
+  min-height: 48px !important;
+}
+
+.meeting-form .form-actions .btn-secondary:hover:not(:disabled) {
+  background: #e5e7eb !important;
+  border-color: #9ca3af !important;
+}
+
+.meeting-form .form-actions .btn svg {
+  width: 16px !important;
+  height: 16px !important;
 }
 
 /* Source Selection Styles */

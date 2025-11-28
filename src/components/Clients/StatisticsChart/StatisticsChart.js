@@ -209,7 +209,18 @@ const StatisticsChart = ({ statistics = {} }) => {
     <div className="statistics-charts-container">
       <div className="statistics-chart-header">
         <div>
-          <Typography variant="h6" className="statistics-chart-title">
+          <Typography 
+            variant="h6" 
+            className="statistics-chart-title"
+            sx={{
+              fontWeight: 700,
+              color: '#101828',
+              fontSize: '0.75rem',
+              textTransform: 'uppercase',
+              letterSpacing: '0.08em',
+              marginBottom: '4px',
+            }}
+          >
             Client Statistics
           </Typography>
           <Typography variant="body2" color="text.secondary">
@@ -243,10 +254,35 @@ const StatisticsChart = ({ statistics = {} }) => {
       <div className="charts-grid">
         {/* Action Items Chart */}
         <div className="chart-cell">
-          <Card className="statistics-chart-card">
-            <CardContent>
+          <Card 
+            className="statistics-chart-card"
+            sx={{
+              boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
+              borderRadius: '18px',
+              border: '1px solid #e4e7ec',
+              background: '#ffffff',
+              '&:hover': {
+                boxShadow: '0 20px 45px rgba(15, 23, 42, 0.12)',
+                transform: 'translateY(-4px)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <CardContent sx={{ padding: '1.75rem' }}>
               <div className="chart-header">
-                <Typography variant="h6" className="chart-title">
+                <Typography 
+                  variant="h6" 
+                  className="chart-title"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#101828',
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    margin: 0,
+                    lineHeight: 1.2,
+                  }}
+                >
                   Action Items
                 </Typography>
                 <div className="chart-legend">
@@ -334,10 +370,35 @@ const StatisticsChart = ({ statistics = {} }) => {
 
         {/* Meetings Chart */}
         <div className="chart-cell">
-          <Card className="statistics-chart-card">
-            <CardContent>
+          <Card 
+            className="statistics-chart-card"
+            sx={{
+              boxShadow: '0 18px 40px rgba(15, 23, 42, 0.08)',
+              borderRadius: '18px',
+              border: '1px solid #e4e7ec',
+              background: '#ffffff',
+              '&:hover': {
+                boxShadow: '0 20px 45px rgba(15, 23, 42, 0.12)',
+                transform: 'translateY(-4px)',
+              },
+              transition: 'all 0.3s ease',
+            }}
+          >
+            <CardContent sx={{ padding: '1.75rem' }}>
               <div className="chart-header">
-                <Typography variant="h6" className="chart-title">
+                <Typography 
+                  variant="h6" 
+                  className="chart-title"
+                  sx={{
+                    fontWeight: 700,
+                    color: '#101828',
+                    fontSize: '0.75rem',
+                    textTransform: 'uppercase',
+                    letterSpacing: '0.08em',
+                    margin: 0,
+                    lineHeight: 1.2,
+                  }}
+                >
                   Meetings
                 </Typography>
                 <div className="chart-legend">
