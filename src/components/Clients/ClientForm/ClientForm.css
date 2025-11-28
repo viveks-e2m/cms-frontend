@@ -473,6 +473,42 @@
   line-height: 1.4;
 }
 
+/* Checkbox Styles - Scoped to client form */
+.client-form-scoped .checkbox-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0;
+}
+
+.client-form-scoped .form-checkbox {
+  width: 20px;
+  height: 20px;
+  cursor: pointer;
+  accent-color: #3b82f6;
+  flex-shrink: 0;
+  margin: 0;
+}
+
+.client-form-scoped .checkbox-label {
+  color: #374151;
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  margin: 0;
+  user-select: none;
+}
+
+.client-form-scoped .form-checkbox:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.client-form-scoped .form-checkbox:disabled + .checkbox-label {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 /* Form Actions - Scoped to client form */
 .client-form-scoped .form-actions {
   display: flex;

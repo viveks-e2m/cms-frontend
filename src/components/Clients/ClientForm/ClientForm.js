@@ -56,6 +56,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
     task_audit_sheet_link: "",
     last_renewal_date: "",
     next_renewal_date: "",
+    projected_renewals: false,
   });
   const [errors, setErrors] = useState({});
   const [loadingUsers, setLoadingUsers] = useState(false);
@@ -147,6 +148,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
           next_renewal_date: client.next_renewal_date
             ? client.next_renewal_date.split("T")[0]
             : "",
+          projected_renewals: client.projected_renewals || false,
         });
       } else {
         // Adding new client - account_manager will default to current user on backend
@@ -166,6 +168,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
           task_audit_sheet_link: "",
           last_renewal_date: "",
           next_renewal_date: "",
+          projected_renewals: false,
         });
       }
       setErrors({});
@@ -317,6 +320,7 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
       task_audit_sheet_link: formData.task_audit_sheet_link.trim() || null,
       last_renewal_date: formData.last_renewal_date || null,
       next_renewal_date: formData.next_renewal_date || null,
+      projected_renewals: formData.projected_renewals || false,
     };
 
     // Debug log to verify interns are being sent
@@ -942,6 +946,35 @@ const ClientForm = ({ client, isOpen, onSave, onCancel, mode: modeProp }) => {
                 }
               />
               <div className="form-help">Date when the contract is scheduled for renewal</div>
+            </div>
+          </div>
+
+          <div className="form-group">
+            <label htmlFor="projected_renewals" className="form-label">
+              <DateIcon className="label-icon" />
+              Projected Renewals
+            </label>
+            <div className="checkbox-wrapper">
+              <input
+                id="projected_renewals"
+                type="checkbox"
+                className="form-checkbox"
+                checked={formData.projected_renewals}
+                onChange={(e) =>
+                  handleInputChange("projected_renewals", e.target.checked)
+                }
+                disabled={
+                  isReadOnly ||
+                  createClientMutation.isPending ||
+                  updateClientMutation.isPending
+                }
+              />
+              <label htmlFor="projected_renewals" className="checkbox-label">
+                Enable projected renewals for this client
+              </label>
+            </div>
+            <div className="form-help">
+              Check this box if this client has projected renewals
             </div>
           </div>
 
