@@ -458,7 +458,7 @@ const DashboardPage = () => {
           </PermissionGuard>
 
           {/* Account Manager Renewals Chart - Spans 2 columns */}
-          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
+          <PermissionGuard permissions={[PERMISSIONS.READ_ALL_CLIENTS]}>
             <AccountManagerRenewalsChart clients={allClientsData || []} />
           </PermissionGuard>
         </div>
