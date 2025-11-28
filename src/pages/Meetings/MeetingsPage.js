@@ -8,6 +8,7 @@ import { PERMISSIONS } from "../../constants/permissions";
 import { useMeetingsDirectory, useMeetingTranscript } from "../../hooks/useQueries";
 import useDebounce from "../../hooks/useDebounce";
 import MarkdownSummary from "../../components/Meetings/MarkdownSummary/MarkdownSummary";
+import MeetingsSkeleton from "../../components/Meetings/MeetingsSkeleton";
 import {
   Search as SearchIcon,
   Refresh as RefreshIcon,
@@ -870,7 +871,10 @@ const MeetingsPage = () => {
           </div>
         }
       >
-        <div className="page-container meeting-explorer">
+        {isLoading ? (
+          <MeetingsSkeleton />
+        ) : (
+          <div className="page-container meeting-explorer">
           <header className="meeting-explorer__header">
             <div>
               <h1>Meeting Explorer</h1>
@@ -957,6 +961,7 @@ const MeetingsPage = () => {
             <div className="meeting-explorer__details">{renderDetails()}</div>
           </section>
         </div>
+        )}
       </PermissionGuard>
     </DashboardLayout>
   );

@@ -21,6 +21,8 @@ import { useQueryClient } from "@tanstack/react-query";
 import { queryKeys } from "../../utils/queryClient";
 import { clientAPI } from "../../utils/apiServices";
 import LoadingSpinner from "../../components/UI/LoadingSpinner/LoadingSpinner";
+import ClientsSkeleton from "../../components/Clients/ClientsSkeleton";
+import ClientDetailsSkeleton from "../../components/Clients/ClientDetailsSkeleton";
 import Pagination from "../../components/UI/Pagination/Pagination";
 import {
   MeetingsList,
@@ -975,9 +977,7 @@ const ClientsPage = () => {
   if (loadingState) {
     return (
       <DashboardLayout>
-        <div className="page-loading">
-          <LoadingSpinner message="Loading clients..." />
-        </div>
+        <ClientsSkeleton viewMode={viewMode} />
       </DashboardLayout>
     );
   }
@@ -1093,9 +1093,7 @@ const ClientsPage = () => {
 
           <div className="client-details-content">
             {detailsLoadingState ? (
-              <div className="details-loading">
-                <LoadingSpinner message="Loading client details and meetings... This may take up to 2 minutes." />
-              </div>
+              <ClientDetailsSkeleton activeTab={activeTab} />
             ) : (
               <>
                 {activeTab === "overview" && (
