@@ -1,0 +1,139 @@
+/* Account Manager Renewals Chart Container - Match metric-card-enhanced style */
+.account-manager-renewals-chart-container {
+  background: #ffffff;
+  border-radius: 6px;
+  padding: 1.25rem;
+  border: 1px solid #e5e7eb;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  grid-column: span 2; /* Span 2 columns in the grid */
+}
+
+.account-manager-renewals-chart-container:hover {
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  transform: translateY(-2px);
+}
+
+/* Chart Header - Match metric-card-header-compact style */
+.account-manager-renewals-chart-header {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 1px solid #f3f4f6;
+}
+
+.chart-header-title {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+}
+
+.chart-header-icon {
+  width: 20px !important;
+  height: 20px !important;
+  color: #3b82f6;
+}
+
+.chart-title {
+  color: #111827;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+/* Chart Content */
+.account-manager-renewals-chart-content {
+  flex: 1;
+  min-height: 250px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.5rem 0;
+}
+
+/* Empty State */
+.chart-empty-state {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 250px;
+  color: #6b7280;
+  font-size: 0.875rem;
+}
+
+/* Tooltip Styles */
+.account-manager-tooltip {
+  background: rgba(31, 41, 55, 0.95);
+  border-radius: 8px;
+  padding: 12px 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  color: #ffffff;
+}
+
+.tooltip-header {
+  font-weight: 600;
+  font-size: 14px;
+  margin-bottom: 8px;
+  color: #ffffff;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+  padding-bottom: 6px;
+}
+
+.tooltip-content {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.tooltip-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  font-size: 13px;
+}
+
+.tooltip-label {
+  color: rgba(255, 255, 255, 0.8);
+}
+
+.tooltip-value {
+  color: #ffffff;
+  font-weight: 600;
+}
+
+/* Responsive Design */
+@media (max-width: 1200px) {
+  .account-manager-renewals-chart-container {
+    grid-column: span 1; /* On smaller screens, take 1 column */
+  }
+}
+
+@media (max-width: 768px) {
+  .account-manager-renewals-chart-container {
+    padding: 1rem;
+    grid-column: span 1;
+  }
+
+  .account-manager-renewals-chart-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .account-manager-renewals-chart-content {
+    min-height: 200px;
+    max-height: 250px;
+  }
+}
+
+

@@ -20,6 +20,8 @@ import {
   CalendarMonth as CalendarMonthIcon,
 } from "@mui/icons-material";
 import ClientRenewalCalendar from "../../components/Clients/ClientRenewalCalendar/ClientRenewalCalendar";
+import ProjectedRenewalsChart from "../../components/Dashboard/ProjectedRenewalsChart";
+import AccountManagerRenewalsChart from "../../components/Dashboard/AccountManagerRenewalsChart";
 import "./DashboardPage.css";
 
 const DashboardPage = () => {
@@ -448,6 +450,16 @@ const DashboardPage = () => {
                 </div>
               </div>
             </div>
+          </PermissionGuard>
+
+          {/* Projected Renewals Chart - First column in new row */}
+          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
+            <ProjectedRenewalsChart clients={allClientsData || []} />
+          </PermissionGuard>
+
+          {/* Account Manager Renewals Chart - Spans 2 columns */}
+          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
+            <AccountManagerRenewalsChart clients={allClientsData || []} />
           </PermissionGuard>
         </div>
 
