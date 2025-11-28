@@ -36,7 +36,7 @@ import OnboardingInfo from "../../components/Clients/OnboardingInfo";
 import ClientForm from "../../components/Clients/ClientForm";
 import ClientNotes from "../../components/Clients/ClientNotes/ClientNotes";
 import ClientAvatar from "../../components/UI/ClientAvatar";
-import MonthlySummaryCueCard from "../../components/Clients/MonthlySummaryCueCard/MonthlySummaryCueCard";
+import StatisticsChart from "../../components/Clients/StatisticsChart/StatisticsChart";
 import {
   People as PeopleIcon,
   Add as AddIcon,
@@ -298,126 +298,6 @@ const ClientsPage = () => {
     secretsData,
     currentActionItemsList,
   ]);
-
-  const monthlySummary = useMemo(() => {
-    const now = new Date();
-    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-    const startOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
-    const endOfLastMonth = new Date(
-      now.getFullYear(),
-      now.getMonth(),
-      0,
-      23,
-      59,
-      59,
-      999
-    );
-
-    const parseDate = (value) => {
-      if (!value) return null;
-      if (value instanceof Date && !Number.isNaN(value.getTime())) {
-        return value;
-      }
-      const parsed = new Date(value);
-      return Number.isNaN(parsed.getTime()) ? null : parsed;
-    };
-
-    const meetings = Array.isArray(overviewMeetings) ? overviewMeetings : [];
-    const meetingDates = meetings
-      .map((meeting) =>
-        parseDate(
-          meeting.meeting_date ||
-            meeting.meetingDate ||
-            meeting.start_time ||
-            meeting.startTime ||
-            meeting.created_at ||
-            meeting.createdAt ||
-            meeting.date
-        )
-      )
-      .filter(Boolean);
-
-    const meetingsThisMonth = meetingDates.filter(
-      (date) => date >= startOfMonth
-    ).length;
-    const meetingsLastMonth = meetingDates.filter(
-      (date) => date >= startOfLastMonth && date <= endOfLastMonth
-    ).length;
-    const meetingTrend = meetingsThisMonth - meetingsLastMonth;
-
-    const actionItemsSource = overviewActionItemsList || [];
-    const monthlyActionItems = actionItemsSource.filter((item) => {
-      const createdDate = parseDate(
-        item.created_at ||
-          item.createdAt ||
-          item.created_on ||
-          item.createdOn ||
-          item.updated_at ||
-          item.updatedAt ||
-          item.due_date ||
-          item.dueDate
-      );
-      return createdDate && createdDate >= startOfMonth;
-    });
-
-    const hasMonthlyData =
-      monthlyActionItems.length > 0 || actionItemsSource.length === 0;
-    const scopedItems = hasMonthlyData ? monthlyActionItems : actionItemsSource;
-
-    const statusCounts = scopedItems.reduce(
-      (acc, item) => {
-        const status = (item.status || "open").toLowerCase();
-        if (status === "completed") acc.completed += 1;
-        else if (status === "in_progress") acc.inProgress += 1;
-        else acc.open += 1;
-
-        const dueDate = item.due_date || item.dueDate;
-        if (dueDate && status !== "completed") {
-          const parsedDue = parseDate(dueDate);
-          if (parsedDue && parsedDue < now) {
-            acc.overdue += 1;
-          }
-        }
-        return acc;
-      },
-      { open: 0, inProgress: 0, completed: 0, overdue: 0 }
-    );
-
-    const totalActionItems = scopedItems.length;
-    const completionRate =
-      totalActionItems > 0
-        ? Math.round((statusCounts.completed / totalActionItems) * 100)
-        : 0;
-
-    const monthLabel = now.toLocaleString("en-US", {
-      month: "long",
-      year: "numeric",
-    });
-
-    const statusKey =
-      normalizeStatusValue(selectedClient?.status) || "pre-boarding";
-
-    return {
-      monthLabel,
-      statusLabel: getStatusLabel(selectedClient?.status),
-      statusKey,
-      actionItems: {
-        total: totalActionItems,
-        open: statusCounts.open,
-        inProgress: statusCounts.inProgress,
-        completed: statusCounts.completed,
-        overdue: statusCounts.overdue,
-        completionRate,
-        scopeLabel: hasMonthlyData ? "This month" : "Latest activity",
-        isMonthlyScope: hasMonthlyData,
-      },
-      meetings: {
-        thisMonth: meetingsThisMonth,
-        lastMonth: meetingsLastMonth,
-        trend: meetingTrend,
-      },
-    };
-  }, [overviewMeetings, overviewActionItemsList, selectedClient]);
 
   const loadingState = loadingClients || loadingUsers;
   const detailsLoadingState =
@@ -1109,11 +989,9 @@ const ClientsPage = () => {
                       {/* Main Content Grid */}
                       <div className="overview-layout">
                         <div className="overview-row">
-                          <div className="overview-column">
-                            <MonthlySummaryCueCard
-                              summary={monthlySummary}
-                              onActionItemsClick={() => setActiveTab("action-items")}
-                              onMeetingsClick={() => setActiveTab("meetings")}
+                          <div className="overview-column overview-column-full">
+                            <StatisticsChart
+                              statistics={clientOverview?.statistics}
                             />
                           </div>
                         </div>
