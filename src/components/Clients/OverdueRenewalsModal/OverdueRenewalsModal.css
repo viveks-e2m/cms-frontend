@@ -1,0 +1,191 @@
+/* Overdue Renewals Modal - Match Existing Project Styling */
+.overdue-renewals-modal-paper {
+  border-radius: 6px !important;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3) !important;
+  border-left: 4px solid #ef4444;
+  background: #ffffff !important;
+}
+
+.overdue-renewals-modal-title {
+  padding: 2rem 2rem 1rem 2rem !important;
+  background: #ffffff;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.overdue-renewals-modal-icon {
+  color: #ef4444 !important;
+  width: 28px !important;
+  height: 28px !important;
+  margin-top: 0.25rem;
+}
+
+.overdue-renewals-modal-title-text {
+  color: #001f3f !important;
+  font-size: 1.25rem !important;
+  font-weight: 700 !important;
+  margin: 0 0 0.25rem 0 !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+.overdue-renewals-modal-subtitle {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+  margin: 0 !important;
+  line-height: 1.4;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+.overdue-renewals-modal-close-btn {
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  width: 32px !important;
+  height: 32px !important;
+  border: none !important;
+  background: #f3f4f6 !important;
+  border-radius: 6px !important;
+  color: #6b7280 !important;
+  cursor: pointer !important;
+  transition: all 0.2s ease !important;
+  padding: 0 !important;
+}
+
+.overdue-renewals-modal-close-btn:hover {
+  background: #e5e7eb !important;
+  color: #374151 !important;
+}
+
+.overdue-renewals-modal-close-btn svg {
+  width: 18px !important;
+  height: 18px !important;
+}
+
+.overdue-renewals-modal-content {
+  padding: 0 !important;
+  background: #ffffff;
+  max-height: 60vh;
+  overflow-y: auto;
+}
+
+.overdue-renewals-modal-empty {
+  padding: 3rem 2rem;
+  text-align: center;
+}
+
+.overdue-renewals-modal-list {
+  padding: 0 !important;
+}
+
+.overdue-renewals-modal-list-item {
+  padding: 1rem 2rem !important;
+  transition: background-color 0.2s ease !important;
+  cursor: pointer !important;
+}
+
+.overdue-renewals-modal-list-item:hover {
+  background: #f9fafb !important;
+}
+
+.overdue-renewals-modal-item-content {
+  width: 100%;
+}
+
+.overdue-renewals-modal-item-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.overdue-renewals-modal-item-icon {
+  color: #6b7280 !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
+  margin-right: 0.75rem;
+}
+
+.overdue-renewals-modal-client-name {
+  color: #111827 !important;
+  font-weight: 600 !important;
+  font-size: 0.9375rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+.overdue-renewals-modal-date-icon {
+  color: #6b7280 !important;
+  width: 14px !important;
+  height: 14px !important;
+  flex-shrink: 0;
+  margin-right: 0.5rem;
+}
+
+.overdue-renewals-modal-date-text {
+  color: #6b7280 !important;
+  font-size: 0.875rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+.overdue-renewals-modal-days-overdue {
+  color: #dc2626 !important;
+  font-weight: 500 !important;
+  font-size: 0.8125rem !important;
+  margin-left: 0.5rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+}
+
+.overdue-renewals-modal-arrow-icon {
+  color: #9ca3af !important;
+  width: 18px !important;
+  height: 18px !important;
+  flex-shrink: 0;
+  transition: color 0.2s ease !important;
+}
+
+.overdue-renewals-modal-list-item:hover .overdue-renewals-modal-arrow-icon {
+  color: #6b7280 !important;
+}
+
+.overdue-renewals-modal-actions {
+  padding: 1rem 2rem !important;
+  background: #ffffff;
+  border-top: 1px solid #e5e7eb;
+}
+
+.overdue-renewals-modal-close-button {
+  color: #374151 !important;
+  border-color: #d1d5db !important;
+  font-weight: 500 !important;
+  text-transform: none !important;
+  padding: 0.5rem 1.25rem !important;
+  border-radius: 6px !important;
+  font-size: 0.875rem !important;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif !important;
+  transition: all 0.2s ease !important;
+}
+
+.overdue-renewals-modal-close-button:hover {
+  background: #f9fafb !important;
+  border-color: #9ca3af !important;
+  color: #111827 !important;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .overdue-renewals-modal-title {
+    padding: 1.5rem 1.5rem 0.75rem 1.5rem !important;
+  }
+
+  .overdue-renewals-modal-list-item {
+    padding: 0.875rem 1.5rem !important;
+  }
+
+  .overdue-renewals-modal-actions {
+    padding: 0.875rem 1.5rem !important;
+  }
+
+  .overdue-renewals-modal-content {
+    max-height: 50vh;
+  }
+}
+

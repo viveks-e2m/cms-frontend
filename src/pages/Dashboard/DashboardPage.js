@@ -20,6 +20,7 @@ import {
   CalendarMonth as CalendarMonthIcon,
 } from "@mui/icons-material";
 import ClientRenewalCalendar from "../../components/Clients/ClientRenewalCalendar/ClientRenewalCalendar";
+import OverdueRenewalsModal from "../../components/Clients/OverdueRenewalsModal";
 import ProjectedRenewalsChart from "../../components/Dashboard/ProjectedRenewalsChart";
 import AccountManagerRenewalsChart from "../../components/Dashboard/AccountManagerRenewalsChart";
 import "./DashboardPage.css";
@@ -244,6 +245,24 @@ const DashboardPage = () => {
     () => renewalEvents.filter((event) => event.isOverdue).length,
     [renewalEvents]
   );
+
+  const overdueRenewalEvents = React.useMemo(
+    () => renewalEvents.filter((event) => event.isOverdue),
+    [renewalEvents]
+  );
+
+  // Modal state for overdue renewals
+  const [isOverdueModalOpen, setIsOverdueModalOpen] = React.useState(false);
+
+  const handleOverduePillClick = () => {
+    if (overdueRenewalEvents.length > 0) {
+      setIsOverdueModalOpen(true);
+    }
+  };
+
+  const handleCloseOverdueModal = () => {
+    setIsOverdueModalOpen(false);
+  };
 
   // Navigation handlers
   const formatStatusForClientsPage = (value) => {
@@ -479,7 +498,23 @@ const DashboardPage = () => {
                 <CalendarMonthIcon className="section-title-icon" />
                 <h3 className="section-title-modern">Client Renewal Calendar</h3>
               </div>
-              <div className="calendar-overdue-pill">
+              <div
+                className={`calendar-overdue-pill ${overdueRenewalCount > 0 ? "calendar-overdue-pill-clickable" : ""}`}
+                onClick={handleOverduePillClick}
+                role={overdueRenewalCount > 0 ? "button" : undefined}
+                tabIndex={overdueRenewalCount > 0 ? 0 : undefined}
+                onKeyDown={(e) => {
+                  if (overdueRenewalCount > 0 && (e.key === "Enter" || e.key === " ")) {
+                    e.preventDefault();
+                    handleOverduePillClick();
+                  }
+                }}
+                aria-label={
+                  overdueRenewalCount > 0
+                    ? `View ${overdueRenewalCount} overdue renewal${overdueRenewalCount === 1 ? "" : "s"}`
+                    : "No overdue renewals"
+                }
+              >
                 {overdueRenewalCount} overdue
               </div>
             </div>
@@ -491,6 +526,14 @@ const DashboardPage = () => {
             </div>
           </div>
         </PermissionGuard>
+
+        {/* Overdue Renewals Modal */}
+        <OverdueRenewalsModal
+          open={isOverdueModalOpen}
+          onClose={handleCloseOverdueModal}
+          overdueEvents={overdueRenewalEvents}
+          onClientClick={handleClientClick}
+        />
       </div>
     </DashboardLayout>
   );
