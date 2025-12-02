@@ -330,7 +330,7 @@ const DashboardPage = () => {
                   <PeopleIcon className="metric-icon" />
                 </div>
                 <div className="metric-header-content-compact">
-                  <h3 className="metric-title-compact">Clients</h3>
+                  <h3 className="metric-title-compact">Active Clients</h3>
                   <div className="metric-value-compact">{dashboardData.clientStats.total_clients}</div>
                 </div>
               </div>
