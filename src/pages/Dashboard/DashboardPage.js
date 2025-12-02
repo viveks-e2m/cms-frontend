@@ -472,7 +472,7 @@ const DashboardPage = () => {
           </PermissionGuard>
 
           {/* Projected Renewals Chart - First column in new row */}
-          <PermissionGuard permissions={[PERMISSIONS.READ_CLIENT]}>
+          <PermissionGuard permissions={[PERMISSIONS.CREATE_CLIENT]}>
             <ProjectedRenewalsChart clients={allClientsData || []} />
           </PermissionGuard>
 

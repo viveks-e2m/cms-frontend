@@ -212,6 +212,20 @@
   font-weight: 600;
 }
 
+.chart-empty-message {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 350px;
+  width: 100%;
+  color: #6b7280;
+}
+
+.chart-empty-message .MuiTypography-root {
+  font-size: 0.875rem;
+  color: #6b7280;
+}
+
 /* Responsive adjustments */
 @media (max-width: 1200px) {
   .charts-grid {

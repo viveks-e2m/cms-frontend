@@ -304,66 +304,74 @@ const StatisticsChart = ({ statistics = {} }) => {
                   </div>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart
-                  data={actionItemsChartData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis
-                    dataKey="month"
-                    stroke="#666"
-                    tick={{ fill: "#666", fontSize: 12 }}
-                  />
-                  <YAxis
-                    stroke="#666"
-                    tick={{ fill: "#666", fontSize: 12 }}
-                    domain={[0, actionItemsMaxValue]}
-                  />
-                  <Tooltip content={<ActionItemsTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="open"
-                    name="Open"
-                    stroke="#6366f1"
-                    strokeWidth={2}
-                    dot={{ fill: "#6366f1", r: 4 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="inProgress"
-                    name="In Progress"
-                    stroke="#f59e0b"
-                    strokeWidth={2}
-                    dot={{ fill: "#f59e0b", r: 4 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="completed"
-                    name="Completed"
-                    stroke="#10b981"
-                    strokeWidth={2}
-                    dot={{ fill: "#10b981", r: 4 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
-                  />
-                  <Line
-                    type="monotone"
-                    dataKey="overdue"
-                    name="Overdue"
-                    stroke="#dc2626"
-                    strokeWidth={2}
-                    dot={{ fill: "#dc2626", r: 4 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
-                    strokeDasharray="5 5"
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {actionItemsChartData.length === 0 || actionItemsChartData.every(d => d.total === 0) ? (
+                <div className="chart-empty-message">
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    No data to display
+                  </Typography>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart
+                    data={actionItemsChartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#666"
+                      tick={{ fill: "#666", fontSize: 12 }}
+                    />
+                    <YAxis
+                      stroke="#666"
+                      tick={{ fill: "#666", fontSize: 12 }}
+                      domain={[0, actionItemsMaxValue]}
+                    />
+                    <Tooltip content={<ActionItemsTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="open"
+                      name="Open"
+                      stroke="#6366f1"
+                      strokeWidth={2}
+                      dot={{ fill: "#6366f1", r: 4 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="inProgress"
+                      name="In Progress"
+                      stroke="#f59e0b"
+                      strokeWidth={2}
+                      dot={{ fill: "#f59e0b", r: 4 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="completed"
+                      name="Completed"
+                      stroke="#10b981"
+                      strokeWidth={2}
+                      dot={{ fill: "#10b981", r: 4 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                    <Line
+                      type="monotone"
+                      dataKey="overdue"
+                      name="Overdue"
+                      stroke="#dc2626"
+                      strokeWidth={2}
+                      dot={{ fill: "#dc2626", r: 4 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                      strokeDasharray="5 5"
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>
@@ -408,35 +416,43 @@ const StatisticsChart = ({ statistics = {} }) => {
                   </div>
                 </div>
               </div>
-              <ResponsiveContainer width="100%" height={350}>
-                <LineChart
-                  data={meetingsChartData}
-                  margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
-                >
-                  <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
-                  <XAxis
-                    dataKey="month"
-                    stroke="#666"
-                    tick={{ fill: "#666", fontSize: 12 }}
-                  />
-                  <YAxis
-                    stroke="#666"
-                    tick={{ fill: "#666", fontSize: 12 }}
-                    domain={[0, meetingsMaxValue]}
-                  />
-                  <Tooltip content={<MeetingsTooltip />} />
-                  <Line
-                    type="monotone"
-                    dataKey="total"
-                    name="Meetings"
-                    stroke="#3b82f6"
-                    strokeWidth={2}
-                    dot={{ fill: "#3b82f6", r: 4 }}
-                    activeDot={{ r: 6 }}
-                    connectNulls
-                  />
-                </LineChart>
-              </ResponsiveContainer>
+              {meetingsChartData.length === 0 || meetingsChartData.every(d => d.total === 0) ? (
+                <div className="chart-empty-message">
+                  <Typography variant="body2" color="text.secondary" align="center">
+                    No data to display
+                  </Typography>
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={350}>
+                  <LineChart
+                    data={meetingsChartData}
+                    margin={{ top: 5, right: 30, left: 20, bottom: 5 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" stroke="#e0e0e0" />
+                    <XAxis
+                      dataKey="month"
+                      stroke="#666"
+                      tick={{ fill: "#666", fontSize: 12 }}
+                    />
+                    <YAxis
+                      stroke="#666"
+                      tick={{ fill: "#666", fontSize: 12 }}
+                      domain={[0, meetingsMaxValue]}
+                    />
+                    <Tooltip content={<MeetingsTooltip />} />
+                    <Line
+                      type="monotone"
+                      dataKey="total"
+                      name="Meetings"
+                      stroke="#3b82f6"
+                      strokeWidth={2}
+                      dot={{ fill: "#3b82f6", r: 4 }}
+                      activeDot={{ r: 6 }}
+                      connectNulls
+                    />
+                  </LineChart>
+                </ResponsiveContainer>
+              )}
             </CardContent>
           </Card>
         </div>
