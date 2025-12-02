@@ -44,9 +44,9 @@ const SignupPage = () => {
 
         <SignupForm onSuccess={handleSignupSuccess} />
 
-        <div className="signup-footer">
+        {/* <div className="signup-footer">
           <p>© 2025 CMS Dashboard. All rights reserved.</p>
-        </div>
+        </div> */}
       </div>
       
       {/* Background Decoration */}

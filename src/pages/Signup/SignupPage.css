@@ -16,7 +16,6 @@
   padding: 3rem;
   width: 100%;
   max-width: 520px;
-  text-align: center;
   position: relative;
   z-index: 2;
   animation: slideInUp var(--animation-duration-slow) ease;

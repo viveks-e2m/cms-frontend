@@ -78,8 +78,6 @@
 /* Form Footer */
 .form-footer {
   text-align: center;
-  padding-top: 1rem;
-  border-top: 1px solid var(--neutral-medium);
 }
 
 .form-footer p {
