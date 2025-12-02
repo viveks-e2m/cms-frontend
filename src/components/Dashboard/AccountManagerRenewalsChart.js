@@ -165,6 +165,29 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
     );
   };
 
+  // Custom Y-axis label to vertically center the "Percentage (%)" text
+  const CustomYAxisLabel = ({ viewBox }) => {
+    if (!viewBox) return null;
+    // Calculate the vertical center of the Y-axis
+    const centerY = viewBox.y + viewBox.height / 2;
+    // Position the label close to the Y-axis, similar to X-axis label positioning
+    const x = viewBox.x - 3; // Position close to the axis line
+    
+    return (
+      <text
+        x={x}
+        y={centerY}
+        fill="#6b7280"
+        fontSize={11}
+        fontWeight={500}
+        textAnchor="middle"
+        transform={`rotate(-90, ${x}, ${centerY})`}
+      >
+        Percentage (%)
+      </text>
+    );
+  };
+
   if (chartData.length === 0) {
     return (
       <div className="account-manager-renewals-chart-container">
@@ -194,7 +217,7 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
         <ResponsiveContainer width="100%" height={250}>
           <BarChart
             data={chartData}
-            margin={{ top: 20, right: 30, left: 20, bottom: 20 }}
+            margin={{ top: 20, right: 30, left: 60, bottom: 20 }}
             barCategoryGap="15%"
           >
             <CartesianGrid strokeDasharray="3 3" stroke="#e5e7eb" />
@@ -210,7 +233,7 @@ const AccountManagerRenewalsChart = ({ clients = [] }) => {
               tick={{ fill: "#6b7280", fontSize: 12 }}
               tickLine={{ stroke: "#6b7280" }}
               domain={[0, 100]}
-              label={{ value: "Percentage (%)", angle: -90, position: "insideLeft", fill: "#6b7280" }}
+              label={<CustomYAxisLabel />}
             />
             <Tooltip content={<CustomTooltip />} />
             <Bar
