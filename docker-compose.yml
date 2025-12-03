@@ -8,14 +8,14 @@ services:
     environment:
       REACT_APP_API_URL: "https://py-cms.sitepreviews.dev"
       NODE_ENV: "development"
-    networks:
-      - wp-overlay
+    # networks:
+    #   - wp-overlay
     deploy:
       resources:
         limits:
           cpus: "1.0"
           memory: "2000m"
 
-networks:
-  wp-overlay:
-    external: true
+# networks:
+#   wp-overlay:
+#     external: true
