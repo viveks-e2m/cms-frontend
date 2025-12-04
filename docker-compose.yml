@@ -4,7 +4,8 @@ services:
   frontend:
     build: .
     ports:
-      - "3010:80"
+      - "3010:80"   # HTTP
+      - "3043:443"  # HTTPS
     environment:
       REACT_APP_API_URL: "https://py-cms.sitepreviews.dev"
       NODE_ENV: "production"
